@@ -1,6 +1,7 @@
+require('dotenv').config();
 const Telegraf = require('telegraf');
 
-const bot = new Telegraf('8470299517:AAGCD-OzkgO-ALq12u04KAoAO82MlJoAVYo');
+const bot = new Telegraf(process.env.BOT_TOKEN);
 
 bot.start((ctx) =>
   ctx.reply('👋 Привет! Я помогу подобрать БАДы персонально.\nНажми /survey чтобы пройти опрос.')
