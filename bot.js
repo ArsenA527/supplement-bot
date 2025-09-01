@@ -1,9 +1,8 @@
 require('dotenv').config();
 const Telegraf = require('telegraf');
-
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
-const userData = {};
+const userState = {};
 const questions = [
   {
     key: "age",
@@ -161,9 +160,41 @@ const questions = [
   }
 ];
 
+function startSurvey(ctx) {
+  const chatId = ctx.chat.id;
+  userState[chatId] = { current: 0, answers: {} };
+  askQuestion(ctx);
+
+}
+
+function askQuestion(ctx) {
+  const chatId = ctx.chat.id;
+  const state = userState[chatId];
+  const question = questions[state.current];
+
+  if (!question) {
+    ctx.reply("✅ Спасибо, опрос завершён! Я обработаю ваши ответы.");
+    console.log("Ответы пользователя:", state.answers); // тут потом подключишь логику рекомендаций
+    return;
+  }
+
+  if (question.options) {
+    // Варианты кнопками
+    ctx.reply(
+      question.text,
+      Markup.keyboard(question.options.map((o) => [o])).oneTime().resize()
+    );
+  } else {
+    // Свободный ввод
+    ctx.reply(question.text);
+  }
+}
+
 bot.start((ctx) =>
   ctx.reply('👋 Привет! Я помогу подобрать БАДы персонально.\nНажми /survey чтобы пройти опрос.')
 );
+
+bot.command('test', (ctx => { console.log(ctx.chat.id) }))
 
 bot.command('help', (ctx) =>
   ctx.reply(
@@ -184,7 +215,7 @@ bot.command('help', (ctx) =>
   )
 );
 
-bot.command('survey', (ctx) => ctx.reply('🧩 Опрос скоро начнётся… (заглушка)'));
+bot.command('survey', (ctx) => { ctx.reply('🧩 Начнём опрос.'); startSurvey(ctx) });
 bot.command('plan', (ctx) => ctx.reply('📝 Рекомендации будут после прохождения опроса.'));
 bot.command('profile', (ctx) => ctx.reply('👤 Профиль: пока пуст. Пройди /survey.'));
 bot.command('edit', (ctx) => ctx.reply('✏️ Что изменить? (будет меню)'));
@@ -196,6 +227,19 @@ bot.command('feedback', (ctx) => ctx.reply('📮 Напиши свой отзы�
 bot.command('privacy', (ctx) =>
   ctx.reply('⚠️ Дисклеймер: рекомендации носят справочный характер и не заменяют консультацию врача.')
 );
+
+bot.on("text", (ctx) => {
+  const chatId = ctx.chat.id;
+  const state = userState[chatId];
+
+  if (!state) return;
+
+  const question = questions[state.current];
+  state.answers[question.key] = ctx.message.text;
+
+  state.current++;
+  askQuestion(ctx);
+})
 
 bot.launch();
 console.log('🤖 Бот запущен');
