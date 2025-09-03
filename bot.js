@@ -1,6 +1,5 @@
 require('dotenv').config();
 const Telegraf = require('telegraf');
-const Markup = require('telegraf/markup');
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
 const userState = {};
@@ -179,15 +178,18 @@ function askQuestion(ctx) {
     return;
   }
 
+  const txt = `${question.text}\n\n${question.note}`
+
   if (question.options) {
-    // Варианты кнопками
-    ctx.reply(
-      question.text,
-      Markup.keyboard(question.options.map((o) => [o])).oneTime().resize()
-    );
+
+    bot.telegram.sendMessage(ctx.chat.id, txt, {
+      reply_markup: {
+        inline_keyboard: question.options.map(option => [ {text: option, callback_data: option} ])
+      }
+    })
   } else {
     // Свободный ввод
-    ctx.reply(question.text);
+    ctx.reply(txt);
   }
 }
 
@@ -195,7 +197,25 @@ bot.start((ctx) =>
   ctx.reply('👋 Привет! Я помогу подобрать БАДы персонально.\nНажми /survey чтобы пройти опрос.')
 );
 
-bot.command('test', (ctx => { console.log(ctx.chat.id) }))
+bot.command('test', (ctx => {
+  // console.log(ctx);
+  // console.log(ctx.chat.id);
+/*
+  bot.telegram.sendMessage(ctx.chat.id, 'Hello world',
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: 'one', callback_data: 'one' }
+          ],
+          [
+            { text: 'one', callback_data: 'one' }
+          ]
+        ]
+      }
+    }
+  )*/
+}))
 
 bot.command('help', (ctx) =>
   ctx.reply(
@@ -241,6 +261,25 @@ bot.on("text", (ctx) => {
   state.current++;
   askQuestion(ctx);
 })
+
+// Обработка клика по кнопке
+bot.on("callback_query", (ctx) => {
+  const chatId = ctx.chat.id;
+  const state = userState[chatId];
+
+  if (!state) return;
+
+  const question = questions[state.current];
+  state.answers[question.key] = ctx.callbackQuery.data;
+
+  // ctx.reply(state);
+
+  state.current++;
+  // Убираем "часики" у кнопки
+  ctx.answerCbQuery();
+
+  askQuestion(ctx);
+});
 
 bot.launch();
 console.log('🤖 Бот запущен');
