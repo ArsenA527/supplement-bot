@@ -178,16 +178,18 @@ function askQuestion(ctx) {
     return;
   }
 
+  const txt = `${question.text}\n\n${question.note}`
+
   if (question.options) {
 
-    bot.telegram.sendMessage(ctx.chat.id, question.text, {
+    bot.telegram.sendMessage(ctx.chat.id, txt, {
       reply_markup: {
         inline_keyboard: question.options.map(option => [ {text: option, callback_data: option} ])
       }
     })
   } else {
     // Свободный ввод
-    ctx.reply(question.text);
+    ctx.reply(txt);
   }
 }
 
