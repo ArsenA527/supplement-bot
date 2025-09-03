@@ -1,6 +1,7 @@
 require('dotenv').config();
 const Telegraf = require('telegraf');
 const bot = new Telegraf(process.env.BOT_TOKEN);
+const { generateRecommendations, formatRecommendations } = require('./recommendationEngine');
 
 const userState = {};
 const questions = [
@@ -160,11 +161,11 @@ const questions = [
   }
 ];
 
+
 function startSurvey(ctx) {
   const chatId = ctx.chat.id;
   userState[chatId] = { current: 0, answers: {} };
   askQuestion(ctx);
-
 }
 
 function askQuestion(ctx) {
@@ -174,7 +175,8 @@ function askQuestion(ctx) {
 
   if (!question) {
     ctx.reply("✅ Спасибо, опрос завершён! Я обработаю ваши ответы.");
-    console.log("Ответы пользователя:", state.answers); // тут потом подключишь логику рекомендаций
+    completeSurvey(ctx, state.answers);
+    // delete userState[chatId];
     return;
   }
 
@@ -193,29 +195,37 @@ function askQuestion(ctx) {
   }
 }
 
+function completeSurvey(ctx, answers) {
+  const recommendations = generateRecommendations(answers);
+  const message = formatRecommendations(recommendations);
+
+    ctx.reply(message, {
+    reply_markup: {
+      inline_keyboard: [
+        [
+          {
+            text: '💳 Получить детальный план с дозировками',
+            callback_data: 'get_detailed_plan'
+          }
+        ],
+        [
+          {
+            text: '📋 Пройти опрос заново',
+            callback_data: 'restart_survey'
+          }
+        ]
+      ]
+    }
+  });
+
+  console.log("Рекомендации для пользователя:", recommendations);
+}
+
 bot.start((ctx) =>
   ctx.reply('👋 Привет! Я помогу подобрать БАДы персонально.\nНажми /survey чтобы пройти опрос.')
 );
 
-bot.command('test', (ctx => {
-  // console.log(ctx);
-  // console.log(ctx.chat.id);
-/*
-  bot.telegram.sendMessage(ctx.chat.id, 'Hello world',
-    {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            { text: 'one', callback_data: 'one' }
-          ],
-          [
-            { text: 'one', callback_data: 'one' }
-          ]
-        ]
-      }
-    }
-  )*/
-}))
+
 
 bot.command('help', (ctx) =>
   ctx.reply(
@@ -272,13 +282,25 @@ bot.on("callback_query", (ctx) => {
   const question = questions[state.current];
   state.answers[question.key] = ctx.callbackQuery.data;
 
-  // ctx.reply(state);
+  ctx.reply(state);
 
   state.current++;
   // Убираем "часики" у кнопки
   ctx.answerCbQuery();
 
   askQuestion(ctx);
+});
+
+// Добавляем обработчик для кнопок
+bot.command('get_detailed_plan', (ctx => {
+  ctx.reply('💎 Детальный план доступен по подписке. Напишите /subscribe для получения информации.');
+  ctx.answerCbQuery();
+}))
+
+// Пройти опрос заново
+bot.action('restart_survey', (ctx) => {
+  startSurvey(ctx);
+  ctx.answerCbQuery();
 });
 
 bot.launch();
