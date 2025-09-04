@@ -176,25 +176,29 @@ function askQuestion(ctx) {
   if (!question) {
     ctx.reply("✅ Спасибо, опрос завершён! Я обработаю ваши ответы.");
     completeSurvey(ctx, state.answers);
-    // delete userState[chatId];
     return;
   }
 
-  const txt = `${question.text}\n\n${question.note}`
+  const txt = `${question.text}\n\n${question.note}`;
 
   if (question.options) {
+    // Используем индекс варианта вместо полного текста для callback_data
+    const keyboard = question.options.map((option, index) => [
+      {
+        text: option,
+        callback_data: `q${state.current}a${index}` // Формат: q0a0, q0a1, etc.
+      }
+    ]);
 
     bot.telegram.sendMessage(ctx.chat.id, txt, {
       reply_markup: {
-        inline_keyboard: question.options.map(option => [ {text: option, callback_data: option} ])
+        inline_keyboard: keyboard
       }
-    })
+    });
   } else {
-    // Свободный ввод
     ctx.reply(txt);
   }
 }
-
 function completeSurvey(ctx, answers) {
   const recommendations = generateRecommendations(answers);
   const message = formatRecommendations(recommendations);
@@ -225,8 +229,6 @@ bot.start((ctx) =>
   ctx.reply('👋 Привет! Я помогу подобрать БАДы персонально.\nНажми /survey чтобы пройти опрос.')
 );
 
-
-
 bot.command('help', (ctx) =>
   ctx.reply(
     [
@@ -255,9 +257,7 @@ bot.command('subscribe', (ctx) => ctx.reply('💳 Подписка (в разр�
 bot.command('status', (ctx) => ctx.reply('ℹ️ Статус: подписка не активна, напоминания выкл.'));
 bot.command('reset', (ctx) => ctx.reply('♻️ Анкета очищена (пока без хранения).'));
 bot.command('feedback', (ctx) => ctx.reply('📮 Напиши свой отзыв в ответ на это сообщение.'));
-bot.command('privacy', (ctx) =>
-  ctx.reply('⚠️ Дисклеймер: рекомендации носят справочный характер и не заменяют консультацию врача.')
-);
+bot.command('privacy', (ctx) => ctx.reply('⚠️ Дисклеймер: рекомендации носят справочный характер и не заменяют консультацию врача.'));
 
 bot.on("text", (ctx) => {
   const chatId = ctx.chat.id;
@@ -277,27 +277,44 @@ bot.on("callback_query", (ctx) => {
   const chatId = ctx.chat.id;
   const state = userState[chatId];
 
-  if (!state) return;
+  if (!state) {
+    ctx.answerCbQuery('❌ Сессия устарела. Начните заново: /survey');
+    return;
+  }
 
   const question = questions[state.current];
-  state.answers[question.key] = ctx.callbackQuery.data;
 
-  ctx.reply(state);
+  // Парсим callback_data в формате q0a0
+  const callbackData = ctx.callbackQuery.data;
+  const match = callbackData.match(/q(\d+)a(\d+)/);
+
+  if (match) {
+    const questionIndex = parseInt(match[1]);
+    const answerIndex = parseInt(match[2]);
+
+    // Проверяем что индекс ответа корректен
+    if (questionIndex === state.current && question.options && answerIndex < question.options.length) {
+      state.answers[question.key] = question.options[answerIndex];
+    } else {
+      ctx.answerCbQuery('❌ Ошибка: неверные данные кнопки');
+      return;
+    }
+  } else {
+    // Для обратной совместимости (если остались старые форматы)
+    state.answers[question.key] = ctx.callbackQuery.data;
+  }
 
   state.current++;
-  // Убираем "часики" у кнопки
   ctx.answerCbQuery();
-
   askQuestion(ctx);
 });
 
-// Добавляем обработчик для кнопок
-bot.command('get_detailed_plan', (ctx => {
+// Обработка кнопок после опроса - ПРАВИЛЬНАЯ РЕАЛИЗАЦИЯ
+bot.action('get_detailed_plan', (ctx) => {
   ctx.reply('💎 Детальный план доступен по подписке. Напишите /subscribe для получения информации.');
   ctx.answerCbQuery();
-}))
+});
 
-// Пройти опрос заново
 bot.action('restart_survey', (ctx) => {
   startSurvey(ctx);
   ctx.answerCbQuery();
@@ -305,3 +322,9 @@ bot.action('restart_survey', (ctx) => {
 
 bot.launch();
 console.log('🤖 Бот запущен');
+
+// Добавьте в начало для отладки
+console.log('Количество вопросов:', questions.length);
+questions.forEach((q, i) => {
+  console.log(`${i}. ${q.key}: ${q.text.substring(0, 30)}...`);
+});
