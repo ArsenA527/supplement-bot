@@ -127,11 +127,9 @@ function generateRecommendations(answers) {
   const allRecommendations = [];
   const seenSupplements = new Set();
 
-  // Проходим по всем правилам
   for (const [ruleName, rule] of Object.entries(recommendationRules)) {
     if (rule.condition(answers)) {
       for (const supplement of rule.supplements) {
-        // Избегаем дубликатов
         if (!seenSupplements.has(supplement.name)) {
           allRecommendations.push(supplement);
           seenSupplements.add(supplement.name);

@@ -1,6 +1,52 @@
 require('dotenv').config();
 const Telegraf = require('telegraf');
+
 const bot = new Telegraf(process.env.BOT_TOKEN);
+
+// Импортируем контроллеры
+const surveyController = require('./controllers/surveyController');
+const botController = require('./controllers/botController');
+
+// Команды бота
+bot.start(botController.handleStart);
+bot.help(botController.handleHelp);
+bot.command('plan', botController.handlePlan);
+
+// ... остальные обработчики команд ...
+
+// Обработчики сообщений
+bot.on('text', surveyController.handleTextAnswer);
+bot.on('callback_query', surveyController.handleButtonAnswer);
+
+// Обработчики действий после опроса
+bot.action('get_detailed_plan', (ctx) => {
+  ctx.reply('💎 Детальный план доступен по подписке. Напишите /subscribe для получения информации.');
+  ctx.answerCbQuery();
+});
+
+bot.action('restart_survey', (ctx) => {
+  surveyController.handleStartSurvey(ctx);
+  ctx.answerCbQuery();
+});
+
+// Обработка ошибок
+bot.catch((err, ctx) => {
+  console.error('❌ Ошибка бота:', err);
+  ctx.reply('⚠️ Произошла ошибка. Попробуйте снова: /start');
+});
+
+// Запуск бота
+bot.launch().then(() => {
+  console.log('🤖 Бот запущен');
+}).catch(err => {
+  console.error('❌ Ошибка запуска бота:', err);
+});
+
+// Graceful shutdown
+process.once('SIGINT', () => bot.stop('SIGINT'));
+process.once('SIGTERM', () => bot.stop('SIGTERM'));
+
+/*
 const { generateRecommendations, formatRecommendations } = require('./recommendationEngine');
 
 const userState = {};
@@ -328,3 +374,4 @@ console.log('Количество вопросов:', questions.length);
 questions.forEach((q, i) => {
   console.log(`${i}. ${q.key}: ${q.text.substring(0, 30)}...`);
 });
+*/
