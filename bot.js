@@ -62,14 +62,14 @@ bot.launch().then(() => {
 // Graceful shutdown
 process.once('SIGINT', () => {
   console.log('🔄 Остановка бота...');
-  bot.stop('SIGINT');
+  bot.stop();
   db.close();
   process.exit(0);
 });
 
 process.once('SIGTERM', () => {
   console.log('🔄 Остановка бота...');
-  bot.stop('SIGTERM');
+  bot.stop();
   db.close();
   process.exit(0);
 });

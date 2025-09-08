@@ -29,7 +29,7 @@ db.serialize(() => {
   console.log('✅ База данных инициализирована');
 });
 
-// Graceful shutdown
+// Graceful shutdown для БД
 process.on('SIGINT', () => {
   db.close((err) => {
     if (err) {
