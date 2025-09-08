@@ -4,7 +4,7 @@ function getMainMenuKeyboard() {
       keyboard: [
         ['📋 Пройти опрос', '💊 Мои рекомендации'],
         ['👤 Мой профиль', '⚙️ Настройки'],
-        ['ℹ️ Помощь']
+        ['ℹ️ Помощь', '💳 Подписка']
       ],
       resize_keyboard: true,
       one_time_keyboard: false

@@ -30,7 +30,10 @@ function handleHelp(ctx) {
 /profile - Мой профиль
 /help - Помощь`;
 
-  ctx.reply(helpText, { parse_mode: 'Markdown' });
+  ctx.reply(helpText, {
+    parse_mode: 'Markdown',
+    ...getMainMenuKeyboard() // Добавляем меню к помощи
+  });
 }
 
 function handlePlan(ctx) {
@@ -38,14 +41,19 @@ function handlePlan(ctx) {
 
   surveyService.getSurveyResults(chatId).then(answers => {
     if (!answers || Object.keys(answers).length === 0) {
-      ctx.reply('📝 Сначала пройди опрос: /survey');
+      ctx.reply('📝 Сначала пройди опрос: /survey', getMainMenuKeyboard());
       return;
     }
 
     const recommendations = recommendationService.generateRecommendations(answers);
     const message = recommendationService.formatRecommendations(recommendations);
 
-    ctx.reply(message, { parse_mode: 'Markdown' });
+    ctx.reply(message, {
+      parse_mode: 'Markdown',
+      ...getMainMenuKeyboard() // Добавляем меню к рекомендациям
+    });
+  }).catch(err => {
+    ctx.reply('❌ Ошибка загрузки рекомендаций', getMainMenuKeyboard());
   });
 }
 
@@ -54,7 +62,7 @@ function handleProfile(ctx) {
 
   surveyService.getSurveyResults(chatId).then(answers => {
     if (!answers || Object.keys(answers).length === 0) {
-      ctx.reply('📊 Ты еще не проходил опрос. Начни: /survey');
+      ctx.reply('📊 Ты еще не проходил опрос. Начни: /survey', getMainMenuKeyboard());
       return;
     }
 
@@ -63,7 +71,12 @@ function handleProfile(ctx) {
       profileText += `• ${key}: ${value}\n`;
     }
 
-    ctx.reply(profileText, { parse_mode: 'Markdown' });
+    ctx.reply(profileText, {
+      parse_mode: 'Markdown',
+      ...getMainMenuKeyboard() // Добавляем меню к профилю
+    });
+  }).catch(err => {
+    ctx.reply('❌ Ошибка загрузки профиля', getMainMenuKeyboard());
   });
 }
 
@@ -82,14 +95,19 @@ function handleTextCommands(ctx) {
       handleProfile(ctx);
       break;
     case '⚙️ Настройки':
-      ctx.reply('⚙️ Настройки пока в разработке');
+      ctx.reply('⚙️ Настройки пока в разработке', getMainMenuKeyboard());
       break;
     case 'ℹ️ Помощь':
       handleHelp(ctx);
       break;
     default:
-      ctx.reply('Используй кнопки меню для навигации 👆');
+      ctx.reply('Используй кнопки меню для навигации 👆', getMainMenuKeyboard());
   }
+}
+
+// Новая функция для принудительного показа меню
+function showMainMenu(ctx) {
+  ctx.reply('Главное меню:', getMainMenuKeyboard());
 }
 
 module.exports = {
@@ -97,5 +115,6 @@ module.exports = {
   handleHelp,
   handlePlan,
   handleProfile,
-  handleTextCommands
+  handleTextCommands,
+  showMainMenu
 };

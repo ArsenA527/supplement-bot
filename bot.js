@@ -8,13 +8,16 @@ const db = require('./config/database');
 const botController = require('./controllers/botController');
 const surveyController = require('./controllers/surveyController');
 
-// Команды
+// Команды с возвратом в меню
 bot.start(botController.handleStart);
-bot.help(botController.handleHelp);
+bot.help((ctx) => {
+  botController.handleHelp(ctx);
+});
 bot.command('survey', surveyController.handleStartSurvey);
 bot.command('plan', botController.handlePlan);
 bot.command('profile', botController.handleProfile);
 bot.command('help', botController.handleHelp);
+bot.command('menu', botController.showMainMenu);
 
 // Обработка текстовых сообщений
 bot.on('text', (ctx) => {
@@ -36,10 +39,14 @@ bot.on('callback_query', (ctx) => {
   const callbackData = ctx.callbackQuery.data;
 
   if (callbackData === 'get_detailed_plan') {
-    ctx.reply('💎 Детальный план с дозировками доступен по подписке. Используй /subscribe для информации');
+    ctx.reply('💎 Детальный план с дозировками доступен по подписке. Используй /subscribe для информации',
+      getMainMenuKeyboard());
     ctx.answerCbQuery();
   } else if (callbackData === 'restart_survey') {
     surveyController.handleStartSurvey(ctx);
+    ctx.answerCbQuery();
+  } else if (callbackData === 'main_menu') {
+    botController.showMainMenu(ctx);
     ctx.answerCbQuery();
   } else {
     surveyController.handleButtonAnswer(ctx);

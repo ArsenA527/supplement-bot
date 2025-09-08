@@ -14,7 +14,34 @@ function handleStartSurvey(ctx) {
     .then(() => sendQuestion(ctx))
     .catch(err => {
       console.error('❌ Ошибка начала опроса:', err);
-      ctx.reply('⚠️ Ошибка начала опроса. Попробуй снова: /survey');
+      ctx.reply('⚠️ Ошибка начала опроса. Попробуй снова: /survey', getMainMenuKeyboard());
+    });
+}
+
+function completeSurvey(ctx) {
+  const chatId = ctx.chat.id;
+
+  surveyService.getSurveyResults(chatId)
+    .then(answers => {
+      const recommendations = recommendationService.generateRecommendations(answers);
+      const message = recommendationService.formatRecommendations(recommendations);
+
+      ctx.reply(message, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '💳 Детальный план', callback_data: 'get_detailed_plan' }],
+            [{ text: '🔄 Пройти заново', callback_data: 'restart_survey' }],
+            [{ text: '🏠 Главное меню', callback_data: 'main_menu' }] // Добавляем кнопку меню
+          ]
+        }
+      });
+
+      surveyService.completeSurvey(chatId);
+    })
+    .catch(err => {
+      console.error('❌ Ошибка завершения опроса:', err);
+      ctx.reply('⚠️ Ошибка обработки результатов', getMainMenuKeyboard());
     });
 }
 
@@ -99,31 +126,31 @@ function handleButtonAnswer(ctx) {
     });
 }
 
-function completeSurvey(ctx) {
-  const chatId = ctx.chat.id;
+// function completeSurvey(ctx) {
+//   const chatId = ctx.chat.id;
 
-  surveyService.getSurveyResults(chatId)
-    .then(answers => {
-      const recommendations = recommendationService.generateRecommendations(answers);
-      const message = recommendationService.formatRecommendations(recommendations);
+//   surveyService.getSurveyResults(chatId)
+//     .then(answers => {
+//       const recommendations = recommendationService.generateRecommendations(answers);
+//       const message = recommendationService.formatRecommendations(recommendations);
 
-      ctx.reply(message, {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: '💳 Детальный план', callback_data: 'get_detailed_plan' }],
-            [{ text: '🔄 Пройти заново', callback_data: 'restart_survey' }]
-          ]
-        }
-      });
+//       ctx.reply(message, {
+//         parse_mode: 'Markdown',
+//         reply_markup: {
+//           inline_keyboard: [
+//             [{ text: '💳 Детальный план', callback_data: 'get_detailed_plan' }],
+//             [{ text: '🔄 Пройти заново', callback_data: 'restart_survey' }]
+//           ]
+//         }
+//       });
 
-      surveyService.completeSurvey(chatId);
-    })
-    .catch(err => {
-      console.error('❌ Ошибка завершения опроса:', err);
-      ctx.reply('⚠️ Ошибка обработки результатов');
-    });
-}
+//       surveyService.completeSurvey(chatId);
+//     })
+//     .catch(err => {
+//       console.error('❌ Ошибка завершения опроса:', err);
+//       ctx.reply('⚠️ Ошибка обработки результатов');
+//     });
+// }
 
 module.exports = {
   handleStartSurvey,
