@@ -1,3 +1,17 @@
+function getMainMenuKeyboard() {
+  return {
+    reply_markup: {
+      keyboard: [
+        ['📋 Пройти опрос', '💊 Мои рекомендации'],
+        ['👤 Мой профиль', '⚙️ Настройки'],
+        ['ℹ️ Помощь']
+      ],
+      resize_keyboard: true,
+      one_time_keyboard: false
+    }
+  };
+}
+
 function getQuestionKeyboard(question) {
   if (!question.options) return null;
 
@@ -11,19 +25,7 @@ function getQuestionKeyboard(question) {
   return { reply_markup: { inline_keyboard: keyboard } };
 }
 
-function getMainKeyboard() {
-  return {
-    reply_markup: {
-      keyboard: [
-        ['📋 Пройти опрос', '💊 Мои рекомендации'],
-        ['⚙️ Настройки', 'ℹ️ Помощь']
-      ],
-      resize_keyboard: true
-    }
-  };
-}
-
 module.exports = {
-  getQuestionKeyboard,
-  getMainKeyboard
+  getMainMenuKeyboard,
+  getQuestionKeyboard
 };

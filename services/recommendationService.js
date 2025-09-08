@@ -1,127 +1,61 @@
 const recommendationRules = {
-  // Правила для стресса и энергии
   stress: {
-    // изменить conditions
-    condition: (answers) => answers.stress && answers.stress.includes('стресс'),
+    condition: (answers) => answers.stress && ['Часто', 'Постоянно'].includes(answers.stress),
     supplements: [
       {
         name: 'Магний',
         dosage: '400 мг',
         time: 'вечером',
-        reason: 'Снижает уровень кортизола, улучшает сон и расслабление'
+        reason: 'Снижает cortisol, улучшает сон'
       },
       {
         name: 'L-теанин',
         dosage: '200 мг',
-        time: 'утром и днем',
-        reason: 'Помогает снизить тревожность без седативного эффекта'
+        time: 'утром/днем',
+        reason: 'Снижает тревожность без сонливости'
       }
     ]
   },
-
-  // Правила для сна
   sleep: {
-    // изменить conditions
     condition: (answers) => answers.sleep && !answers.sleep.includes('Хороший'),
     supplements: [
       {
         name: 'Мелатонин',
         dosage: '3 мг',
-        time: 'за 30 минут до сна',
-        reason: 'Регулирует циркадные ритмы, улучшает качество сна'
-      },
-      {
-        name: 'Глицин',
-        dosage: '1000 мг',
         time: 'перед сном',
-        reason: 'Улучшает засыпание и качество сна'
+        reason: 'Регулирует циркадные ритмы'
       }
     ]
   },
-
-  // Правила для энергии
   energy: {
-    // изменить conditions
-    condition: (answers) => answers.sleep && !answers.sleep.includes('усталость'),
+    condition: (answers) => answers.energy && answers.energy.includes('усталость'),
     supplements: [
       {
         name: 'Коэнзим Q10',
         dosage: '200 мг',
-        time: 'утром с едой',
-        reason: 'Улучшает энергетический обмен на клеточном уровне'
-      },
-      {
-        name: 'Витамин B комплекс',
-        dosage: '1 капсула',
         time: 'утром',
-        reason: 'Необходим для производства энергии'
+        reason: 'Улучшает энергообмен в клетках'
       }
     ]
   },
-
-  // Правила для иммунитета
-  immunity: {
-    // изменить conditions
-    condition: (answers) => answers.sleep && !answers.sleep.includes('простуды'),
-    supplements: [
-      {
-        name: 'Витамин D3',
-        dosage: '2000-5000 МЕ',
-        time: 'утром с едой',
-        reason: 'Критически важен для работы иммунной системы'
-      },
-      {
-        name: 'Цинк',
-        dosage: '15-30 мг',
-        time: 'днем',
-        reason: 'Поддерживает иммунную функцию'
-      }
-    ]
-  },
-
-  // Правила для кожи, волос, ногтей
-  beauty: {
-    // изменить conditions
-    condition: (answers) => answers.symptoms &&
-      (answers.symptoms.includes('кожа') ||
-        answers.symptoms.includes('волосы') ||
-        answers.symptoms.includes('ногти')),
-
-    supplements: [
-      {
-        name: 'Коллаген',
-        dosage: '10 г',
-        time: 'утром натощак',
-        reason: 'Улучшает состояние кожи, волос и ногтей'
-      },
-      {
-        name: 'Биотин',
-        dosage: '5000 мкг',
-        time: 'утром',
-        reason: 'Укрепляет волосы и ногти'
-      }
-    ]
-  },
-
-  // Базовые рекомендации для всех
   base: {
-    condition: () => true, // Всегда true
+    condition: () => true,
     supplements: [
       {
         name: 'Омега-3',
         dosage: '1000 мг',
         time: 'с едой',
-        reason: 'Поддерживает здоровье мозга, сердца и противовоспалительный ответ'
+        reason: 'Поддержка сердца, мозга, противовоспалительный эффект'
       },
       {
-        name: 'Витамин C',
-        dosage: '500-1000 мг',
+        name: 'Витамин D3',
+        dosage: '2000 МЕ',
         time: 'утром',
-        reason: 'Мощный антиоксидант, поддерживает иммунитет'
+        reason: 'Критически важен для иммунитета и настроения'
       }
     ]
   }
-}
+};
 
 function generateRecommendations(answers) {
   const allRecommendations = [];
@@ -141,24 +75,21 @@ function generateRecommendations(answers) {
   return allRecommendations;
 }
 
-
-function formatRecommendation(recommendations) {
+function formatRecommendations(recommendations) {
   if (recommendations.length === 0) {
-    return '🎉 Отличные привычки! Рекомендуем базовый мультивитаминный комплекс для поддержки здоровья.';
+    return '🎉 Отличные привычки! Рекомендуем базовый мультивитаминный комплекс.';
   }
 
-  let message = '🌟 Ваши персональные рекомендации:\n\n';
+  let message = '🌟 *ВАШИ РЕКОМЕНДАЦИИ:*\n\n';
 
   recommendations.forEach((supp, index) => {
-    message += `${index + 1}. 💊 ${supp.name}\n`;
-    message += `   📏 Дозировка: ${supp.dosage}\n`;
-    message += `   ⏰ Время приема: ${supp.time}\n`;
-    message += `   📝 Обоснование: ${supp.reason}\n\n`;
+    message += `${index + 1}. 💊 *${supp.name}*\n`;
+    message += `   📏 ${supp.dosage} | ⏰ ${supp.time}\n`;
+    message += `   📝 ${supp.reason}\n\n`;
   });
 
-  message += '\n⚠️ Важно: перед приемом проконсультируйтесь с врачом.';
+  message += '\n⚠️ *Консультация врача обязательна перед приемом!*';
   return message;
 }
 
-
-module.exports = { generateRecommendations, formatRecommendation }
+module.exports = { generateRecommendations, formatRecommendations };
