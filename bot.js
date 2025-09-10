@@ -133,6 +133,31 @@ bot.on('successful_payment', (ctx) => {
   );
 });
 
+// В bot.js добавляем
+bot.command('testquestions', async (ctx) => {
+  const surveyService = require('./services/surveyService');
+  const subscriptionService = require('./services/subscriptionService');
+
+  const chatId = ctx.chat.id;
+  const isPremium = await subscriptionService.isSubscriptionActive(chatId);
+  const questions = await surveyService.getQuestionsForUser(chatId);
+
+  let message = `🔍 *Тест вопросов:*\n\n`;
+  message += `• Premium статус: ${isPremium ? '✅ Да' : '❌ Нет'}\n`;
+  message += `• Всего вопросов: ${questions.length}\n\n`;
+
+  // Показываем первые 5 вопросов для примера
+  questions.slice(0, 5).forEach((q, i) => {
+    message += `${i + 1}. ${q.text}\n`;
+  });
+
+  if (questions.length > 5) {
+    message += `\n... и еще ${questions.length - 5} вопросов`;
+  }
+
+  ctx.reply(message, { parse_mode: 'Markdown' });
+});
+
 // Команда для отладки подписки
 bot.command('debugsub', async (ctx) => {
   const subscriptionService = require('./services/subscriptionService');

@@ -25,11 +25,14 @@ class SurveyService {
   // Получить текущий вопрос
   async getCurrentQuestion(chatId) {
     const state = await this.getUserState(chatId);
-    if (!state || state.current >= questions.free.length) return null;
+    if (!state) return null;
 
     const userQuestions = await this.getQuestionsForUser(chatId);
-    const question = userQuestions[state.current];
 
+    // Используем длину актуального массива вопросов
+    if (state.current >= userQuestions.length) return null;
+
+    const question = userQuestions[state.current];
     return question ? { ...question, index: state.current } : null;
   }
 
@@ -38,7 +41,12 @@ class SurveyService {
     try {
       const isPremium = await subscriptionService.isSubscriptionActive(chatId);
       console.log(`📊 User ${chatId} is premium: ${isPremium}`);
-      return isPremium ? questions.premium : questions.free;
+      console.log(`📋 Free questions: ${questions.free.length}, Premium questions: ${questions.premium.length}`);
+
+      const selectedQuestions = isPremium ? questions.premium : questions.free;
+      console.log(`🎯 Selected ${selectedQuestions.length} questions for user`);
+
+      return selectedQuestions;
     } catch (error) {
       console.error('❌ Ошибка определения подписки:', error);
       return questions.free;
