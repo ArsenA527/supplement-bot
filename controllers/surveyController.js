@@ -18,6 +18,7 @@ function handleStartSurvey(ctx) {
     });
 }
 
+// В surveyController.js обновляем completeSurvey
 function completeSurvey(ctx) {
   const chatId = ctx.chat.id;
 
@@ -26,13 +27,18 @@ function completeSurvey(ctx) {
       const recommendations = recommendationService.generateRecommendations(answers);
       const message = recommendationService.formatRecommendations(recommendations);
 
-      ctx.reply(message, {
+      // Добавляем информацию о подписке
+      const subscriptionMessage = ctx.state.subscription.plan === 'premium'
+        ? '\n\n✨ Вы используете Premium подписку! Доступны расширенные функции.'
+        : '\n\n💎 Хотите больше? Получите персональные дозировки с Premium подпиской: /subscribe';
+
+      ctx.reply(message + subscriptionMessage, {
         parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [
             [{ text: '💳 Детальный план', callback_data: 'get_detailed_plan' }],
             [{ text: '🔄 Пройти заново', callback_data: 'restart_survey' }],
-            [{ text: '🏠 Главное меню', callback_data: 'main_menu' }] // Добавляем кнопку меню
+            [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
           ]
         }
       });

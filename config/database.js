@@ -11,9 +11,9 @@ if (!fs.existsSync(dataDir)) {
 const dbPath = path.join(dataDir, 'bot.db');
 const db = new sqlite3.Database(dbPath);
 
-// Создаем таблицы
+// Создаем таблицы при инициализации
 db.serialize(() => {
-  // Основная таблица пользователей
+  // Таблица пользователей
   db.run(`CREATE TABLE IF NOT EXISTS users (
     chat_id INTEGER PRIMARY KEY,
     username TEXT,
@@ -21,15 +21,39 @@ db.serialize(() => {
     last_name TEXT,
     state TEXT,
     answers TEXT,
-    subscription TEXT DEFAULT 'free',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+
+  // Таблица подписок
+  db.run(`CREATE TABLE IF NOT EXISTS subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chat_id INTEGER UNIQUE,
+    plan TEXT DEFAULT 'free',
+    status TEXT DEFAULT 'active',
+    start_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    end_date DATETIME,
+    payment_data TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (chat_id) REFERENCES users (chat_id)
+  )`);
+
+  // Таблица платежей
+  db.run(`CREATE TABLE IF NOT EXISTS payments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chat_id INTEGER,
+    amount REAL,
+    currency TEXT DEFAULT 'RUB',
+    status TEXT,
+    yookassa_id TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (chat_id) REFERENCES users (chat_id)
   )`);
 
   console.log('✅ База данных инициализирована');
 });
 
-// Graceful shutdown для БД
+// Graceful shutdown
 process.on('SIGINT', () => {
   db.close((err) => {
     if (err) {
