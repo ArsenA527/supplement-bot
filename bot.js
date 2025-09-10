@@ -198,6 +198,46 @@ bot.command('activatepremium', async (ctx) => {
   ctx.reply('✅ Premium подписка активирована вручную! Используйте /survey');
 });
 
+// Команда для очистки данных пользователя
+bot.command('clearmydata', async (ctx) => {
+  const db = require('./config/database');
+  const chatId = ctx.chat.id;
+
+  try {
+    await db.run('DELETE FROM users WHERE chat_id = ?', [chatId]);
+    await db.run('DELETE FROM subscriptions WHERE chat_id = ?', [chatId]);
+
+    ctx.reply('✅ Ваши данные очищены! Можете начать заново: /start',
+      require('./keyboards').getMainMenuKeyboard()
+    );
+  } catch (error) {
+    console.error('❌ Ошибка очистки данных:', error);
+    ctx.reply('❌ Ошибка очистки данных');
+  }
+});
+
+// Команда для полной очистки (только для админа)
+bot.command('cleardb', async (ctx) => {
+  // Проверяем что это админ (замените на ваш chat ID)
+  if (ctx.chat.id !== 725240491) {
+    ctx.reply('🚫 Команда только для администратора');
+    return;
+  }
+
+  const db = require('./config/database');
+
+  try {
+    await db.run('DELETE FROM users');
+    await db.run('DELETE FROM subscriptions');
+    await db.run('DELETE FROM payments');
+
+    ctx.reply('✅ Вся база данных очищена!');
+  } catch (error) {
+    console.error('❌ Ошибка очистки базы:', error);
+    ctx.reply('❌ Ошибка очистки базы данных');
+  }
+});
+
 // Обработка ошибок
 bot.catch((err, ctx) => {
   console.error('❌ Ошибка бота:', err);
