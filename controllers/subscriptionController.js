@@ -56,7 +56,7 @@ class SubscriptionController {
     const chatId = ctx.chat.id;
 
     try {
-      // Временная заглушка - активируем подписку на 7 дней для теста
+      // Активируем подписку на 7 дней для теста
       const endDate = new Date();
       endDate.setDate(endDate.getDate() + 7);
 
@@ -66,12 +66,17 @@ class SubscriptionController {
         end_date: endDate.toISOString()
       });
 
+      // Очищаем текущую сессию опроса если она есть
+      const surveyService = require('../services/surveyService');
+      await surveyService.completeSurvey(chatId);
+
       ctx.reply(`🎉 *Подписка активирована на 7 дней!*\n\n` +
         `Теперь вам доступны:\n` +
-        `• Расширенный опрос (17+ вопросов)\n` +
-        `• Персональные дозировки\n` +
-        `• Премиум функции\n\n` +
-        `Используйте /survey для нового опроса!`,
+        `• 📋 Расширенный опрос (17+ вопросов)\n` +
+        `• 💊 Персональные дозировки\n` +
+        `• ⏰ Напоминания о приеме\n` +
+        `• 🔄 Неограниченные опросы\n\n` +
+        `*Используйте /survey для нового расширенного опроса!*`,
       {
         parse_mode: 'Markdown',
         ...getMainMenuKeyboard()
@@ -82,7 +87,6 @@ class SubscriptionController {
       ctx.reply('❌ Ошибка активации подписки. Обратитесь в поддержку.');
     }
   }
-
   // Проверить статус подписки
   async checkSubscriptionStatus(ctx) {
     const chatId = ctx.chat.id;

@@ -133,6 +133,46 @@ bot.on('successful_payment', (ctx) => {
   );
 });
 
+// Команда для отладки подписки
+bot.command('debugsub', async (ctx) => {
+  const subscriptionService = require('./services/subscriptionService');
+  const surveyService = require('./services/surveyService');
+
+  const chatId = ctx.chat.id;
+  const subscription = await subscriptionService.getUserSubscription(chatId);
+  const isActive = await subscriptionService.isSubscriptionActive(chatId);
+  const canStart = await surveyService.canStartSurvey(chatId);
+
+  let message = `🔍 *Debug информации о подписке:*\n\n`;
+  message += `• Chat ID: ${chatId}\n`;
+  message += `• План: ${subscription.plan}\n`;
+  message += `• Статус: ${subscription.status}\n`;
+  message += `• Активна: ${isActive ? '✅ Да' : '❌ Нет'}\n`;
+  message += `• Может начать опрос: ${canStart ? '✅ Да' : '❌ Нет'}\n`;
+
+  if (subscription.end_date) {
+    message += `• Действует до: ${new Date(subscription.end_date).toLocaleDateString('ru-RU')}\n`;
+  }
+
+  ctx.reply(message, { parse_mode: 'Markdown' });
+});
+
+// Команда для принудительной активации premium
+bot.command('activatepremium', async (ctx) => {
+  const subscriptionService = require('./services/subscriptionService');
+
+  const endDate = new Date();
+  endDate.setMonth(endDate.getMonth() + 1);
+
+  await subscriptionService.updateSubscription(ctx.chat.id, {
+    plan: 'premium',
+    status: 'active',
+    end_date: endDate.toISOString()
+  });
+
+  ctx.reply('✅ Premium подписка активирована вручную! Используйте /survey');
+});
+
 // Обработка ошибок
 bot.catch((err, ctx) => {
   console.error('❌ Ошибка бота:', err);

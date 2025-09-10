@@ -35,8 +35,14 @@ class SurveyService {
 
   // Получить вопросы в зависимости от подписки
   async getQuestionsForUser(chatId) {
-    const isPremium = await subscriptionService.isSubscriptionActive(chatId);
-    return isPremium ? questions.premium : questions.free;
+    try {
+      const isPremium = await subscriptionService.isSubscriptionActive(chatId);
+      console.log(`📊 User ${chatId} is premium: ${isPremium}`);
+      return isPremium ? questions.premium : questions.free;
+    } catch (error) {
+      console.error('❌ Ошибка определения подписки:', error);
+      return questions.free;
+    }
   }
 
   // Проверить может ли пользователь начать опрос
