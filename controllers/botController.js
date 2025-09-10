@@ -100,6 +100,9 @@ function handleTextCommands(ctx) {
     case 'ℹ️ Помощь':
       handleHelp(ctx);
       break;
+    case '💳 Подписка': // Добавляем обработку кнопки подписки
+      require('./subscriptionController').handleSubscribe(ctx);
+      break;
     default:
       ctx.reply('Используй кнопки меню для навигации 👆', getMainMenuKeyboard());
   }

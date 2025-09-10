@@ -3,8 +3,8 @@ function getMainMenuKeyboard() {
     reply_markup: {
       keyboard: [
         ['📋 Пройти опрос', '💊 Мои рекомендации'],
-        ['👤 Мой профиль', '⚙️ Настройки'],
-        ['ℹ️ Помощь', '💳 Подписка']
+        ['👤 Мой профиль', '💳 Подписка'], // Меняем "Настройки" на "Подписка"
+        ['ℹ️ Помощь']
       ],
       resize_keyboard: true,
       one_time_keyboard: false

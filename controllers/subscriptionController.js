@@ -19,7 +19,7 @@ class SubscriptionController {
       message += `✓ ${feat}\n`;
     });
 
-    message += `\n🎯 *Для оформления подписки используйте:* /subscribe`;
+    message += `\n💳 *Для оформления подписки нажмите:* /subscribe`;
 
     ctx.reply(message, {
       parse_mode: 'Markdown',
@@ -31,30 +31,34 @@ class SubscriptionController {
   async handleSubscribe(ctx) {
     const plans = subscriptionService.getSubscriptionPlans();
 
+    // Временно используем обычную кнопку вместо платежной
     ctx.reply(`🚀 *Оформление Premium подписки*\n\n` +
       `Стоимость: ${plans.premium.price} руб/мес\n` +
       `Период: 30 дней\n\n` +
-      `Для оплаты используйте кнопку ниже 👇`,
+      `Для оплаты переведите ${plans.premium.price} руб на карту:\n` +
+      `💳 *2202 2017 4457 0306* (СБЕР)\n` +
+      `📝 *В комментарии укажите ваш ID:* ${ctx.chat.id}\n\n` +
+      `После оплаты отправьте скриншот чека для активации подписки!`,
     {
       parse_mode: 'Markdown',
       reply_markup: {
         inline_keyboard: [
-          [{ text: '💳 Оплатить 299 руб', pay: true }],
-          [{ text: '📋 Информация о подписках', callback_data: 'subscription_info' }]
+          [{ text: '✅ Я оплатил(а)', callback_data: 'payment_confirmed' }],
+          [{ text: '📋 Информация о подписках', callback_data: 'subscription_info' }],
+          [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
         ]
       }
     });
   }
 
-  // Обработка успешной оплаты
-  async handleSuccessfulPayment(ctx) {
+  // Обработка подтверждения оплаты
+  async handlePaymentConfirmation(ctx) {
     const chatId = ctx.chat.id;
-    const paymentInfo = ctx.message.successful_payment;
 
     try {
-      // Обновляем подписку пользователя
+      // Временная заглушка - активируем подписку на 7 дней для теста
       const endDate = new Date();
-      endDate.setMonth(endDate.getMonth() + 1);
+      endDate.setDate(endDate.getDate() + 7);
 
       await subscriptionService.updateSubscription(chatId, {
         plan: 'premium',
@@ -62,9 +66,9 @@ class SubscriptionController {
         end_date: endDate.toISOString()
       });
 
-      ctx.reply(`🎉 *Подписка активирована!*\n\n` +
+      ctx.reply(`🎉 *Подписка активирована на 7 дней!*\n\n` +
         `Теперь вам доступны:\n` +
-        `• Расширенный опрос\n` +
+        `• Расширенный опрос (17+ вопросов)\n` +
         `• Персональные дозировки\n` +
         `• Премиум функции\n\n` +
         `Используйте /survey для нового опроса!`,
@@ -77,6 +81,32 @@ class SubscriptionController {
       console.error('❌ Ошибка активации подписки:', error);
       ctx.reply('❌ Ошибка активации подписки. Обратитесь в поддержку.');
     }
+  }
+
+  // Проверить статус подписки
+  async checkSubscriptionStatus(ctx) {
+    const chatId = ctx.chat.id;
+    const subscription = await subscriptionService.getUserSubscription(chatId);
+
+    let message = `📋 *Статус вашей подписки:*\n\n`;
+    message += `• План: ${subscription.plan === 'premium' ? '💎 Premium' : '🎁 Free'}\n`;
+    message += `• Статус: ${subscription.status || 'active'}\n`;
+
+    if (subscription.end_date) {
+      const endDate = new Date(subscription.end_date);
+      message += `• Действует до: ${endDate.toLocaleDateString('ru-RU')}\n`;
+    }
+
+    if (subscription.plan === 'free') {
+      message += `\n💡 Для получения Premium доступа используйте: /subscribe`;
+    } else {
+      message += `\n✨ Вы наслаждаетесь всеми преимуществами Premium подписки!`;
+    }
+
+    ctx.reply(message, {
+      parse_mode: 'Markdown',
+      ...getMainMenuKeyboard()
+    });
   }
 }
 

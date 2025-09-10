@@ -99,10 +99,10 @@ bot.on('callback_query', (ctx) => {
     require('./services/surveyService').canStartSurvey(ctx.chat.id)
       .then(canStart => {
         if (canStart) {
-          surveyController.handleStartSurvey(ctx);
+          require('./controllers/surveyController').handleStartSurvey(ctx);
         } else {
           ctx.reply(`🚫 Бесплатный опрос можно пройти только один раз.\n\n` +
-                  `💎 Оформите подписку для неограниченного доступа: /subscribe`,
+                    `💎 Оформите подписку для неограниченного доступа: /subscribe`,
             require('./keyboards').getMainMenuKeyboard()
           );
         }
@@ -110,15 +110,19 @@ bot.on('callback_query', (ctx) => {
     ctx.answerCbQuery();
   }
   else if (callbackData === 'main_menu') {
-    botController.showMainMenu(ctx);
+    require('./controllers/botController').showMainMenu(ctx);
     ctx.answerCbQuery();
   }
   else if (callbackData === 'subscription_info') {
-    subscriptionController.showSubscriptionPlans(ctx);
+    require('./controllers/subscriptionController').showSubscriptionPlans(ctx);
+    ctx.answerCbQuery();
+  }
+  else if (callbackData === 'payment_confirmed') {
+    require('./controllers/subscriptionController').handlePaymentConfirmation(ctx);
     ctx.answerCbQuery();
   }
   else {
-    surveyController.handleButtonAnswer(ctx);
+    require('./controllers/surveyController').handleButtonAnswer(ctx);
   }
 });
 
