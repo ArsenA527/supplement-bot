@@ -11,8 +11,20 @@ if (!fs.existsSync(dataDir)) {
 const dbPath = path.join(dataDir, 'bot.db');
 const db = new sqlite3.Database(dbPath);
 
-// Создаем таблицы
+// Создаем таблицы при инициализации
 db.serialize(() => {
+  // Таблица пользователей
+  db.run(`CREATE TABLE IF NOT EXISTS users (
+    chat_id INTEGER PRIMARY KEY,
+    username TEXT,
+    first_name TEXT,
+    last_name TEXT,
+    state TEXT,
+    answers TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+
   // Таблица подписок
   db.run(`CREATE TABLE IF NOT EXISTS subscriptions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -22,6 +34,7 @@ db.serialize(() => {
     start_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     end_date DATETIME,
     payment_data TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (chat_id) REFERENCES users (chat_id)
   )`);
 
@@ -37,10 +50,10 @@ db.serialize(() => {
     FOREIGN KEY (chat_id) REFERENCES users (chat_id)
   )`);
 
-  console.log('✅ Таблицы подписок и платежей созданы');
+  console.log('✅ База данных инициализирована');
 });
 
-// Graceful shutdown для БД
+// Graceful shutdown
 process.on('SIGINT', () => {
   db.close((err) => {
     if (err) {
