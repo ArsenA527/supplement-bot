@@ -57,6 +57,13 @@ function handlePlan(ctx) {
   });
 }
 
+// Добавляем в начало файла вспомогательную функцию
+function escapeMarkdown(text) {
+  if (typeof text !== 'string') return text;
+  return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
+}
+
+// Обновляем handleProfile
 function handleProfile(ctx) {
   const chatId = ctx.chat.id;
 
@@ -67,17 +74,47 @@ function handleProfile(ctx) {
     }
 
     let profileText = `👤 *Твой профиль:*\n\n`;
+
     for (const [key, value] of Object.entries(answers)) {
-      profileText += `• ${key}: ${value}\n`;
+      const safeValue = escapeMarkdown(String(value));
+      const formattedKey = formatKey(key);
+      profileText += `• ${formattedKey}: ${safeValue}\n`;
     }
+
+    profileText += `\n💎 *Подписка:* ${ctx.state.subscription.plan === 'premium' ? 'Premium ✅' : 'Free'}`;
 
     ctx.reply(profileText, {
       parse_mode: 'Markdown',
-      ...getMainMenuKeyboard() // Добавляем меню к профилю
+      ...getMainMenuKeyboard()
     });
   }).catch(err => {
+    console.error('❌ Ошибка загрузки профиля:', err);
     ctx.reply('❌ Ошибка загрузки профиля', getMainMenuKeyboard());
   });
+}
+
+function formatKey(key) {
+  const keyMap = {
+    'age': '📅 Возраст',
+    'height': '📏 Рост',
+    'weight': '⚖️ Вес',
+    'smoking': '🚬 Курение',
+    'alcohol': '🍷 Алкоголь',
+    'diet': '🥗 Питание',
+    'blood_pressure': '🩸 Давление',
+    'chronic': '🏥 Хронические болезни',
+    'sleep': '😴 Сон',
+    'energy': '⚡ Энергия',
+    'stress': '😵‍💫 Стресс',
+    'symptoms': '⚠️ Симптомы',
+    'libido': '❤️ Либидо',
+    'region': '🌍 Регион',
+    'activity': '🏃 Активность',
+    'goal': '🎯 Цель',
+    'stimulants': '☕ Стимуляторы'
+  };
+
+  return keyMap[key] || key;
 }
 
 function handleTextCommands(ctx) {
