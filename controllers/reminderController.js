@@ -4,17 +4,90 @@ const { getMainMenuKeyboard, getReminderSettingsKeyboard } = require('../keyboar
 class ReminderController {
   constructor(bot) {
     this.reminderService = new ReminderService(bot);
+    this.bot = bot;
   }
 
   // Инициализация сервиса
   async initialize() {
-    await this.reminderService.initialize();
+    try {
+      await this.reminderService.initialize();
+      console.log('✅ Сервис напоминаний инициализирован');
+    } catch (error) {
+      console.error('❌ Ошибка инициализации напоминаний:', error);
+    }
+  }
+
+  // Создать напоминания из рекомендаций
+  async createRemindersFromRecommendations(ctx, recommendations) {
+    const chatId = ctx.chat.id;
+
+    try {
+      // Сначала удалим старые напоминания
+      await this.clearUserReminders(chatId);
+
+      // Базовые времена приема по умолчанию
+      const defaultTimes = {
+        'утром': '08:00',
+        'утро': '08:00',
+        'днем': '13:00',
+        'дневное': '13:00',
+        'вечером': '20:00',
+        'вечер': '20:00',
+        'перед сном': '22:00',
+        'сон': '22:00',
+        'с едой': '12:00',
+        'еда': '12:00'
+      };
+
+      let createdCount = 0;
+
+      for (const supplement of recommendations) {
+        const timeKey = supplement.time.toLowerCase();
+        const time = defaultTimes[timeKey] || '12:00';
+
+        try {
+          await this.reminderService.createReminder(chatId, {
+            supplement_name: supplement.name,
+            dosage: supplement.dosage,
+            time: time,
+            days: '1111111'
+          });
+          createdCount++;
+        } catch (error) {
+          console.error('❌ Ошибка создания напоминания:', error);
+        }
+      }
+
+      if (createdCount > 0) {
+        ctx.reply(`✅ Создано ${createdCount} напоминаний! Вы будете получать уведомления о приеме добавок.\n\n` +
+                 `Используйте /myreminders для просмотра напоминаний.`,
+          getMainMenuKeyboard()
+        );
+      } else {
+        ctx.reply('❌ Не удалось создать напоминания. Проверьте рекомендации.',
+          getMainMenuKeyboard()
+        );
+      }
+
+    } catch (error) {
+      console.error('❌ Ошибка создания напоминаний:', error);
+      ctx.reply('❌ Ошибка настройки напоминаний. Попробуйте позже.');
+    }
+  }
+
+  // Очистить напоминания пользователя
+  async clearUserReminders(chatId) {
+    return new Promise((resolve) => {
+      const db = require('../config/database');
+      db.run('DELETE FROM reminders WHERE chat_id = ?', [chatId], (err) => {
+        if (err) console.error('❌ Ошибка очистки напоминаний:', err);
+        resolve();
+      });
+    });
   }
 
   // Показать настройки напоминаний
   async showReminderSettings(ctx) {
-    const chatId = ctx.chat.id;
-
     const message = `⚙️ *Настройки напоминаний*\n\n` +
       `Здесь вы можете настроить время напоминаний о приеме добавок.\n\n` +
       `По умолчанию:\n` +
@@ -29,40 +102,29 @@ class ReminderController {
     });
   }
 
-  // Создать напоминания из рекомендаций
-  async createRemindersFromRecommendations(ctx, recommendations) {
+  // Показать напоминания пользователя
+  async showUserReminders(ctx) {
     const chatId = ctx.chat.id;
+    const reminders = await this.reminderService.getUserReminders(chatId);
 
-    try {
-      // Базовые времена приема по умолчанию
-      const defaultTimes = {
-        'утром': '08:00',
-        'днем': '13:00',
-        'вечером': '20:00',
-        'перед сном': '22:00',
-        'с едой': '12:00'
-      };
-
-      for (const supplement of recommendations) {
-        const time = defaultTimes[supplement.time] || '12:00';
-
-        await this.reminderService.createReminder(chatId, {
-          supplement_name: supplement.name,
-          dosage: supplement.dosage,
-          time: time,
-          days: '1111111' // Все дни недели
-        });
-      }
-
-      ctx.reply(`✅ Напоминания настроены! Вы будете получать уведомления о приеме добавок.\n\n` +
-               `Используйте /reminders для управления напоминаниями.`,
+    if (reminders.length === 0) {
+      ctx.reply('📋 У вас нет активных напоминаний.\n\nНастройте напоминания после прохождения опроса.',
         getMainMenuKeyboard()
       );
-
-    } catch (error) {
-      console.error('❌ Ошибка создания напоминаний:', error);
-      ctx.reply('❌ Ошибка настройки напоминаний. Попробуйте позже.');
+      return;
     }
+
+    let message = '📋 *Ваши напоминания:*\n\n';
+    reminders.forEach(reminder => {
+      message += `⏰ ${reminder.time} - ${reminder.supplement_name} (${reminder.dosage})\n`;
+    });
+
+    message += `\nВсего: ${reminders.length} напоминаний`;
+
+    ctx.reply(message, {
+      parse_mode: 'Markdown',
+      ...getMainMenuKeyboard()
+    });
   }
 
   // Показать историю приема
@@ -153,12 +215,17 @@ class ReminderController {
   // Вспомогательный метод для получения напоминания
   async getReminderById(reminderId) {
     return new Promise((resolve) => {
+      const db = require('../config/database');
       db.get('SELECT * FROM reminders WHERE id = ?', [reminderId], (err, row) => {
         resolve(row);
       });
     });
   }
+
+  // Вспомогательный метод для отправки напоминания
+  async sendReminder(reminder) {
+    await this.reminderService.sendReminder(reminder);
+  }
 }
 
-// module.exports = ReminderController;
 module.exports = { ReminderController };

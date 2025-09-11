@@ -1,6 +1,5 @@
 const db = require('../config/database');
 const cron = require('node-cron');
-const { Telegraf } = require('telegraf');
 
 class ReminderService {
   constructor(bot) {
@@ -16,16 +15,16 @@ class ReminderService {
 
   // Загрузить все активные напоминания
   async loadAllReminders() {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       db.all(
-        `SELECT r.*, u.timezone
+        `SELECT r.*, COALESCE(u.timezone, 'Europe/Moscow') as timezone
          FROM reminders r
          LEFT JOIN notification_settings u ON r.chat_id = u.chat_id
-         WHERE r.is_active = true AND u.allow_notifications = true`,
+         WHERE r.is_active = true`,
         (err, reminders) => {
           if (err) {
             console.error('❌ Ошибка загрузки напоминаний:', err);
-            resolve([]);
+            reject(err);
           } else {
             reminders.forEach(reminder => this.scheduleReminder(reminder));
             console.log(`✅ Загружено ${reminders.length} напоминаний`);
@@ -39,18 +38,24 @@ class ReminderService {
   // Создать напоминание
   async createReminder(chatId, reminderData) {
     return new Promise((resolve, reject) => {
+      const self = this;
+
       db.run(
         `INSERT INTO reminders (chat_id, supplement_name, dosage, time, days)
          VALUES (?, ?, ?, ?, ?)`,
-        [chatId, reminderData.supplement_name, reminderData.dosage, reminderData.time, reminderData.days],
+        [chatId, reminderData.supplement_name, reminderData.dosage, reminderData.time, reminderData.days || '1111111'],
         function(err) {
           if (err) return reject(err);
 
           const reminderId = this.lastID;
           // Загружаем созданное напоминание и планируем его
           db.get('SELECT * FROM reminders WHERE id = ?', [reminderId], (err, reminder) => {
-            if (!err && reminder) {
-              this.scheduleReminder(reminder);
+            if (err) return reject(err);
+
+            if (reminder) {
+              // Добавляем временную зону по умолчанию
+              reminder.timezone = 'Europe/Moscow';
+              self.scheduleReminder(reminder);
             }
             resolve(reminderId);
           });
@@ -61,25 +66,35 @@ class ReminderService {
 
   // Запланировать напоминание
   scheduleReminder(reminder) {
-    const jobId = `reminder_${reminder.id}`;
+    try {
+      const jobId = `reminder_${reminder.id}`;
 
-    // Останавливаем существующее задание если есть
-    if (this.scheduledJobs.has(jobId)) {
-      this.scheduledJobs.get(jobId).stop();
+      // Останавливаем существующее задание если есть
+      if (this.scheduledJobs.has(jobId)) {
+        this.scheduledJobs.get(jobId).stop();
+      }
+
+      // Парсим время (формат: "08:00")
+      const [hours, minutes] = reminder.time.split(':').map(Number);
+
+      if (isNaN(hours) || isNaN(minutes)) {
+        console.error('❌ Неверный формат времени:', reminder.time);
+        return;
+      }
+
+      // Создаем cron задание (каждый день в указанное время)
+      const job = cron.schedule(`${minutes} ${hours} * * *`, () => {
+        this.sendReminder(reminder);
+      }, {
+        timezone: reminder.timezone || 'Europe/Moscow'
+      });
+
+      this.scheduledJobs.set(jobId, job);
+      console.log(`⏰ Напоминание запланировано: ${reminder.supplement_name} в ${reminder.time}`);
+
+    } catch (error) {
+      console.error('❌ Ошибка планирования напоминания:', error);
     }
-
-    // Парсим время (формат: "08:00")
-    const [hours, minutes] = reminder.time.split(':').map(Number);
-
-    // Создаем cron задание (каждый день в указанное время)
-    const job = cron.schedule(`${minutes} ${hours} * * *`, () => {
-      this.sendReminder(reminder);
-    }, {
-      timezone: reminder.timezone || 'Europe/Moscow'
-    });
-
-    this.scheduledJobs.set(jobId, job);
-    console.log(`⏰ Напоминание запланировано: ${reminder.supplement_name} в ${reminder.time}`);
   }
 
   // Отправить напоминание
@@ -103,15 +118,25 @@ class ReminderService {
         { parse_mode: 'Markdown', ...keyboard }
       );
 
-      // Записываем в историю как "ожидание подтверждения"
-      await this.recordIntake(reminder.chat_id, {
-        supplement_name: reminder.supplement_name,
-        dosage: reminder.dosage,
-        status: 'pending'
-      });
+      console.log(`📨 Отправлено напоминание пользователю ${reminder.chat_id}`);
 
     } catch (error) {
       console.error('❌ Ошибка отправки напоминания:', error);
+      // Если пользователь заблокировал бота, деактивируем напоминание
+      if (error.response && error.response.error_code === 403) {
+        this.deactivateReminder(reminder.id);
+      }
+    }
+  }
+
+  // Деактивировать напоминание
+  async deactivateReminder(reminderId) {
+    const db = require('../config/database');
+    db.run('UPDATE reminders SET is_active = false WHERE id = ?', [reminderId]);
+    const jobId = `reminder_${reminderId}`;
+    if (this.scheduledJobs.has(jobId)) {
+      this.scheduledJobs.get(jobId).stop();
+      this.scheduledJobs.delete(jobId);
     }
   }
 
@@ -138,7 +163,7 @@ class ReminderService {
 
       db.all(
         `SELECT * FROM intake_history
-         WHERE chat_id = ? AND taken_at >= ?
+         WHERE chat_id = ? AND datetime(taken_at) >= datetime(?)
          ORDER BY taken_at DESC`,
         [chatId, sinceDate.toISOString()],
         (err, history) => {
@@ -170,6 +195,24 @@ class ReminderService {
     }
 
     return stats;
+  }
+
+  // Получить напоминания пользователя
+  async getUserReminders(chatId) {
+    return new Promise((resolve) => {
+      db.all(
+        'SELECT * FROM reminders WHERE chat_id = ? ORDER BY time',
+        [chatId],
+        (err, reminders) => {
+          if (err) {
+            console.error('❌ Ошибка получения напоминаний:', err);
+            resolve([]);
+          } else {
+            resolve(reminders);
+          }
+        }
+      );
+    });
   }
 }
 
