@@ -8,9 +8,17 @@ const db = require('./config/database');
 const botController = require('./controllers/botController');
 const surveyController = require('./controllers/surveyController');
 const subscriptionController = require('./controllers/subscriptionController');
+const { ReminderController } = require('./controllers/reminderController');
+const reminderController = new ReminderController(bot);
 
 // Middleware
 const { injectSubscriptionData } = require('./middlewares/subscriptionMiddleware');
+
+reminderController.initialize().then(() => {
+  console.log('✅ Сервис напоминаний инициализирован');
+});
+
+global.reminderController = reminderController;
 
 // Middleware для инъекции данных подписки
 bot.use(injectSubscriptionData);
@@ -62,6 +70,28 @@ bot.command('mysubscription', async (ctx) => {
     parse_mode: 'Markdown',
     ...require('./keyboards').getMainMenuKeyboard()
   });
+});
+
+// Ручное создание напоминаний
+bot.command('setupreminders', async (ctx) => {
+  if (ctx.state.subscription.plan !== 'premium') {
+    ctx.reply('❌ Требуется premium подписка для напоминаний');
+    return;
+  }
+
+  const surveyService = require('./services/surveyService');
+  const answers = await surveyService.getSurveyResults(ctx.chat.id);
+
+  if (!answers) {
+    ctx.reply('❌ Сначала пройдите опрос: /survey');
+    return;
+  }
+
+  const recommendationService = require('./services/recommendationService');
+  const recommendations = recommendationService.generateRecommendations(answers);
+
+  await reminderController.createRemindersFromRecommendations(ctx, recommendations);
+  ctx.reply('✅ Напоминания настроены!');
 });
 
 // Обработка текстовых сообщений
@@ -236,6 +266,22 @@ bot.command('cleardb', async (ctx) => {
     console.error('❌ Ошибка очистки базы:', error);
     ctx.reply('❌ Ошибка очистки базы данных');
   }
+});
+
+bot.command('reminders', (ctx) => reminderController.showReminderSettings(ctx));
+bot.command('history', (ctx) => reminderController.showIntakeHistory(ctx, 7));
+
+// Обработка действий с напоминаниями
+bot.action(/intake_(taken|skipped|later)_(\d+)/, (ctx) => {
+  const action = ctx.match[1];
+  const reminderId = ctx.match[2];
+  reminderController.handleReminderAction(ctx, action, reminderId);
+});
+
+// Обработка истории
+bot.action(/history_(\d+)/, (ctx) => {
+  const days = parseInt(ctx.match[1]);
+  reminderController.showIntakeHistory(ctx, days);
 });
 
 // Обработка ошибок

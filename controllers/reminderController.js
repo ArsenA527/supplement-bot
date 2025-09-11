@@ -160,4 +160,5 @@ class ReminderController {
   }
 }
 
-module.exports = ReminderController;
+// module.exports = ReminderController;
+module.exports = { ReminderController };
