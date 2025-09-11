@@ -53,6 +53,47 @@ db.serialize(() => {
   console.log('✅ База данных инициализирована');
 });
 
+// После существующих таблиц добавляем:
+db.serialize(() => {
+  // Таблица напоминаний
+  db.run(`CREATE TABLE IF NOT EXISTS reminders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chat_id INTEGER,
+    supplement_name TEXT,
+    dosage TEXT,
+    time TEXT,
+    days TEXT DEFAULT '1111111', -- 7 digits for each day of week (1=active, 0=inactive)
+    is_active BOOLEAN DEFAULT true,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (chat_id) REFERENCES users (chat_id)
+  )`);
+
+  // Таблица истории приема
+  db.run(`CREATE TABLE IF NOT EXISTS intake_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chat_id INTEGER,
+    supplement_name TEXT,
+    dosage TEXT,
+    taken_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status TEXT DEFAULT 'taken', -- 'taken', 'skipped', 'missed'
+    FOREIGN KEY (chat_id) REFERENCES users (chat_id)
+  )`);
+
+  // Таблица настроек уведомлений
+  db.run(`CREATE TABLE IF NOT EXISTS notification_settings (
+    chat_id INTEGER PRIMARY KEY,
+    morning_time TEXT DEFAULT '08:00',
+    afternoon_time TEXT DEFAULT '13:00',
+    evening_time TEXT DEFAULT '20:00',
+    allow_notifications BOOLEAN DEFAULT true,
+    timezone TEXT DEFAULT 'Europe/Moscow',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (chat_id) REFERENCES users (chat_id)
+  )`);
+
+  console.log('✅ Таблицы напоминаний созданы');
+});
+
 // Graceful shutdown
 process.on('SIGINT', () => {
   db.close((err) => {
