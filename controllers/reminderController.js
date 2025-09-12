@@ -212,6 +212,76 @@ class ReminderController {
     }
   }
 
+  // Добавляем метод в ReminderController
+  async handleReminderActionSimple(ctx, action, reminderId) {
+    try {
+      const db = require('../config/database');
+
+      // Получаем напоминание
+      db.get('SELECT * FROM reminders WHERE id = ?', [reminderId], async (err, reminder) => {
+        if (err || !reminder) {
+          ctx.answerCbQuery('❌ Напоминание не найдено');
+          return;
+        }
+
+        let message;
+
+        switch (action) {
+          case 'taken':
+            await this.reminderService.recordIntake(ctx.chat.id, {
+              supplement_name: reminder.supplement_name,
+              dosage: reminder.dosage,
+              status: 'taken'
+            });
+            message = '✅ Прием подтвержден!';
+            break;
+
+          case 'skipped':
+            await this.reminderService.recordIntake(ctx.chat.id, {
+              supplement_name: reminder.supplement_name,
+              dosage: reminder.dosage,
+              status: 'skipped'
+            });
+            message = '⏭️ Прием пропущен';
+            break;
+
+          case 'later':
+            message = '⏰ Напомню через 1 минуту';
+            // Тестовое напоминание через 1 минуту
+            setTimeout(() => {
+              ctx.reply(`⏰ Напоминание: ${reminder.supplement_name} (${reminder.dosage})`,
+                {
+                  reply_markup: {
+                    inline_keyboard: [
+                      [
+                        { text: '✅ Принял', callback_data: `intake_taken_${reminder.id}` },
+                        { text: '⏰ Еще раз', callback_data: `intake_later_${reminder.id}` },
+                        { text: '❌ Пропустить', callback_data: `intake_skipped_${reminder.id}` }
+                      ]
+                    ]
+                  }
+                }
+              );
+            }, 60000);
+            break;
+        }
+
+        ctx.answerCbQuery(message);
+
+        // Пытаемся удалить сообщение
+        try {
+          await ctx.deleteMessage();
+        } catch (error) {
+          console.log('Сообщение уже удалено или недоступно');
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Ошибка обработки:', error);
+      ctx.answerCbQuery('❌ Ошибка обработки');
+    }
+  }
+
   // Вспомогательный метод для получения напоминания
   async getReminderById(reminderId) {
     return new Promise((resolve) => {

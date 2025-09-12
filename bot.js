@@ -94,76 +94,7 @@ bot.command('setupreminders', async (ctx) => {
   ctx.reply('✅ Напоминания настроены!');
 });
 
-// Обработка текстовых сообщений
-bot.on('text', (ctx) => {
-  const chatId = ctx.chat.id;
 
-  // Проверяем, находится ли пользователь в опросе
-  require('./services/surveyService').getUserState(chatId)
-    .then(state => {
-      if (state && state.current !== undefined) {
-        surveyController.handleTextAnswer(ctx);
-      } else {
-        botController.handleTextCommands(ctx);
-      }
-    })
-    .catch(() => botController.handleTextCommands(ctx));
-});
-
-// Обработка inline-кнопок
-bot.on('callback_query', (ctx) => {
-  const callbackData = ctx.callbackQuery.data;
-
-  if (callbackData === 'get_detailed_plan') {
-    ctx.reply('💎 Детальный план с дозировками доступен по подписке Premium!\n\n' +
-              'Используйте /subscribe для получения полного доступа к:\n' +
-              '• Персональным дозировкам\n' +
-              '• Расширенному опросу\n' +
-              '• Напоминаниям о приеме',
-      require('./keyboards').getMainMenuKeyboard()
-    );
-    ctx.answerCbQuery();
-  }
-  else if (callbackData === 'restart_survey') {
-    // Проверяем может ли пользователь начать опрос
-    require('./services/surveyService').canStartSurvey(ctx.chat.id)
-      .then(canStart => {
-        if (canStart) {
-          require('./controllers/surveyController').handleStartSurvey(ctx);
-        } else {
-          ctx.reply(`🚫 Бесплатный опрос можно пройти только один раз.\n\n` +
-                    `💎 Оформите подписку для неограниченного доступа: /subscribe`,
-            require('./keyboards').getMainMenuKeyboard()
-          );
-        }
-      });
-    ctx.answerCbQuery();
-  }
-  else if (callbackData === 'main_menu') {
-    require('./controllers/botController').showMainMenu(ctx);
-    ctx.answerCbQuery();
-  }
-  else if (callbackData === 'subscription_info') {
-    require('./controllers/subscriptionController').showSubscriptionPlans(ctx);
-    ctx.answerCbQuery();
-  }
-  else if (callbackData === 'payment_confirmed') {
-    require('./controllers/subscriptionController').handlePaymentConfirmation(ctx);
-    ctx.answerCbQuery();
-  }
-  else {
-    require('./controllers/surveyController').handleButtonAnswer(ctx);
-  }
-});
-
-// Обработка успешных платежей (заглушка для будущей интеграции)
-bot.on('successful_payment', (ctx) => {
-  ctx.reply('✅ Платеж успешно обработан! Ваша подписка активирована.',
-    require('./keyboards').getMainMenuKeyboard()
-  );
-});
-
-// В bot.js добавляем
 bot.command('testquestions', async (ctx) => {
   const surveyService = require('./services/surveyService');
   const subscriptionService = require('./services/subscriptionService');
@@ -186,6 +117,30 @@ bot.command('testquestions', async (ctx) => {
   }
 
   ctx.reply(message, { parse_mode: 'Markdown' });
+});
+
+// Тестовая команда для создания напоминания
+bot.command('testreminder', async (ctx) => {
+  const reminderService = require('./services/reminderService');
+  const service = new reminderService(ctx.telegram);
+
+  await service.createReminder(ctx.chat.id, {
+    supplement_name: 'Тестовая добавка',
+    dosage: '500 мг',
+    time: '10:55',
+    days: '1111111'
+  });
+
+  ctx.reply('⏰ Тестовое напоминание создано! Проверьте через 1 минуту.');
+});
+
+// Команда для проверки истории
+bot.command('checkhistory', async (ctx) => {
+  const reminderService = require('./services/reminderService');
+  const service = new reminderService(ctx.telegram);
+
+  const history = await service.getIntakeHistory(ctx.chat.id, 1);
+  ctx.reply(`📊 Записей в истории: ${history.length}`);
 });
 
 // Команда для отладки подписки
@@ -271,11 +226,86 @@ bot.command('cleardb', async (ctx) => {
 bot.command('reminders', (ctx) => reminderController.showReminderSettings(ctx));
 bot.command('history', (ctx) => reminderController.showIntakeHistory(ctx, 7));
 
+
+// Обработка текстовых сообщений
+bot.on('text', (ctx) => {
+  const chatId = ctx.chat.id;
+
+  // Проверяем, находится ли пользователь в опросе
+  require('./services/surveyService').getUserState(chatId)
+    .then(state => {
+      if (state && state.current !== undefined) {
+        surveyController.handleTextAnswer(ctx);
+      } else {
+        botController.handleTextCommands(ctx);
+      }
+    })
+    .catch(() => botController.handleTextCommands(ctx));
+});
+
+// Обработка inline-кнопок
+bot.on('callback_query', (ctx) => {
+  const callbackData = ctx.callbackQuery.data;
+
+  if (callbackData === 'get_detailed_plan') {
+    ctx.reply('💎 Детальный план с дозировками доступен по подписке Premium!\n\n' +
+              'Используйте /subscribe для получения полного доступа к:\n' +
+              '• Персональным дозировкам\n' +
+              '• Расширенному опросу\n' +
+              '• Напоминаниям о приеме',
+      require('./keyboards').getMainMenuKeyboard()
+    );
+    ctx.answerCbQuery();
+  }
+  else if (callbackData === 'restart_survey') {
+    // Проверяем может ли пользователь начать опрос
+    require('./services/surveyService').canStartSurvey(ctx.chat.id)
+      .then(canStart => {
+        if (canStart) {
+          require('./controllers/surveyController').handleStartSurvey(ctx);
+        } else {
+          ctx.reply(`🚫 Бесплатный опрос можно пройти только один раз.\n\n` +
+                    `💎 Оформите подписку для неограниченного доступа: /subscribe`,
+            require('./keyboards').getMainMenuKeyboard()
+          );
+        }
+      });
+    ctx.answerCbQuery();
+  }
+  else if (callbackData === 'main_menu') {
+    require('./controllers/botController').showMainMenu(ctx);
+    ctx.answerCbQuery();
+  }
+  else if (callbackData === 'subscription_info') {
+    require('./controllers/subscriptionController').showSubscriptionPlans(ctx);
+    ctx.answerCbQuery();
+  }
+  else if (callbackData === 'payment_confirmed') {
+    require('./controllers/subscriptionController').handlePaymentConfirmation(ctx);
+    ctx.answerCbQuery();
+  }
+  else {
+    require('./controllers/surveyController').handleButtonAnswer(ctx);
+  }
+});
+
+// Обработка успешных платежей (заглушка для будущей интеграции)
+bot.on('successful_payment', (ctx) => {
+  ctx.reply('✅ Платеж успешно обработан! Ваша подписка активирована.',
+    require('./keyboards').getMainMenuKeyboard()
+  );
+});
+
 // Обработка действий с напоминаниями
 bot.action(/intake_(taken|skipped|later)_(\d+)/, (ctx) => {
   const action = ctx.match[1];
   const reminderId = ctx.match[2];
-  reminderController.handleReminderAction(ctx, action, reminderId);
+
+  if (global.reminderController) {
+    global.reminderController.handleReminderActionSimple(ctx, action, reminderId);
+  } else {
+    ctx.answerCbQuery('❌ Сервис напоминаний не доступен');
+  }
 });
 
 // Обработка истории
