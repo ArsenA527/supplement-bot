@@ -4,7 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node bot.js"
+    "start": "node bot.js",
+    "dev": "nodemon bot.js",
+    "production": "pm2 start ecosystem.config.js --env production",
+    "stop": "pm2 stop supplement-bot",
+    "restart": "pm2 restart supplement-bot",
+    "status": "pm2 status",
+    "logs": "pm2 logs supplement-bot",
+    "monit": "pm2 monit"
   },
   "keywords": [],
   "author": "",
