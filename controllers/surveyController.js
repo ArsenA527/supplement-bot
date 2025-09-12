@@ -1,6 +1,8 @@
 const surveyService = require('../services/surveyService');
 const recommendationService = require('../services/recommendationService');
 const { getQuestionKeyboard } = require('../keyboards');
+const ReminderController = require('./reminderController');
+
 
 function handleStartSurvey(ctx) {
   const chatId = ctx.chat.id;
