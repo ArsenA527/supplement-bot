@@ -340,6 +340,63 @@ class ReminderService {
       });
     });
   }
+
+  // Получить статистику за период
+  async getIntakeStatsByPeriod(chatId, startDate, endDate) {
+    return new Promise((resolve) => {
+      db.all(
+        `SELECT * FROM intake_history
+        WHERE chat_id = ? AND taken_at BETWEEN ? AND ?
+        ORDER BY taken_at DESC`,
+        [chatId, startDate.toISOString(), endDate.toISOString()],
+        (err, history) => {
+          if (err) {
+            console.error('❌ Ошибка получения статистики:', err);
+            resolve({ taken: 0, skipped: 0, total: 0, compliance: 0 });
+          } else {
+            const stats = {
+              total: history.length,
+              taken: history.filter(item => item.status === 'taken').length,
+              skipped: history.filter(item => item.status === 'skipped').length,
+              compliance: 0
+            };
+
+            if (stats.total > 0) {
+              stats.compliance = Math.round((stats.taken / stats.total) * 100);
+            }
+
+            resolve(stats);
+          }
+        }
+      );
+    });
+  }
+
+  // Получить самые частые пропуски
+  async getMostSkippedSupplements(chatId, days = 30) {
+    return new Promise((resolve) => {
+      const sinceDate = new Date();
+      sinceDate.setDate(sinceDate.getDate() - days);
+
+      db.all(
+        `SELECT supplement_name, COUNT(*) as skip_count
+        FROM intake_history
+        WHERE chat_id = ? AND status = 'skipped' AND taken_at >= ?
+        GROUP BY supplement_name
+        ORDER BY skip_count DESC
+        LIMIT 5`,
+        [chatId, sinceDate.toISOString()],
+        (err, results) => {
+          if (err) {
+            console.error('❌ Ошибка получения статистики пропусков:', err);
+            resolve([]);
+          } else {
+            resolve(results);
+          }
+        }
+      );
+    });
+  }
 }
 
 module.exports = ReminderService;
