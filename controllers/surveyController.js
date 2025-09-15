@@ -1,8 +1,6 @@
 const surveyService = require('../services/surveyService');
 const recommendationService = require('../services/recommendationService');
-const { getQuestionKeyboard } = require('../keyboards');
-const ReminderController = require('./reminderController');
-
+const { getQuestionKeyboard, getMainMenuKeyboard } = require('../keyboards');
 
 function handleStartSurvey(ctx) {
   const chatId = ctx.chat.id;
@@ -16,40 +14,7 @@ function handleStartSurvey(ctx) {
     .then(() => sendQuestion(ctx))
     .catch(err => {
       console.error('❌ Ошибка начала опроса:', err);
-      ctx.reply('⚠️ Ошибка начала опроса. Попробуй снова: /survey', getMainMenuKeyboard());
-    });
-}
-
-// В surveyController.js обновляем completeSurvey
-function completeSurvey(ctx) {
-  const chatId = ctx.chat.id;
-
-  surveyService.getSurveyResults(chatId)
-    .then(answers => {
-      const recommendations = recommendationService.generateRecommendations(answers);
-      const message = recommendationService.formatRecommendations(recommendations);
-
-      // Добавляем информацию о подписке
-      const subscriptionMessage = ctx.state.subscription.plan === 'premium'
-        ? '\n\n✨ Вы используете Premium подписку! Доступны расширенные функции.'
-        : '\n\n💎 Хотите больше? Получите персональные дозировки с Premium подпиской: /subscribe';
-
-      ctx.reply(message + subscriptionMessage, {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: '💳 Детальный план', callback_data: 'get_detailed_plan' }],
-            [{ text: '🔄 Пройти заново', callback_data: 'restart_survey' }],
-            [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
-          ]
-        }
-      });
-
-      surveyService.completeSurvey(chatId);
-    })
-    .catch(err => {
-      console.error('❌ Ошибка завершения опроса:', err);
-      ctx.reply('⚠️ Ошибка обработки результатов', getMainMenuKeyboard());
+      ctx.reply('⚠️ Ошибка начала опроса. Попробуйте снова: /survey', getMainMenuKeyboard());
     });
 }
 
@@ -73,7 +38,7 @@ function sendQuestion(ctx) {
     })
     .catch(err => {
       console.error('❌ Ошибка отправки вопроса:', err);
-      ctx.reply('⚠️ Ошибка. Начни заново: /survey');
+      ctx.reply('⚠️ Ошибка. Начните заново: /survey', getMainMenuKeyboard());
     });
 }
 
@@ -84,7 +49,7 @@ function handleTextAnswer(ctx) {
   surveyService.getCurrentQuestion(chatId)
     .then(question => {
       if (!question || question.options) {
-        ctx.reply('❌ Используй кнопки для ответа');
+        ctx.reply('❌ Используйте кнопки для ответа');
         return;
       }
 
@@ -95,70 +60,100 @@ function handleTextAnswer(ctx) {
         });
     })
     .catch(err => {
-      ctx.reply('⚠️ Ошибка. Начни заново: /survey');
+      ctx.reply('⚠️ Ошибка. Начните заново: /survey', getMainMenuKeyboard());
     });
 }
 
+// ОБНОВЛЕННЫЙ ОБРАБОТЧИК КНОПОК
 function handleButtonAnswer(ctx) {
-  const chatId = ctx.chat.id;
   const callbackData = ctx.callbackQuery.data;
 
-  const match = callbackData.match(/q(\d+)a(\d+)/);
-  if (!match) {
-    ctx.answerCbQuery('❌ Ошибка данных');
+  // Пропускаем кнопки напоминаний
+  if (callbackData.startsWith('intake_')) {
+    console.log('⏰ Кнопка напоминания, пропускаем обработку');
+    ctx.answerCbQuery();
     return;
   }
 
-  const questionIndex = parseInt(match[1]);
-  const answerIndex = parseInt(match[2]);
+  // Обрабатываем кнопки опроса
+  handleSurveyButtonAnswer(ctx);
+}
 
-  surveyService.getCurrentQuestion(chatId)
-    .then(question => {
-      if (!question || question.index !== questionIndex || !question.options) {
-        ctx.answerCbQuery('❌ Вопрос устарел');
-        return;
-      }
+function handleSurveyButtonAnswer(ctx) {
+  const chatId = ctx.chat.id;
+  const state = surveyService.getUserStateSync(chatId);
 
-      const answer = question.options[answerIndex];
-      surveyService.saveAnswer(chatId, answer)
-        .then(() => {
-          ctx.answerCbQuery();
-          sendQuestion(ctx);
-        })
-        .catch(err => {
-          ctx.answerCbQuery('❌ Ошибка сохранения');
-        });
+  if (!state) {
+    ctx.answerCbQuery('❌ Сессия устарела. Начните заново: /survey');
+    return;
+  }
+
+  const callbackData = ctx.callbackQuery.data;
+  let answerText;
+
+  // Парсим callback_data в формате q0a0
+  const match = callbackData.match(/q(\d+)a(\d+)/);
+
+  if (match) {
+    const questionIndex = parseInt(match[1]);
+    const answerIndex = parseInt(match[2]);
+    const questions = surveyService.getQuestionsForUserSync(chatId);
+
+    if (questions && questionIndex < questions.length && questions[questionIndex].options) {
+      answerText = questions[questionIndex].options[answerIndex];
+    }
+  } else {
+    // Старый формат
+    answerText = callbackData;
+  }
+
+  if (!answerText) {
+    ctx.answerCbQuery('❌ Ошибка данных вопроса');
+    return;
+  }
+
+  surveyService.saveAnswer(chatId, answerText)
+    .then(() => {
+      ctx.answerCbQuery();
+      sendQuestion(ctx);
     })
     .catch(err => {
-      ctx.answerCbQuery('⚠️ Ошибка обработки');
+      ctx.answerCbQuery('❌ Ошибка сохранения ответа');
     });
 }
 
-// function completeSurvey(ctx) {
-//   const chatId = ctx.chat.id;
+function completeSurvey(ctx) {
+  const chatId = ctx.chat.id;
 
-//   surveyService.getSurveyResults(chatId)
-//     .then(answers => {
-//       const recommendations = recommendationService.generateRecommendations(answers);
-//       const message = recommendationService.formatRecommendations(recommendations);
+  surveyService.getSurveyResults(chatId)
+    .then(answers => {
+      const recommendations = recommendationService.generateRecommendations(answers);
+      const message = recommendationService.formatRecommendations(recommendations);
 
-//       ctx.reply(message, {
-//         parse_mode: 'Markdown',
-//         reply_markup: {
-//           inline_keyboard: [
-//             [{ text: '💳 Детальный план', callback_data: 'get_detailed_plan' }],
-//             [{ text: '🔄 Пройти заново', callback_data: 'restart_survey' }]
-//           ]
-//         }
-//       });
+      // Добавляем информацию о подписке
+      const subscription = ctx.state.subscription || { plan: 'free' };
+      const subscriptionMessage = subscription.plan === 'premium'
+        ? '\n\n✨ Вы используете Premium подписку! Доступны расширенные функции.'
+        : '\n\n💎 Хотите больше? Получите персональные дозировки с Premium подпиской: /subscribe';
 
-//       surveyService.completeSurvey(chatId);
-//     })
-//     .catch(err => {
-//       console.error('❌ Ошибка завершения опроса:', err);
-//       ctx.reply('⚠️ Ошибка обработки результатов');
-//     });
-// }
+      ctx.reply(message + subscriptionMessage, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '💳 Детальный план', callback_data: 'get_detailed_plan' }],
+            [{ text: '🔄 Пройти заново', callback_data: 'restart_survey' }],
+            [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
+          ]
+        }
+      });
+
+      surveyService.completeSurvey(chatId);
+    })
+    .catch(err => {
+      console.error('❌ Ошибка завершения опроса:', err);
+      ctx.reply('⚠️ Ошибка обработки результатов', getMainMenuKeyboard());
+    });
+}
 
 module.exports = {
   handleStartSurvey,

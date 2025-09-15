@@ -164,56 +164,8 @@ class ReminderController {
     });
   }
 
-  // Обработка действий с напоминаниями
+  // Обработка действий с напоминаниями - УПРОЩЕННАЯ ВЕРСИЯ
   async handleReminderAction(ctx, action, reminderId) {
-    const chatId = ctx.chat.id;
-
-    try {
-      // Получаем информацию о напоминании
-      const reminder = await this.getReminderById(reminderId);
-
-      if (!reminder || reminder.chat_id !== chatId) {
-        ctx.answerCbQuery('❌ Напоминание не найдено');
-        return;
-      }
-
-      let status, message;
-
-      switch (action) {
-        case 'taken':
-          status = 'taken';
-          message = '✅ Прием подтвержден!';
-          break;
-        case 'skipped':
-          status = 'skipped';
-          message = '⏭️ Прием пропущен';
-          break;
-        case 'later':
-          // Напомнить через 30 минут
-          setTimeout(() => this.sendReminder(reminder), 30 * 60 * 1000);
-          message = '⏰ Напомню через 30 минут';
-          break;
-      }
-
-      if (status) {
-        await this.reminderService.recordIntake(chatId, {
-          supplement_name: reminder.supplement_name,
-          dosage: reminder.dosage,
-          status: status
-        });
-      }
-
-      ctx.answerCbQuery(message);
-      ctx.deleteMessage(); // Удаляем сообщение с кнопками
-
-    } catch (error) {
-      console.error('❌ Ошибка обработки напоминания:', error);
-      ctx.answerCbQuery('❌ Ошибка обработки');
-    }
-  }
-
-  // Добавляем метод в ReminderController
-  async handleReminderActionSimple(ctx, action, reminderId) {
     try {
       const db = require('../config/database');
 
@@ -247,7 +199,7 @@ class ReminderController {
 
           case 'later':
             message = '⏰ Напомню через 1 минуту';
-            // Тестовое напоминание через 1 минуту
+            // Напомнить через 1 минуту (для теста)
             setTimeout(() => {
               ctx.reply(`⏰ Напоминание: ${reminder.supplement_name} (${reminder.dosage})`,
                 {
@@ -277,7 +229,7 @@ class ReminderController {
       });
 
     } catch (error) {
-      console.error('❌ Ошибка обработки:', error);
+      console.error('❌ Ошибка обработки напоминания:', error);
       ctx.answerCbQuery('❌ Ошибка обработки');
     }
   }
@@ -290,11 +242,6 @@ class ReminderController {
         resolve(row);
       });
     });
-  }
-
-  // Вспомогательный метод для отправки напоминания
-  async sendReminder(reminder) {
-    await this.reminderService.sendReminder(reminder);
   }
 }
 
