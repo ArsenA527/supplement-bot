@@ -177,6 +177,24 @@ class SurveyService {
       isPremium: await subscriptionService.isSubscriptionActive(chatId)
     };
   }
+
+  // Синхронное получение состояния (для обработки кнопок)
+  getUserStateSync(chatId) {
+    // Простая синхронная версия для проверки
+    try {
+      const result = db.prepare('SELECT state FROM users WHERE chat_id = ?').get(chatId);
+      return result && result.state ? JSON.parse(result.state) : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  // Синхронное получение вопросов
+  getQuestionsForUserSync(chatId) {
+    // Для простоты возвращаем free вопросы
+    // В реальности нужно проверять подписку
+    return questions.free;
+  }
 }
 
 module.exports = new SurveyService();

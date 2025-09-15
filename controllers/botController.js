@@ -18,21 +18,33 @@ function handleStart(ctx) {
 function handleHelp(ctx) {
   const helpText = `💡 *Доступные команды:*
 
-📋 Пройти опрос - Начать анкету
-💊 Мои рекомендации - Посмотреть рекомендации
-👤 Мой профиль - Информация о профиле
-⚙️ Настройки - Настройки бота
-ℹ️ Помощь - Это сообщение
-
-*Текстовые команды:*
-/survey - Начать опрос
+*Основные:*
+/start - Главное меню
+/survey - Пройти опрос
 /plan - Мои рекомендации
 /profile - Мой профиль
-/help - Помощь`;
+/subscribe - Информация о подписках
+
+*Напоминания:*
+/reminders - Настройки напоминаний
+/myhistory - История приема
+/mystats - Статистика приема
+
+*Тестовые команды (для разработки):*
+/testremindernow - Тест напоминания (мгновенно)
+/myreminders - Мои напоминания
+/checkhistory - Проверить историю
+/reminderstats - Статистика напоминаний
+/debugsub - Отладка подписки
+/activatepremium - Активировать premium
+/clearmydata - Очистить мои данные
+/testquestions - Тест вопросов
+
+*Для помощи:* /help`;
 
   ctx.reply(helpText, {
     parse_mode: 'Markdown',
-    ...getMainMenuKeyboard() // Добавляем меню к помощи
+    ...getMainMenuKeyboard()
   });
 }
 
