@@ -9,6 +9,7 @@ const botController = require('./controllers/botController');
 const surveyController = require('./controllers/surveyController');
 const subscriptionController = require('./controllers/subscriptionController');
 const { ReminderController } = require('./controllers/reminderController');
+const testCommands = require('./commands/testCommands');
 
 // Middleware
 const { injectSubscriptionData } = require('./middlewares/subscriptionMiddleware');
@@ -21,6 +22,19 @@ const reminderController = new ReminderController(bot);
 reminderController.initialize().then(() => {
   console.log('✅ Сервис напоминаний инициализирован');
 });
+
+// ==================== ТЕСТОВЫЕ КОМАНДЫ ====================
+
+bot.command('testremindernow', (ctx) => testCommands.testReminderNow(ctx));
+bot.command('myreminders', (ctx) => testCommands.showMyReminders(ctx));
+bot.command('checkhistory', (ctx) => testCommands.checkHistory(ctx));
+bot.command('reminderstats', (ctx) => testCommands.reminderStats(ctx));
+bot.command('debugsub', (ctx) => testCommands.debugSubscription(ctx));
+bot.command('activatepremium', (ctx) => testCommands.activatePremium(ctx));
+bot.command('clearmydata', (ctx) => testCommands.clearMyData(ctx));
+bot.command('testquestions', (ctx) => testCommands.testQuestions(ctx));
+
+// ==================== КОНЕЦ ТЕСТОВЫХ КОМАНД ====================
 
 // ==================== СПЕЦИФИЧЕСКИЕ ОБРАБОТЧИКИ ====================
 
@@ -207,7 +221,7 @@ bot.on('text', (ctx) => {
     .catch(() => botController.handleTextCommands(ctx));
 });
 
-// ОБЩИЙ ОБРАБОТЧИК CALLBACK_QUERY (ПОСЛЕДНИЙ!)
+// ОБЩИЙ ОБРАБОТЧИК CALLBACK_QUERY
 bot.on('callback_query', (ctx) => {
   const callbackData = ctx.callbackQuery.data;
 
