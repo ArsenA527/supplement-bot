@@ -4,6 +4,13 @@ const Telegraf = require('telegraf');
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const db = require('./config/database');
 
+// Проверяем что бот инициализирован
+bot.telegram.getMe().then(() => {
+  console.log('✅ Bot телеграм клиент доступен');
+}).catch(err => {
+  console.error('❌ Bot телеграм клиент не доступен:', err);
+});
+
 // Импорты контроллеров
 const botController = require('./controllers/botController');
 const surveyController = require('./controllers/surveyController');

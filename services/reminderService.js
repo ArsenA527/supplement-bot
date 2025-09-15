@@ -1,16 +1,26 @@
 const db = require('../config/database');
 const cron = require('node-cron');
 
+// Глобальная ссылка на бота
+let globalBot = null;
+
 class ReminderService {
   constructor(bot) {
     this.bot = bot;
+    this.telegram = bot ? bot.telegram : null;
     this.scheduledJobs = new Map();
+
+    // Сохраняем глобальную ссылку
+    globalBot = bot;
+
+    console.log('🔧 ReminderService initialized with telegram:', !!this.telegram);
   }
 
   // Инициализация сервиса
   async initialize() {
     console.log('⏰ Инициализация сервиса напоминаний...');
     await this.loadAllReminders();
+    this.startReminderChecker(); // Запускаем альтернативную проверку
   }
 
   // Загрузить все активные напоминания
@@ -64,14 +74,8 @@ class ReminderService {
     });
   }
 
-// Запланировать напоминание
+  // Запланировать напоминание (cron)
   scheduleReminder(reminder) {
-    console.log('🔧 ScheduleReminder called with:', {
-      id: reminder.id,
-      time: reminder.time,
-      hasTelegram: !!this.telegram
-    });
-
     try {
       const jobId = `reminder_${reminder.id}`;
 
@@ -88,18 +92,14 @@ class ReminderService {
         return;
       }
 
-      // Сохраняем ссылки для использования в колбэке
-      const telegram = this.telegram;
-      const reminderId = reminder.id;
-      const supplementName = reminder.supplement_name;
-      const dosage = reminder.dosage;
-      const chatId = reminder.chat_id;
-
       // Создаем cron задание
       const job = cron.schedule(`${minutes} ${hours} * * *`, async () => {
         try {
+          // Используем глобальную ссылку на бота
+          const telegram = globalBot ? globalBot.telegram : null;
+
           if (!telegram) {
-            console.error('❌ Telegram client не доступен');
+            console.error('❌ Telegram client не доступен (глобально)');
             return;
           }
 
@@ -107,27 +107,27 @@ class ReminderService {
             reply_markup: {
               inline_keyboard: [
                 [
-                  { text: '✅ Принял', callback_data: `intake_taken_${reminderId}` },
-                  { text: '⏰ Напомнить позже', callback_data: `intake_later_${reminderId}` },
-                  { text: '❌ Пропустить', callback_data: `intake_skipped_${reminderId}` }
+                  { text: '✅ Принял', callback_data: `intake_taken_${reminder.id}` },
+                  { text: '⏰ Напомнить позже', callback_data: `intake_later_${reminder.id}` },
+                  { text: '❌ Пропустить', callback_data: `intake_skipped_${reminder.id}` }
                 ]
               ]
             }
           };
 
           await telegram.sendMessage(
-            chatId,
-            `⏰ *Время приема!*\n\n💊 ${supplementName}\n📏 ${dosage}\n\nПодтвердите прием:`,
+            reminder.chat_id,
+            `⏰ *Время приема!*\n\n💊 ${reminder.supplement_name}\n📏 ${reminder.dosage}\n\nПодтвердите прием:`,
             { parse_mode: 'Markdown', ...keyboard }
           );
 
-          console.log(`📨 Отправлено напоминание пользователю ${chatId}`);
+          console.log(`📨 Отправлено напоминание пользователю ${reminder.chat_id}`);
 
         } catch (error) {
           console.error('❌ Ошибка отправки напоминания:', error);
           // Если пользователь заблокировал бота, деактивируем напоминание
           if (error.response && error.response.error_code === 403) {
-            this.deactivateReminder(reminderId);
+            this.deactivateReminder(reminder.id);
           }
         }
       }, {
@@ -135,16 +135,101 @@ class ReminderService {
       });
 
       this.scheduledJobs.set(jobId, job);
-      console.log(`⏰ Напоминание запланировано: ${supplementName} в ${reminder.time}`);
+      console.log(`⏰ Напоминание запланировано: ${reminder.supplement_name} в ${reminder.time}`);
 
     } catch (error) {
       console.error('❌ Ошибка планирования напоминания:', error);
     }
   }
 
+  // Альтернативный метод: проверка напоминаний каждые 30 секунд
+  startReminderChecker() {
+    setInterval(() => {
+      this.checkDueReminders();
+    }, 30000); // Проверяем каждые 30 секунд
+
+    console.log('⏰ Запущен альтернативный проверщик напоминаний');
+  }
+
+  // Проверить due напоминания
+  async checkDueReminders() {
+    try {
+      const now = new Date();
+      const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
+
+      const reminders = await this.getDueReminders(currentTime);
+
+      if (reminders.length > 0) {
+        console.log(`🔍 Найдено ${reminders.length} напоминаний для времени ${currentTime}`);
+
+        for (const reminder of reminders) {
+          await this.sendReminderNow(reminder);
+        }
+      }
+    } catch (error) {
+      console.error('❌ Ошибка проверки напоминаний:', error);
+    }
+  }
+
+  // Получить напоминания для текущего времени
+  async getDueReminders(currentTime) {
+    return new Promise((resolve) => {
+      db.all(
+        'SELECT * FROM reminders WHERE time = ? AND is_active = true',
+        [currentTime],
+        (err, reminders) => {
+          if (err) {
+            console.error('❌ Ошибка получения due напоминаний:', err);
+            resolve([]);
+          } else {
+            resolve(reminders || []);
+          }
+        }
+      );
+    });
+  }
+
+  // Отправить напоминание сразу
+  async sendReminderNow(reminder) {
+    try {
+      const telegram = globalBot ? globalBot.telegram : this.telegram;
+
+      if (!telegram) {
+        console.error('❌ Telegram client не доступен');
+        return;
+      }
+
+      const keyboard = {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: '✅ Принял', callback_data: `intake_taken_${reminder.id}` },
+              { text: '⏰ Напомнить позже', callback_data: `intake_later_${reminder.id}` },
+              { text: '❌ Пропустить', callback_data: `intake_skipped_${reminder.id}` }
+            ]
+          ]
+        }
+      };
+
+      await telegram.sendMessage(
+        reminder.chat_id,
+        `⏰ *Время приема!*\n\n💊 ${reminder.supplement_name}\n📏 ${reminder.dosage}\n\nПодтвердите прием:`,
+        { parse_mode: 'Markdown', ...keyboard }
+      );
+
+      console.log(`📨 Отправлено напоминание пользователю ${reminder.chat_id}`);
+
+    } catch (error) {
+      console.error('❌ Ошибка отправки напоминания:', error);
+      // Если пользователь заблокировал бота, деактивируем напоминание
+      if (error.response && error.response.error_code === 403) {
+        this.deactivateReminder(reminder.id);
+      }
+    }
+  }
+
   // Деактивировать напоминание
   async deactivateReminder(reminderId) {
-    const db = require('../config/database');
     return new Promise((resolve) => {
       db.run('UPDATE reminders SET is_active = false WHERE id = ?', [reminderId], (err) => {
         if (err) {
@@ -233,6 +318,26 @@ class ReminderService {
           }
         }
       );
+    });
+  }
+
+  // Удалить все напоминания пользователя
+  async clearUserReminders(chatId) {
+    return new Promise((resolve) => {
+      // Останавливаем все jobs для этого пользователя
+      for (const [jobId, job] of this.scheduledJobs.entries()) {
+        if (jobId.includes(`reminder_`)) {
+          job.stop();
+        }
+      }
+
+      // Удаляем из базы
+      db.run('DELETE FROM reminders WHERE chat_id = ?', [chatId], (err) => {
+        if (err) {
+          console.error('❌ Ошибка очистки напоминаний:', err);
+        }
+        resolve();
+      });
     });
   }
 }
