@@ -304,116 +304,47 @@ bot.command('testquestions', async (ctx) => {
   }
 });
 
-// ==================== КОНЕЦ ТЕСТОВЫХ КОМАНД ====================
-
-/*
-// Тестовая команда для создания напоминания
-bot.command('testreminder', async (ctx) => {
-  const reminderService = require('./services/reminderService');
-  const service = new reminderService(ctx.telegram);
-
-  await service.createReminder(ctx.chat.id, {
-    supplement_name: 'Тестовая добавка',
-    dosage: '500 мг',
-    time: '10:55',
-    days: '1111111'
-  });
-
-  ctx.reply('⏰ Тестовое напоминание создано! Проверьте через 1 минуту.');
-});
-
-// Команда для проверки истории
-bot.command('checkhistory', async (ctx) => {
-  const reminderService = require('./services/reminderService');
-  const service = new reminderService(ctx.telegram);
-
-  const history = await service.getIntakeHistory(ctx.chat.id, 1);
-  ctx.reply(`📊 Записей в истории: ${history.length}`);
-});
-
-// Команда для отладки подписки
-bot.command('debugsub', async (ctx) => {
-  const subscriptionService = require('./services/subscriptionService');
-  const surveyService = require('./services/surveyService');
-
-  const chatId = ctx.chat.id;
-  const subscription = await subscriptionService.getUserSubscription(chatId);
-  const isActive = await subscriptionService.isSubscriptionActive(chatId);
-  const canStart = await surveyService.canStartSurvey(chatId);
-
-  let message = `🔍 *Debug информации о подписке:*\n\n`;
-  message += `• Chat ID: ${chatId}\n`;
-  message += `• План: ${subscription.plan}\n`;
-  message += `• Статус: ${subscription.status}\n`;
-  message += `• Активна: ${isActive ? '✅ Да' : '❌ Нет'}\n`;
-  message += `• Может начать опрос: ${canStart ? '✅ Да' : '❌ Нет'}\n`;
-
-  if (subscription.end_date) {
-    message += `• Действует до: ${new Date(subscription.end_date).toLocaleDateString('ru-RU')}\n`;
-  }
-
-  ctx.reply(message, { parse_mode: 'Markdown' });
-});
-
-// Команда для принудительной активации premium
-bot.command('activatepremium', async (ctx) => {
-  const subscriptionService = require('./services/subscriptionService');
-
-  const endDate = new Date();
-  endDate.setMonth(endDate.getMonth() + 1);
-
-  await subscriptionService.updateSubscription(ctx.chat.id, {
-    plan: 'premium',
-    status: 'active',
-    end_date: endDate.toISOString()
-  });
-
-  ctx.reply('✅ Premium подписка активирована вручную! Используйте /survey');
-});
-
-// Команда для очистки данных пользователя
-bot.command('clearmydata', async (ctx) => {
-  const db = require('./config/database');
-  const chatId = ctx.chat.id;
-
+// Тест отправки напоминания прямо сейчас
+bot.command('testremindernow', async (ctx) => {
   try {
-    await db.run('DELETE FROM users WHERE chat_id = ?', [chatId]);
-    await db.run('DELETE FROM subscriptions WHERE chat_id = ?', [chatId]);
+    const ReminderService = require('./services/reminderService');
+    const service = new ReminderService(ctx.telegram);
 
-    ctx.reply('✅ Ваши данные очищены! Можете начать заново: /start',
-      require('./keyboards').getMainMenuKeyboard()
+    // Создаем тестовое напоминание
+    const reminderId = await service.createReminder(ctx.chat.id, {
+      supplement_name: 'Тестовая добавка',
+      dosage: '500 мг',
+      time: '00:01', // Через 1 минуту
+      days: '1111111'
+    });
+
+    // Имитируем отправку сразу для теста
+    const keyboard = {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: '✅ Принял', callback_data: `intake_taken_${reminderId}` },
+            { text: '⏰ Напомнить позже', callback_data: `intake_later_${reminderId}` },
+            { text: '❌ Пропустить', callback_data: `intake_skipped_${reminderId}` }
+          ]
+        ]
+      }
+    };
+
+    await ctx.reply(
+      `⏰ *ТЕСТ Напоминание!*\n\n💊 Тестовая добавка\n📏 500 мг\n\nПодтвердите прием:`,
+      { parse_mode: 'Markdown', ...keyboard }
     );
+
+    ctx.reply('✅ Тестовое напоминание отправлено сразу! Проверьте кнопки.');
+
   } catch (error) {
-    console.error('❌ Ошибка очистки данных:', error);
-    ctx.reply('❌ Ошибка очистки данных');
+    console.error('❌ Ошибка testremindernow:', error);
+    ctx.reply('❌ Ошибка: ' + error.message);
   }
 });
 
-// Команда для полной очистки (только для админа)
-bot.command('cleardb', async (ctx) => {
-  // Проверяем что это админ (замените на ваш chat ID)
-  if (ctx.chat.id !== 725240491) {
-    ctx.reply('🚫 Команда только для администратора');
-    return;
-  }
-
-  const db = require('./config/database');
-
-  try {
-    await db.run('DELETE FROM users');
-    await db.run('DELETE FROM subscriptions');
-    await db.run('DELETE FROM payments');
-
-    ctx.reply('✅ Вся база данных очищена!');
-  } catch (error) {
-    console.error('❌ Ошибка очистки базы:', error);
-    ctx.reply('❌ Ошибка очистки базы данных');
-  }
-});
-
-bot.command('reminders', (ctx) => reminderController.showReminderSettings(ctx));
-bot.command('history', (ctx) => reminderController.showIntakeHistory(ctx, 7));
-*/
+// ==================== КОНЕЦ ТЕСТОВЫХ КОМАНД ====================
 
 
 // Обработка текстовых сообщений
