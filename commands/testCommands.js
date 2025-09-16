@@ -188,5 +188,83 @@ module.exports = {
       console.error('❌ Ошибка testquestions:', error);
       ctx.reply('❌ Ошибка проверки вопросов');
     }
+  },
+
+  // История приема
+  showIntakeHistory: async (ctx, days = 7) => {
+    try {
+      const service = new ReminderService(ctx.telegram);
+      const history = await service.getIntakeHistory(ctx.chat.id, days);
+      const stats = await service.getIntakeStats(ctx.chat.id, days);
+
+      if (history.length === 0) {
+        ctx.reply('📊 История приема пуста.\n\nНачните прием добавок чтобы отслеживать прогресс!',
+          getMainMenuKeyboard()
+        );
+        return;
+      }
+
+      let message = `📊 *История приема (${days} дней):*\n\n`;
+
+      history.forEach((item, index) => {
+        const date = new Date(item.taken_at).toLocaleDateString('ru-RU');
+        const time = new Date(item.taken_at).toLocaleTimeString('ru-RU', {
+          hour: '2-digit', minute: '2-digit'
+        });
+
+        const statusIcon = item.status === 'taken' ? '✅' : item.status === 'skipped' ? '⏭️' : '❌';
+        message += `${statusIcon} ${date} ${time} - ${item.supplement_name} (${item.dosage})\n`;
+      });
+
+      message += `\n📈 *Статистика:*\n` +
+                 `• Принято: ${stats.taken} ✅\n` +
+                 `• Пропущено: ${stats.skipped} ⏭️\n` +
+                 `• Всего: ${stats.total}\n` +
+                 `• Соблюдение: ${stats.compliance}%`;
+
+      ctx.reply(message, {
+        parse_mode: 'Markdown',
+        ...getMainMenuKeyboard()
+      });
+    } catch (error) {
+      console.error('❌ Ошибка загрузки истории:', error);
+      ctx.reply('❌ Ошибка загрузки истории', getMainMenuKeyboard());
+    }
+  },
+
+  // Детальная статистика
+  showDetailedStats: async (ctx) => {
+    try {
+      const service = new ReminderService(ctx.telegram);
+
+      const weeklyStats = await service.getIntakeStats(ctx.chat.id, 7);
+      const monthlyStats = await service.getIntakeStats(ctx.chat.id, 30);
+      const mostSkipped = await service.getMostSkippedSupplements(ctx.chat.id, 30);
+
+      let message = '📊 *Ваша статистика приема:*\n\n';
+
+      message += '📅 *За неделю:*\n';
+      message += `✅ Принято: ${weeklyStats.taken}\n`;
+      message += `⏭️ Пропущено: ${weeklyStats.skipped}\n`;
+      message += `📊 Соблюдение: ${weeklyStats.compliance}%\n\n`;
+
+      message += '📅 *За месяц:*\n';
+      message += `✅ Принято: ${monthlyStats.taken}\n`;
+      message += `⏭️ Пропущено: ${monthlyStats.skipped}\n`;
+      message += `📊 Соблюдение: ${monthlyStats.compliance}%\n\n`;
+
+      if (mostSkipped.length > 0) {
+        message += '⚠️ *Чаще всего пропускаете:*\n';
+        mostSkipped.forEach((item, index) => {
+          message += `${index + 1}. ${item.supplement_name} - ${item.skip_count} раз\n`;
+        });
+      }
+
+      ctx.reply(message, { parse_mode: 'Markdown' });
+
+    } catch (error) {
+      console.error('❌ Ошибка просмотра статистики:', error);
+      ctx.reply('❌ Ошибка загрузки статистики');
+    }
   }
 };

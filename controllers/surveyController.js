@@ -64,19 +64,17 @@ function handleTextAnswer(ctx) {
     });
 }
 
-// ОБНОВЛЕННЫЙ ОБРАБОТЧИК КНОПОК
+// ОБРАБОТКА КНОПОК - ТОЛЬКО ДЛЯ ОПРОСА
 function handleButtonAnswer(ctx) {
   const callbackData = ctx.callbackQuery.data;
 
-  // Пропускаем кнопки напоминаний
-  if (callbackData.startsWith('intake_')) {
-    console.log('⏰ Кнопка напоминания, пропускаем обработку');
+  // Обрабатываем только кнопки опроса (формат q0a0)
+  if (callbackData.startsWith('q') && callbackData.includes('a')) {
+    handleSurveyButtonAnswer(ctx);
+  } else {
+    // Для всех остальных кнопок просто отвечаем
     ctx.answerCbQuery();
-    return;
   }
-
-  // Обрабатываем кнопки опроса
-  handleSurveyButtonAnswer(ctx);
 }
 
 function handleSurveyButtonAnswer(ctx) {
