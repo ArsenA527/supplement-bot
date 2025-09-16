@@ -3,7 +3,7 @@ function getMainMenuKeyboard() {
     reply_markup: {
       keyboard: [
         ['📋 Пройти опрос', '💊 Мои рекомендации'],
-        ['👤 Мой профиль', '💳 Подписка'], // Меняем "Настройки" на "Подписка"
+        ['👤 Мой профиль', '💳 Подписка'],
         ['ℹ️ Помощь']
       ],
       resize_keyboard: true,
@@ -25,6 +25,7 @@ function getQuestionKeyboard(question) {
   return { reply_markup: { inline_keyboard: keyboard } };
 }
 
+// Добавляем отсутствующую функцию
 function getReminderSettingsKeyboard() {
   return {
     reply_markup: {
@@ -56,5 +57,7 @@ function getIntakeHistoryKeyboard() {
 
 module.exports = {
   getMainMenuKeyboard,
-  getQuestionKeyboard
+  getQuestionKeyboard,
+  getReminderSettingsKeyboard, // Добавляем в экспорт
+  getIntakeHistoryKeyboard
 };

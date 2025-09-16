@@ -1,5 +1,5 @@
 const ReminderService = require('../services/reminderService');
-const { getMainMenuKeyboard, getReminderSettingsKeyboard } = require('../keyboards');
+const { getMainMenuKeyboard } = require('../keyboards'); // Исправляем импорт
 
 class ReminderController {
   constructor(bot) {
@@ -88,17 +88,19 @@ class ReminderController {
 
   // Показать настройки напоминаний
   async showReminderSettings(ctx) {
+    // Временно используем простую клавиатуру вместо getReminderSettingsKeyboard
     const message = `⚙️ *Настройки напоминаний*\n\n` +
       `Здесь вы можете настроить время напоминаний о приеме добавок.\n\n` +
       `По умолчанию:\n` +
       `• Утро: 08:00\n` +
       `• День: 13:00\n` +
       `• Вечер: 20:00\n\n` +
-      `Используйте кнопки ниже для настройки:`;
+      `Используйте команды для настройки:`;
 
+    // Используем главное меню вместо специализированной клавиатуры
     ctx.reply(message, {
       parse_mode: 'Markdown',
-      ...getReminderSettingsKeyboard()
+      ...getMainMenuKeyboard() // Используем существующую клавиатуру
     });
   }
 
