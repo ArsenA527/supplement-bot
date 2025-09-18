@@ -31,19 +31,16 @@ class SubscriptionController {
   async handleSubscribe(ctx) {
     const plans = subscriptionService.getSubscriptionPlans();
 
-    // Временно используем обычную кнопку вместо платежной
     ctx.reply(`🚀 *Оформление Premium подписки*\n\n` +
       `Стоимость: ${plans.premium.price} руб/мес\n` +
       `Период: 30 дней\n\n` +
-      `Для оплаты переведите ${plans.premium.price} руб на карту:\n` +
-      `💳 *2202 2017 4457 0306* (СБЕР)\n` +
-      `📝 *В комментарии укажите ваш ID:* ${ctx.chat.id}\n\n` +
-      `После оплаты отправьте скриншот чека для активации подписки!`,
+      `Для оплаты используйте кнопку ниже 👇`,
     {
       parse_mode: 'Markdown',
       reply_markup: {
         inline_keyboard: [
-          [{ text: '✅ Я оплатил(а)', callback_data: 'payment_confirmed' }],
+          // ИСПРАВЛЯЕМ callback_data на 'payment_confirmed'
+          [{ text: '💳 Оплатить 299 руб', callback_data: 'payment_confirmed' }],
           [{ text: '📋 Информация о подписках', callback_data: 'subscription_info' }],
           [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
         ]

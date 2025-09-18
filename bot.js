@@ -262,6 +262,51 @@ bot.action(/intake_later_(\d+)/, async (ctx) => {
   }
 });
 
+// Обработка кнопки "✅ Я оплатил(а)"
+bot.action('payment_confirmed', async (ctx) => {
+  console.log('💳 Обработка кнопки "Я оплатил"');
+  try {
+    const subscriptionService = require('./services/subscriptionService');
+    const chatId = ctx.chat.id;
+
+    // Активируем premium подписку на 7 дней для теста
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + 7);
+
+    await subscriptionService.updateSubscription(chatId, {
+      plan: 'premium',
+      status: 'active',
+      end_date: endDate.toISOString()
+    });
+
+    ctx.answerCbQuery('✅ Подписка активирована!');
+
+    // Удаляем сообщение с кнопками
+    try {
+      await ctx.deleteMessage();
+    } catch (deleteError) {
+      console.log('Сообщение уже удалено');
+    }
+
+    // Отправляем подтверждение
+    ctx.reply(`🎉 *Premium подписка активирована на 7 дней!*\n\n` +
+              `Теперь вам доступны:\n` +
+              `• 📋 Расширенный опрос (17+ вопросов)\n` +
+              `• 💊 Персональные дозировки\n` +
+              `• ⏰ Умные напоминания\n` +
+              `• 🔄 Неограниченные опросы\n\n` +
+              `Используйте /survey для нового опроса!`,
+    {
+      parse_mode: 'Markdown',
+      ...require('./keyboards').getMainMenuKeyboard()
+    });
+
+  } catch (error) {
+    console.error('❌ Ошибка активации подписки:', error);
+    ctx.answerCbQuery('❌ Ошибка активации подписки');
+  }
+});
+
 // ==================== ДРУГИЕ ОБРАБОТЧИКИ ACTION ====================
 
 bot.action(/history_(\d+)/, (ctx) => {
