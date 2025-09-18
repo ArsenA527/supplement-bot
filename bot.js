@@ -13,7 +13,7 @@ const testCommands = require('./commands/testCommands');
 
 // Middleware
 const { injectSubscriptionData } = require('./middlewares/subscriptionMiddleware');
-
+// const userState = {};
 // Middleware для инъекции данных подписки
 bot.use(injectSubscriptionData);
 
@@ -293,27 +293,68 @@ bot.action('get_detailed_plan', (ctx) => {
 // ==================== ОБРАБОТКА ТЕКСТА ====================
 
 // Обработка текстовых сообщений
-bot.on('text', (ctx) => {
+bot.on('text', async (ctx) => {
+  const text = ctx.message.text;
   const chatId = ctx.chat.id;
 
+  console.log(`📨 Текст получен: "${text}" от ${chatId}`);
+
+  // Сначала проверяем, это ли команды главного меню
+  const menuCommands = [
+    '📋 Пройти опрос',
+    '💊 Мои рекомендации',
+    '👤 Мой профиль',
+    '💳 Подписка',
+    'ℹ️ Помощь',
+    '⏰ Утреннее время',
+    '🌅 Дневное время',
+    '🌙 Вечернее время',
+    '🔔 Вкл/Выкл уведомления',
+    '🏠 Главное меню'
+  ];
+
+  if (menuCommands.includes(text)) {
+    console.log('🔍 Это команда меню, передаем в botController');
+    botController.handleTextCommands(ctx);
+    return;
+  }
+
   // Проверяем, находится ли пользователь в опросе
-  require('./services/surveyService').getCurrentQuestion(chatId)
-    .then(question => {
-      if (question) {
-        surveyController.handleTextAnswer(ctx);
-      } else {
-        botController.handleTextCommands(ctx);
-      }
-    })
-    .catch(() => botController.handleTextCommands(ctx));
+  try {
+    const surveyService = require('./services/surveyService');
+    const question = await surveyService.getCurrentQuestion(chatId);
+
+    if (question) {
+      console.log('🔍 Пользователь в опросе, передаем в surveyController');
+      surveyController.handleTextAnswer(ctx);
+    } else {
+      console.log('🔍 Пользователь не в опросе, передаем в botController');
+      botController.handleTextCommands(ctx);
+    }
+  } catch (error) {
+    console.error('❌ Ошибка проверки состояния опроса:', error);
+    botController.handleTextCommands(ctx);
+  }
 });
 
 // ==================== ЗАПУСК И ОБРАБОТКА ОШИБОК ====================
 
 // Диагностика callback_data
 bot.on('callback_query', (ctx) => {
+  const callbackData = ctx.callbackQuery.data;
   console.log('📨 Callback received:', ctx.callbackQuery.data);
-  // Продолжаем обычную обработку
+
+    // Если callback еще не обработан специфическими обработчиками
+  if (!callbackData.startsWith('intake_') &&
+      !callbackData.startsWith('history_') &&
+      callbackData !== 'subscription_info' &&
+      callbackData !== 'main_menu' &&
+      callbackData !== 'restart_survey' &&
+      callbackData !== 'get_detailed_plan') {
+
+      // Передаем в обработчик опросов
+      require('./controllers/surveyController').handleButtonAnswer(ctx);
+    }
 });
 
 // Обработка ошибок

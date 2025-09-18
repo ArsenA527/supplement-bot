@@ -64,59 +64,93 @@ function handleTextAnswer(ctx) {
     });
 }
 
-// ОБРАБОТКА КНОПОК - ТОЛЬКО ДЛЯ ОПРОСА
+// Обработка клика по кнопке опроса
 function handleButtonAnswer(ctx) {
   const callbackData = ctx.callbackQuery.data;
+  console.log(`🔵 Обработка callback: ${callbackData}`);
+
+  // Если это кнопка напоминания - уже обработано в bot.js
+  if (callbackData.startsWith('intake_')) {
+    console.log('⏰ Кнопка напоминания, пропускаем');
+    return;
+  }
 
   // Обрабатываем только кнопки опроса (формат q0a0)
   if (callbackData.startsWith('q') && callbackData.includes('a')) {
     handleSurveyButtonAnswer(ctx);
   } else {
     // Для всех остальных кнопок просто отвечаем
+    console.log('🔔 Неизвестный callback, просто отвечаем');
     ctx.answerCbQuery();
   }
 }
 
+// Обработка кнопок опроса
 function handleSurveyButtonAnswer(ctx) {
   const chatId = ctx.chat.id;
-  const state = surveyService.getUserStateSync(chatId);
 
-  if (!state) {
-    ctx.answerCbQuery('❌ Сессия устарела. Начните заново: /survey');
-    return;
-  }
+  // Получаем состояние из БД через surveyService
+  surveyService.getUserState(chatId)
+    .then(state => {
+      if (!state) {
+        console.log('❌ Нет состояния для пользователя');
+        ctx.answerCbQuery('❌ Сессия устарела. Начните заново: /survey');
+        return;
+      }
 
-  const callbackData = ctx.callbackQuery.data;
-  let answerText;
+      const callbackData = ctx.callbackQuery.data;
+      console.log(`📊 Обработка ответа на вопрос ${state.current}: ${callbackData}`);
 
-  // Парсим callback_data в формате q0a0
-  const match = callbackData.match(/q(\d+)a(\d+)/);
+      // Парсим callback_data в формате q0a0
+      const match = callbackData.match(/q(\d+)a(\d+)/);
 
-  if (match) {
-    const questionIndex = parseInt(match[1]);
-    const answerIndex = parseInt(match[2]);
-    const questions = surveyService.getQuestionsForUserSync(chatId);
+      if (match) {
+        const questionIndex = parseInt(match[1]);
+        const answerIndex = parseInt(match[2]);
 
-    if (questions && questionIndex < questions.length && questions[questionIndex].options) {
-      answerText = questions[questionIndex].options[answerIndex];
-    }
-  } else {
-    // Старый формат
-    answerText = callbackData;
-  }
+        // Получаем вопросы для пользователя
+        surveyService.getQuestionsForUser(chatId)
+          .then(questions => {
+            // Проверяем что это текущий вопрос
+            if (questionIndex !== state.current) {
+              console.log('⚠️ Несоответствие индекса вопроса');
+              ctx.answerCbQuery('❌ Вопрос устарел');
+              return;
+            }
 
-  if (!answerText) {
-    ctx.answerCbQuery('❌ Ошибка данных вопроса');
-    return;
-  }
+            const question = questions[state.current];
+            if (question && question.options && answerIndex < question.options.length) {
+              // Сохраняем ответ и обновляем состояние
+              state.answers[question.key] = question.options[answerIndex];
+              state.current++;
 
-  surveyService.saveAnswer(chatId, answerText)
-    .then(() => {
-      ctx.answerCbQuery();
-      sendQuestion(ctx);
+              surveyService.saveUserData(chatId, state)
+                .then(() => {
+                  console.log(`✅ Ответ сохранен: ${question.key} = ${question.options[answerIndex]}`);
+                  ctx.answerCbQuery();
+                  sendQuestion(ctx);
+                })
+                .catch(err => {
+                  console.error('❌ Ошибка сохранения:', err);
+                  ctx.answerCbQuery('❌ Ошибка сохранения');
+                });
+            } else {
+              console.log('❌ Ошибка данных вопроса');
+              ctx.answerCbQuery('❌ Ошибка данных вопроса');
+            }
+          })
+          .catch(err => {
+            console.error('❌ Ошибка получения вопросов:', err);
+            ctx.answerCbQuery('❌ Ошибка обработки');
+          });
+      } else {
+        console.log('❌ Неверный формат callback');
+        ctx.answerCbQuery('❌ Ошибка формата данных');
+      }
     })
     .catch(err => {
-      ctx.answerCbQuery('❌ Ошибка сохранения ответа');
+      console.error('❌ Ошибка получения состояния:', err);
+      ctx.answerCbQuery('❌ Ошибка обработки');
     });
 }
 

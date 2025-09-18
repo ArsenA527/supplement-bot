@@ -1,0 +1,19 @@
+2025-09-17T12:00:00: ❌ Telegram client не доступен (глобально)
+2025-09-17T12:00:26: ❌ Telegram client не доступен
+2025-09-17T12:00:56: ❌ Telegram client не доступен
+2025-09-17T14:29:03: Failed to fetch updates. Waiting: 1s request to https://api.telegram.org/bot8470299517:AAGCD-OzkgO-ALq12u04KAoAO82MlJoAVYo/getUpdates?offset=993479544&limit=100&timeout=30 failed, reason: socket hang up
+2025-09-17T16:42:24: Failed to fetch updates. Waiting: 1s request to https://api.telegram.org/bot8470299517:AAGCD-OzkgO-ALq12u04KAoAO82MlJoAVYo/getUpdates?offset=993479574&limit=100&timeout=30 failed, reason: socket hang up
+2025-09-17T17:02:47: Failed to fetch updates. Waiting: 1s request to https://api.telegram.org/bot8470299517:AAGCD-OzkgO-ALq12u04KAoAO82MlJoAVYo/getUpdates?offset=993479574&limit=100&timeout=30 failed, reason: read ECONNRESET
+2025-09-18T00:01:00: ❌ Telegram client не доступен (глобально)
+2025-09-18T00:01:00: ❌ Telegram client не доступен (глобально)
+2025-09-18T00:01:00: ❌ Telegram client не доступен (глобально)
+2025-09-18T00:01:00: ❌ Telegram client не доступен (глобально)
+2025-09-18T00:01:00: ❌ Telegram client не доступен (глобально)
+2025-09-18T00:01:00: ❌ Telegram client не доступен (глобально)
+2025-09-18T00:01:00: ❌ Telegram client не доступен (глобально)
+2025-09-18T00:01:00: ❌ Telegram client не доступен (глобально)
+2025-09-18T08:00:00: ❌ Telegram client не доступен (глобально)
+2025-09-18T09:27:59: ❌ Ошибка начала опроса: Error: Вы уже проходили опрос. Для повторного прохождения оформите подписку.
+    at SurveyService.startSurvey (C:\work\supplement-bot\services\surveyService.js:11:13)
+2025-09-18T09:28:02: ❌ Ошибка начала опроса: Error: Вы уже проходили опрос. Для повторного прохождения оформите подписку.
+    at SurveyService.startSurvey (C:\work\supplement-bot\services\surveyService.js:11:13)

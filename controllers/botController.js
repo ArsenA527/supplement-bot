@@ -131,28 +131,32 @@ function formatKey(key) {
 
 function handleTextCommands(ctx) {
   const text = ctx.message.text;
+  console.log(`🎮 Обработка текстовой команды: "${text}"`);
 
   switch(text) {
     case '📋 Пройти опрос':
+      console.log('🚀 Запуск опроса');
       ctx.reply('🧩 Начинаем опрос!');
       require('./surveyController').handleStartSurvey(ctx);
       break;
     case '💊 Мои рекомендации':
+      console.log('💊 Показ рекомендаций');
       handlePlan(ctx);
       break;
     case '👤 Мой профиль':
+      console.log('👤 Показ профиля');
       handleProfile(ctx);
       break;
-    case '⚙️ Настройки':
-      ctx.reply('⚙️ Настройки пока в разработке', getMainMenuKeyboard());
+    case '💳 Подписка':
+      console.log('💳 Информация о подписках');
+      require('./subscriptionController').showSubscriptionPlans(ctx);
       break;
     case 'ℹ️ Помощь':
+      console.log('ℹ️ Показ помощи');
       handleHelp(ctx);
       break;
-    case '💳 Подписка': // Добавляем обработку кнопки подписки
-      require('./subscriptionController').handleSubscribe(ctx);
-      break;
     default:
+      console.log('❓ Неизвестная команда');
       ctx.reply('Используй кнопки меню для навигации 👆', getMainMenuKeyboard());
   }
 }

@@ -1,0 +1,366 @@
+2025-09-17T08:43:53: [dotenv@17.2.1] injecting env (1) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+2025-09-17T08:43:53: ✅ База данных инициализирована
+2025-09-17T08:43:53: ✅ Таблицы напоминаний созданы
+2025-09-17T08:43:53: 🔧 ReminderService initialized with telegram: true
+2025-09-17T08:43:53: ⏰ Инициализация сервиса напоминаний...
+2025-09-17T08:43:53: ⏰ Напоминание запланировано: Омега-3 в 12:00
+2025-09-17T08:43:53: ⏰ Напоминание запланировано: Витамин D3 в 08:00
+2025-09-17T08:43:53: ⏰ Напоминание запланировано: Тестовая добавка в 00:01
+2025-09-17T08:43:53: ⏰ Напоминание запланировано: Тестовая добавка в 00:01
+2025-09-17T08:43:53: ⏰ Напоминание запланировано: Тестовая добавка в 00:01
+2025-09-17T08:43:53: ⏰ Напоминание запланировано: Тестовая добавка в 00:01
+2025-09-17T08:43:53: ⏰ Напоминание запланировано: Тестовая добавка в 00:01
+2025-09-17T08:43:53: ⏰ Напоминание запланировано: Тестовая добавка в 00:01
+2025-09-17T08:43:53: ✅ Загружено 8 напоминаний
+2025-09-17T08:43:53: ⏰ Запущен альтернативный проверщик напоминаний
+2025-09-17T08:43:53: ✅ Сервис напоминаний инициализирован
+2025-09-17T08:43:53: ✅ Сервис напоминаний инициализирован
+2025-09-17T08:43:53: 🤖 Бот запущен
+2025-09-17T08:44:16: 🔧 ReminderService initialized with telegram: false
+2025-09-17T12:00:00: ❌ Telegram client не доступен (глобально)
+2025-09-17T12:00:26: 🔍 Найдено 1 напоминаний для времени 12:00
+2025-09-17T12:00:26: ❌ Telegram client не доступен
+2025-09-17T12:00:56: 🔍 Найдено 1 напоминаний для времени 12:00
+2025-09-17T12:00:56: ❌ Telegram client не доступен
+2025-09-17T12:10:02: 🔧 ReminderService initialized with telegram: false
+2025-09-17T12:10:02: ⏰ Напоминание запланировано: Тестовая добавка в 00:01
+2025-09-17T12:10:05: 🔵 Обработка кнопки Напомнить позже для reminder: 9
+2025-09-17T12:11:19: 🔵 Обработка кнопки Принял для reminder: 9
+2025-09-17T12:11:19: 📝 Записываем прием для: Тестовая добавка
+2025-09-17T12:11:19: 🔧 ReminderService initialized with telegram: false
+2025-09-17T12:11:19: ✅ Прием записан в историю
+2025-09-17T12:11:19: 🗑️ Сообщение удалено
+2025-09-17T12:30:26: 🔧 ReminderService initialized with telegram: false
+2025-09-17T14:29:03: Failed to fetch updates. Waiting: 1s request to https://api.telegram.org/bot8470299517:AAGCD-OzkgO-ALq12u04KAoAO82MlJoAVYo/getUpdates?offset=993479544&limit=100&timeout=30 failed, reason: socket hang up
+2025-09-17T16:30:45: 🔧 ReminderService initialized with telegram: false
+2025-09-17T16:30:59: 🔧 ReminderService initialized with telegram: false
+2025-09-17T16:30:59: ⏰ Напоминание запланировано: Тестовая добавка в 00:01
+2025-09-17T16:31:05: 🔵 Обработка кнопки Пропустить для reminder: 10
+2025-09-17T16:31:05: 🔧 ReminderService initialized with telegram: false
+2025-09-17T16:31:22: 🔧 ReminderService initialized with telegram: false
+2025-09-17T16:31:27: 🔧 ReminderService initialized with telegram: false
+2025-09-17T16:31:38: 🔧 ReminderService initialized with telegram: false
+2025-09-17T16:31:51: 🔧 ReminderService initialized with telegram: false
+2025-09-17T16:32:09: 📊 User 725240491 is premium: false
+2025-09-17T16:32:09: 📋 Free questions: 8, Premium questions: 16
+2025-09-17T16:32:09: 🎯 Selected 8 questions for user
+2025-09-17T16:32:09: 📊 User 725240491 is premium: false
+2025-09-17T16:32:09: 📋 Free questions: 8, Premium questions: 16
+2025-09-17T16:32:09: 🎯 Selected 8 questions for user
+2025-09-17T16:32:12: 📊 User 725240491 is premium: false
+2025-09-17T16:32:12: 📋 Free questions: 8, Premium questions: 16
+2025-09-17T16:32:12: 🎯 Selected 8 questions for user
+2025-09-17T16:32:12: 📊 User 725240491 is premium: false
+2025-09-17T16:32:12: 📋 Free questions: 8, Premium questions: 16
+2025-09-17T16:32:12: 🎯 Selected 8 questions for user
+2025-09-17T16:32:12: 📊 User 725240491 is premium: false
+2025-09-17T16:32:12: 📋 Free questions: 8, Premium questions: 16
+2025-09-17T16:32:12: 🎯 Selected 8 questions for user
+2025-09-17T16:32:12: 📊 User 725240491 is premium: false
+2025-09-17T16:32:12: 📋 Free questions: 8, Premium questions: 16
+2025-09-17T16:32:12: 🎯 Selected 8 questions for user
+2025-09-17T16:32:14: 📊 User 725240491 is premium: false
+2025-09-17T16:32:14: 📋 Free questions: 8, Premium questions: 16
+2025-09-17T16:32:14: 🎯 Selected 8 questions for user
+2025-09-17T16:32:14: 📊 User 725240491 is premium: false
+2025-09-17T16:32:14: 📋 Free questions: 8, Premium questions: 16
+2025-09-17T16:32:14: 🎯 Selected 8 questions for user
+2025-09-17T16:32:14: 📊 User 725240491 is premium: false
+2025-09-17T16:32:14: 📋 Free questions: 8, Premium questions: 16
+2025-09-17T16:32:14: 🎯 Selected 8 questions for user
+2025-09-17T16:32:14: 📊 User 725240491 is premium: false
+2025-09-17T16:32:14: 📋 Free questions: 8, Premium questions: 16
+2025-09-17T16:32:14: 🎯 Selected 8 questions for user
+2025-09-17T16:32:18: 📊 User 725240491 is premium: false
+2025-09-17T16:32:18: 📋 Free questions: 8, Premium questions: 16
+2025-09-17T16:32:18: 🎯 Selected 8 questions for user
+2025-09-17T16:32:18: 📊 User 725240491 is premium: false
+2025-09-17T16:32:18: 📋 Free questions: 8, Premium questions: 16
+2025-09-17T16:32:18: 🎯 Selected 8 questions for user
+2025-09-17T16:32:18: 📊 User 725240491 is premium: false
+2025-09-17T16:32:18: 📋 Free questions: 8, Premium questions: 16
+2025-09-17T16:32:18: 🎯 Selected 8 questions for user
+2025-09-17T16:32:18: 📊 User 725240491 is premium: false
+2025-09-17T16:32:18: 📋 Free questions: 8, Premium questions: 16
+2025-09-17T16:32:18: 🎯 Selected 8 questions for user
+2025-09-17T16:32:21: 📨 Callback received: q3a0
+2025-09-17T16:32:51: 📨 Callback received: q3a0
+2025-09-17T16:33:24: 📨 Callback received: q3a0
+2025-09-17T16:33:29: 📨 Callback received: q3a2
+2025-09-17T16:33:38: 📨 Callback received: q3a2
+2025-09-17T16:33:39: 📨 Callback received: q3a0
+2025-09-17T16:33:46: 📊 User 725240491 is premium: false
+2025-09-17T16:33:46: 📋 Free questions: 8, Premium questions: 16
+2025-09-17T16:33:46: 🎯 Selected 8 questions for user
+2025-09-17T16:33:46: 📊 User 725240491 is premium: false
+2025-09-17T16:33:46: 📋 Free questions: 8, Premium questions: 16
+2025-09-17T16:33:46: 🎯 Selected 8 questions for user
+2025-09-17T16:33:54: 📨 Callback received: q3a0
+2025-09-17T16:34:23: 📨 Callback received: q3a0
+2025-09-17T16:42:24: Failed to fetch updates. Waiting: 1s request to https://api.telegram.org/bot8470299517:AAGCD-OzkgO-ALq12u04KAoAO82MlJoAVYo/getUpdates?offset=993479574&limit=100&timeout=30 failed, reason: socket hang up
+2025-09-17T17:02:47: Failed to fetch updates. Waiting: 1s request to https://api.telegram.org/bot8470299517:AAGCD-OzkgO-ALq12u04KAoAO82MlJoAVYo/getUpdates?offset=993479574&limit=100&timeout=30 failed, reason: read ECONNRESET
+2025-09-17T17:09:34: 📨 Callback received: q3a1
+2025-09-17T17:09:36: 📨 Callback received: q3a2
+2025-09-17T17:09:36: 📨 Callback received: q3a3
+2025-09-17T17:09:36: 📨 Callback received: q3a3
+2025-09-17T17:09:37: 📨 Callback received: q3a0
+2025-09-17T17:09:40: 📊 User 725240491 is premium: false
+2025-09-17T17:09:40: 📋 Free questions: 8, Premium questions: 16
+2025-09-17T17:09:40: 🎯 Selected 8 questions for user
+2025-09-17T17:09:40: 📊 User 725240491 is premium: false
+2025-09-17T17:09:40: 📋 Free questions: 8, Premium questions: 16
+2025-09-17T17:09:40: 🎯 Selected 8 questions for user
+2025-09-17T17:09:57: 📨 Callback received: payment_confirmed
+2025-09-17T19:35:52: 📊 User 1078425799 is premium: false
+2025-09-17T19:35:52: 📋 Free questions: 8, Premium questions: 16
+2025-09-17T19:35:52: 🎯 Selected 8 questions for user
+2025-09-17T19:35:52: 📊 User 1078425799 is premium: false
+2025-09-17T19:35:52: 📋 Free questions: 8, Premium questions: 16
+2025-09-17T19:35:52: 🎯 Selected 8 questions for user
+2025-09-18T00:01:00: ❌ Telegram client не доступен (глобально)
+2025-09-18T00:01:00: ❌ Telegram client не доступен (глобально)
+2025-09-18T00:01:00: ❌ Telegram client не доступен (глобально)
+2025-09-18T00:01:00: ❌ Telegram client не доступен (глобально)
+2025-09-18T00:01:00: ❌ Telegram client не доступен (глобально)
+2025-09-18T00:01:00: ❌ Telegram client не доступен (глобально)
+2025-09-18T00:01:00: ❌ Telegram client не доступен (глобально)
+2025-09-18T00:01:00: ❌ Telegram client не доступен (глобально)
+2025-09-18T08:00:00: ❌ Telegram client не доступен (глобально)
+2025-09-18T08:58:41: 📨 Callback received: payment_confirmed
+2025-09-18T08:59:44: 📊 User 725240491 is premium: false
+2025-09-18T08:59:44: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T08:59:44: 🎯 Selected 8 questions for user
+2025-09-18T08:59:44: 📊 User 725240491 is premium: false
+2025-09-18T08:59:44: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T08:59:44: 🎯 Selected 8 questions for user
+2025-09-18T08:59:49: 📊 User 725240491 is premium: false
+2025-09-18T08:59:49: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T08:59:49: 🎯 Selected 8 questions for user
+2025-09-18T08:59:49: 📊 User 725240491 is premium: false
+2025-09-18T08:59:49: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T08:59:49: 🎯 Selected 8 questions for user
+2025-09-18T08:59:49: 📊 User 725240491 is premium: false
+2025-09-18T08:59:49: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T08:59:49: 🎯 Selected 8 questions for user
+2025-09-18T08:59:49: 📊 User 725240491 is premium: false
+2025-09-18T08:59:49: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T08:59:49: 🎯 Selected 8 questions for user
+2025-09-18T08:59:51: 📊 User 725240491 is premium: false
+2025-09-18T08:59:51: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T08:59:51: 🎯 Selected 8 questions for user
+2025-09-18T08:59:51: 📊 User 725240491 is premium: false
+2025-09-18T08:59:51: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T08:59:51: 🎯 Selected 8 questions for user
+2025-09-18T08:59:51: 📊 User 725240491 is premium: false
+2025-09-18T08:59:51: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T08:59:51: 🎯 Selected 8 questions for user
+2025-09-18T08:59:51: 📊 User 725240491 is premium: false
+2025-09-18T08:59:51: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T08:59:51: 🎯 Selected 8 questions for user
+2025-09-18T08:59:53: 📊 User 725240491 is premium: false
+2025-09-18T08:59:53: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T08:59:53: 🎯 Selected 8 questions for user
+2025-09-18T08:59:53: 📊 User 725240491 is premium: false
+2025-09-18T08:59:53: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T08:59:53: 🎯 Selected 8 questions for user
+2025-09-18T08:59:53: 📊 User 725240491 is premium: false
+2025-09-18T08:59:53: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T08:59:53: 🎯 Selected 8 questions for user
+2025-09-18T08:59:53: 📊 User 725240491 is premium: false
+2025-09-18T08:59:53: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T08:59:53: 🎯 Selected 8 questions for user
+2025-09-18T08:59:55: 📨 Callback received: q3a0
+2025-09-18T09:26:22: 📊 User 725240491 is premium: false
+2025-09-18T09:26:22: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:26:22: 🎯 Selected 8 questions for user
+2025-09-18T09:26:22: 📊 User 725240491 is premium: false
+2025-09-18T09:26:22: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:26:22: 🎯 Selected 8 questions for user
+2025-09-18T09:26:27: 📊 User 725240491 is premium: false
+2025-09-18T09:26:27: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:26:27: 🎯 Selected 8 questions for user
+2025-09-18T09:26:27: 📊 User 725240491 is premium: false
+2025-09-18T09:26:27: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:26:27: 🎯 Selected 8 questions for user
+2025-09-18T09:26:36: 📊 User 725240491 is premium: false
+2025-09-18T09:26:36: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:26:36: 🎯 Selected 8 questions for user
+2025-09-18T09:26:36: 📊 User 725240491 is premium: false
+2025-09-18T09:26:36: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:26:36: 🎯 Selected 8 questions for user
+2025-09-18T09:26:38: 📊 User 725240491 is premium: false
+2025-09-18T09:26:38: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:26:38: 🎯 Selected 8 questions for user
+2025-09-18T09:26:38: 📊 User 725240491 is premium: false
+2025-09-18T09:26:38: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:26:38: 🎯 Selected 8 questions for user
+2025-09-18T09:26:46: 📊 User 725240491 is premium: false
+2025-09-18T09:26:46: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:26:46: 🎯 Selected 8 questions for user
+2025-09-18T09:26:46: 📊 User 725240491 is premium: false
+2025-09-18T09:26:46: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:26:46: 🎯 Selected 8 questions for user
+2025-09-18T09:26:47: 📊 User 725240491 is premium: false
+2025-09-18T09:26:47: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:26:47: 🎯 Selected 8 questions for user
+2025-09-18T09:26:47: 📊 User 725240491 is premium: false
+2025-09-18T09:26:47: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:26:47: 🎯 Selected 8 questions for user
+2025-09-18T09:26:49: 📊 User 725240491 is premium: false
+2025-09-18T09:26:49: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:26:49: 🎯 Selected 8 questions for user
+2025-09-18T09:26:49: 📊 User 725240491 is premium: false
+2025-09-18T09:26:49: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:26:49: 🎯 Selected 8 questions for user
+2025-09-18T09:26:51: 📊 User 725240491 is premium: false
+2025-09-18T09:26:51: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:26:51: 🎯 Selected 8 questions for user
+2025-09-18T09:26:51: 📊 User 725240491 is premium: false
+2025-09-18T09:26:51: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:26:51: 🎯 Selected 8 questions for user
+2025-09-18T09:27:51: 📊 User 725240491 is premium: false
+2025-09-18T09:27:51: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:27:51: 🎯 Selected 8 questions for user
+2025-09-18T09:27:51: 📊 User 725240491 is premium: false
+2025-09-18T09:27:51: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:27:51: 🎯 Selected 8 questions for user
+2025-09-18T09:27:52: 📊 User 725240491 is premium: false
+2025-09-18T09:27:52: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:27:52: 🎯 Selected 8 questions for user
+2025-09-18T09:27:52: 📊 User 725240491 is premium: false
+2025-09-18T09:27:52: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:27:52: 🎯 Selected 8 questions for user
+2025-09-18T09:27:53: 📊 User 725240491 is premium: false
+2025-09-18T09:27:53: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:27:53: 🎯 Selected 8 questions for user
+2025-09-18T09:27:53: 📊 User 725240491 is premium: false
+2025-09-18T09:27:53: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:27:53: 🎯 Selected 8 questions for user
+2025-09-18T09:27:56: 🔧 ReminderService initialized with telegram: false
+2025-09-18T09:27:59: ❌ Ошибка начала опроса: Error: Вы уже проходили опрос. Для повторного прохождения оформите подписку.
+    at SurveyService.startSurvey (C:\work\supplement-bot\services\surveyService.js:11:13)
+2025-09-18T09:28:02: ❌ Ошибка начала опроса: Error: Вы уже проходили опрос. Для повторного прохождения оформите подписку.
+    at SurveyService.startSurvey (C:\work\supplement-bot\services\surveyService.js:11:13)
+2025-09-18T09:36:51: [dotenv@17.2.1] injecting env (1) from .env -- tip: ⚙️  override existing env vars with { override: true }
+2025-09-18T09:36:51: ✅ База данных инициализирована
+2025-09-18T09:36:51: ✅ Таблицы напоминаний созданы
+2025-09-18T09:36:51: 🔧 ReminderService initialized with telegram: true
+2025-09-18T09:36:51: ⏰ Инициализация сервиса напоминаний...
+2025-09-18T09:36:51: ✅ Загружено 0 напоминаний
+2025-09-18T09:36:51: ⏰ Запущен альтернативный проверщик напоминаний
+2025-09-18T09:36:51: ✅ Сервис напоминаний инициализирован
+2025-09-18T09:36:51: ✅ Сервис напоминаний инициализирован
+2025-09-18T09:36:51: 🤖 Бот запущен
+2025-09-18T09:36:51: 📊 User 725240491 is premium: false
+2025-09-18T09:36:51: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:36:51: 🎯 Selected 8 questions for user
+2025-09-18T09:36:51: 📊 User 725240491 is premium: false
+2025-09-18T09:36:51: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:36:51: 🎯 Selected 8 questions for user
+2025-09-18T09:36:59: 📊 User 725240491 is premium: false
+2025-09-18T09:36:59: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:36:59: 🎯 Selected 8 questions for user
+2025-09-18T09:36:59: 📊 User 725240491 is premium: false
+2025-09-18T09:36:59: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T09:36:59: 🎯 Selected 8 questions for user
+2025-09-18T11:02:50: 📊 User 725240491 is premium: false
+2025-09-18T11:02:50: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:02:50: 🎯 Selected 8 questions for user
+2025-09-18T11:02:50: 📊 User 725240491 is premium: false
+2025-09-18T11:02:50: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:02:50: 🎯 Selected 8 questions for user
+2025-09-18T11:03:35: [dotenv@17.2.1] injecting env (1) from .env -- tip: 📡 observe env with Radar: https://dotenvx.com/radar
+2025-09-18T11:03:35: ✅ База данных инициализирована
+2025-09-18T11:03:35: ✅ Таблицы напоминаний созданы
+2025-09-18T11:03:35: 🔧 ReminderService initialized with telegram: true
+2025-09-18T11:03:35: ⏰ Инициализация сервиса напоминаний...
+2025-09-18T11:03:35: ✅ Загружено 0 напоминаний
+2025-09-18T11:03:35: ⏰ Запущен альтернативный проверщик напоминаний
+2025-09-18T11:03:35: ✅ Сервис напоминаний инициализирован
+2025-09-18T11:03:35: ✅ Сервис напоминаний инициализирован
+2025-09-18T11:03:35: 🤖 Бот запущен
+2025-09-18T11:03:35: 📊 User 725240491 is premium: false
+2025-09-18T11:03:35: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:03:35: 🎯 Selected 8 questions for user
+2025-09-18T11:03:35: 📊 User 725240491 is premium: false
+2025-09-18T11:03:35: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:03:35: 🎯 Selected 8 questions for user
+2025-09-18T11:03:46: 📊 User 725240491 is premium: false
+2025-09-18T11:03:46: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:03:46: 🎯 Selected 8 questions for user
+2025-09-18T11:03:46: 📊 User 725240491 is premium: false
+2025-09-18T11:03:46: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:03:46: 🎯 Selected 8 questions for user
+2025-09-18T11:22:45: 🔧 ReminderService initialized with telegram: false
+2025-09-18T11:22:45: ⏰ Напоминание запланировано: Тестовая добавка в 00:01
+2025-09-18T11:22:47: 🔵 Обработка кнопки Принял для reminder: 11
+2025-09-18T11:22:47: 📝 Записываем прием для: Тестовая добавка
+2025-09-18T11:22:47: 🔧 ReminderService initialized with telegram: false
+2025-09-18T11:22:47: ✅ Прием записан в историю
+2025-09-18T11:22:47: 🗑️ Сообщение удалено
+2025-09-18T11:22:51: 📊 User 725240491 is premium: false
+2025-09-18T11:22:51: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:22:51: 🎯 Selected 8 questions for user
+2025-09-18T11:22:51: 📊 User 725240491 is premium: false
+2025-09-18T11:22:51: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:22:51: 🎯 Selected 8 questions for user
+2025-09-18T11:27:46: 📊 User 725240491 is premium: false
+2025-09-18T11:27:46: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:27:46: 🎯 Selected 8 questions for user
+2025-09-18T11:27:46: 📊 User 725240491 is premium: false
+2025-09-18T11:27:46: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:27:46: 🎯 Selected 8 questions for user
+2025-09-18T11:27:47: 📊 User 725240491 is premium: false
+2025-09-18T11:27:47: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:27:47: 🎯 Selected 8 questions for user
+2025-09-18T11:27:47: 📊 User 725240491 is premium: false
+2025-09-18T11:27:47: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:27:47: 🎯 Selected 8 questions for user
+2025-09-18T11:27:48: 📊 User 725240491 is premium: false
+2025-09-18T11:27:48: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:27:48: 🎯 Selected 8 questions for user
+2025-09-18T11:27:48: 📊 User 725240491 is premium: false
+2025-09-18T11:27:48: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:27:48: 🎯 Selected 8 questions for user
+2025-09-18T11:27:54: 📊 User 725240491 is premium: false
+2025-09-18T11:27:54: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:27:54: 🎯 Selected 8 questions for user
+2025-09-18T11:27:54: 📊 User 725240491 is premium: false
+2025-09-18T11:27:54: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:27:54: 🎯 Selected 8 questions for user
+2025-09-18T11:28:25: 📊 User 725240491 is premium: false
+2025-09-18T11:28:25: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:28:25: 🎯 Selected 8 questions for user
+2025-09-18T11:28:25: 📊 User 725240491 is premium: false
+2025-09-18T11:28:25: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:28:25: 🎯 Selected 8 questions for user
+2025-09-18T11:28:26: 📊 User 725240491 is premium: false
+2025-09-18T11:28:26: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:28:26: 🎯 Selected 8 questions for user
+2025-09-18T11:28:26: 📊 User 725240491 is premium: false
+2025-09-18T11:28:26: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:28:26: 🎯 Selected 8 questions for user
+2025-09-18T11:29:15: 📊 User 725240491 is premium: false
+2025-09-18T11:29:15: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:29:15: 🎯 Selected 8 questions for user
+2025-09-18T11:29:15: 📊 User 725240491 is premium: false
+2025-09-18T11:29:15: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:29:15: 🎯 Selected 8 questions for user
+2025-09-18T11:29:50: 📊 User 725240491 is premium: false
+2025-09-18T11:29:50: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:29:50: 🎯 Selected 8 questions for user
+2025-09-18T11:29:50: 📊 User 725240491 is premium: false
+2025-09-18T11:29:50: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:29:50: 🎯 Selected 8 questions for user
+2025-09-18T11:29:55: 📊 User 725240491 is premium: false
+2025-09-18T11:29:55: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:29:55: 🎯 Selected 8 questions for user
+2025-09-18T11:29:55: 📊 User 725240491 is premium: false
+2025-09-18T11:29:55: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:29:55: 🎯 Selected 8 questions for user
+2025-09-18T11:31:47: 📊 User 725240491 is premium: false
+2025-09-18T11:31:47: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:31:47: 🎯 Selected 8 questions for user
+2025-09-18T11:31:47: 📊 User 725240491 is premium: false
+2025-09-18T11:31:47: 📋 Free questions: 8, Premium questions: 16
+2025-09-18T11:31:47: 🎯 Selected 8 questions for user

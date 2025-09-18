@@ -121,17 +121,8 @@ class SurveyService {
   async saveUserData(chatId, state) {
     return new Promise((resolve, reject) => {
       db.run(
-        `INSERT INTO users (chat_id, state, answers)
-         VALUES (?, ?, ?)
-         ON CONFLICT(chat_id)
-         DO UPDATE SET state = ?, answers = ?, updated_at = CURRENT_TIMESTAMP`,
-        [
-          chatId,
-          JSON.stringify(state),
-          JSON.stringify(state.answers),
-          JSON.stringify(state),
-          JSON.stringify(state.answers)
-        ],
+        `UPDATE users SET state = ?, answers = ? WHERE chat_id = ?`,
+        [JSON.stringify(state), JSON.stringify(state.answers), chatId],
         (err) => err ? reject(err) : resolve()
       );
     });
@@ -165,17 +156,18 @@ class SurveyService {
     });
   }
 
-  // Получить статистику опроса
-  async getSurveyStats(chatId) {
-    const state = await this.getUserState(chatId);
-    const userQuestions = await this.getQuestionsForUser(chatId);
-
-    return {
-      totalQuestions: userQuestions.length,
-      completedQuestions: state ? state.current : 0,
-      progress: state ? Math.round((state.current / userQuestions.length) * 100) : 0,
-      isPremium: await subscriptionService.isSubscriptionActive(chatId)
-    };
+  // Получить состояние пользователя
+  async getUserState(chatId) {
+    return new Promise((resolve) => {
+      db.get('SELECT state FROM users WHERE chat_id = ?', [chatId], (err, row) => {
+        if (err) {
+          console.error('❌ Ошибка чтения состояния:', err);
+          resolve(null);
+        } else {
+          resolve(row && row.state ? JSON.parse(row.state) : null);
+        }
+      });
+    });
   }
 
   // Синхронное получение состояния (для обработки кнопок)
