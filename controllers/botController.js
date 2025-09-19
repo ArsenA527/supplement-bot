@@ -30,15 +30,6 @@ function handleHelp(ctx) {
 /myhistory - История приема
 /mystats - Статистика приема
 
-*Тестовые команды (для разработки):*
-/testremindernow - Тест напоминания (мгновенно)
-/myreminders - Мои напоминания
-/checkhistory - Проверить историю
-/reminderstats - Статистика напоминаний
-/debugsub - Отладка подписки
-/activatepremium - Активировать premium
-/clearmydata - Очистить мои данные
-/testquestions - Тест вопросов
 
 *Для помощи:* /help`;
 
