@@ -19,7 +19,7 @@ class ReminderService {
   // Инициализация сервиса
   async initialize() {
     console.log('⏰ Инициализация сервиса напоминаний...');
-    await this.loadAllReminders();
+    // await this.loadAllReminders();
     this.startReminderChecker(); // Запускаем альтернативную проверку
   }
 

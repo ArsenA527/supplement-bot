@@ -22,11 +22,11 @@ class ReminderController {
     const chatId = ctx.chat.id;
 
     try {
-      // Сначала удалим старые напоминания
+      // Сначала удаляем старые напоминания
       await this.clearUserReminders(chatId);
 
-      // Базовые времена приема по умолчанию
-      const defaultTimes = {
+      // Умное распределение времени по умолчанию
+      const timeSlots = {
         'утром': '08:00',
         'утро': '08:00',
         'днем': '13:00',
@@ -36,45 +36,59 @@ class ReminderController {
         'перед сном': '22:00',
         'сон': '22:00',
         'с едой': '12:00',
-        'еда': '12:00'
+        'еда': '12:00',
+        'после еды': '13:00'
       };
 
       let createdCount = 0;
+      const timeDistribution = {};
 
+      // Распределяем добавки по разным временам
       for (const supplement of recommendations) {
         const timeKey = supplement.time.toLowerCase();
-        const time = defaultTimes[timeKey] || '12:00';
+        let time = timeSlots[timeKey] || '10:00';
+
+        // Если время уже занято, сдвигаем на 30 минут
+        if (timeDistribution[time]) {
+          const [hours, minutes] = time.split(':').map(Number);
+          const newMinutes = (minutes + 30) % 60;
+          const newHours = minutes + 30 >= 60 ? hours + 1 : hours;
+          time = `${String(newHours).padStart(2, '0')}:${String(newMinutes).padStart(2, '0')}`;
+        }
+
+        timeDistribution[time] = true;
 
         try {
           await this.reminderService.createReminder(chatId, {
             supplement_name: supplement.name,
             dosage: supplement.dosage,
             time: time,
-            days: '1111111'
+            days: '1111111' // Все дни недели
           });
           createdCount++;
+
+          console.log(`✅ Создано напоминание: ${supplement.name} в ${time}`);
+
         } catch (error) {
           console.error('❌ Ошибка создания напоминания:', error);
         }
       }
 
       if (createdCount > 0) {
-        ctx.reply(`✅ Создано ${createdCount} напоминаний! Вы будете получать уведомления о приеме добавок.\n\n` +
-                 `Используйте /myreminders для просмотра напоминаний.`,
-          getMainMenuKeyboard()
-        );
-      } else {
-        ctx.reply('❌ Не удалось создать напоминания. Проверьте рекомендации.',
-          getMainMenuKeyboard()
+        // Сообщение об успешном создании
+        ctx.reply(`✅ Создано ${createdCount} напоминаний! Вы будете получать уведомления:\n\n` +
+                `📅 *Расписание:*\n` +
+                Object.keys(timeDistribution).sort().map(t => `⏰ ${t}`).join('\n') +
+                `\n\nИспользуйте /myreminders для просмотра всех напоминаний.`,
+          { parse_mode: 'Markdown' }
         );
       }
 
     } catch (error) {
-      console.error('❌ Ошибка создания напоминаний:', error);
-      ctx.reply('❌ Ошибка настройки напоминаний. Попробуйте позже.');
+      console.error('❌ Ошибка создания напоминаний из рекомендаций:', error);
+      ctx.reply('❌ Не удалось настроить напоминания. Попробуйте позже вручную: /reminders');
     }
   }
-
   // Очистить напоминания пользователя
   async clearUserReminders(chatId) {
     return new Promise((resolve) => {

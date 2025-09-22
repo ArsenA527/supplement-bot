@@ -4,6 +4,17 @@ const surveyService = require('../services/surveyService');
 const { getMainMenuKeyboard } = require('../keyboards');
 
 module.exports = {
+  testRemindersNow: async (ctx) => {
+    try {
+      const service = new ReminderService(ctx.telegram);
+      await service.checkDueReminders();
+      ctx.reply('🔍 Проверка напоминаний выполнена');
+    } catch (error) {
+      console.error('❌ Ошибка теста напоминаний:', error);
+      ctx.reply('❌ Ошибка проверки напоминаний');
+    }
+  },
+
   // Тест напоминания прямо сейчас
   testReminderNow: async (ctx) => {
     try {
