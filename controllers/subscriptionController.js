@@ -1,4 +1,5 @@
 const subscriptionService = require('../services/subscriptionService');
+const paymentService = require('../services/paymentService');
 const { getMainMenuKeyboard } = require('../keyboards');
 
 class SubscriptionController {
@@ -19,7 +20,7 @@ class SubscriptionController {
       message += `✓ ${feat}\n`;
     });
 
-    message += `\n💳 *Для оформления подписки нажмите:* /subscribe`;
+    message += `\n💳 *Для оформления подписки:* /subscribe`;
 
     ctx.reply(message, {
       parse_mode: 'Markdown',
@@ -30,32 +31,46 @@ class SubscriptionController {
   // Обработчик команды /subscribe
   async handleSubscribe(ctx) {
     const plans = subscriptionService.getSubscriptionPlans();
+    const premiumPlan = plans.premium;
 
-    ctx.reply(`🚀 *Оформление Premium подписки*\n\n` +
-      `Стоимость: ${plans.premium.price} руб/мес\n` +
-      `Период: 30 дней\n\n` +
-      `Для оплаты используйте кнопку ниже 👇`,
-    {
-      parse_mode: 'Markdown',
-      reply_markup: {
-        inline_keyboard: [
-          // ИСПРАВЛЯЕМ callback_data на 'payment_confirmed'
-          [{ text: '💳 Оплатить 299 руб', callback_data: 'payment_confirmed' }],
-          [{ text: '📋 Информация о подписках', callback_data: 'subscription_info' }],
-          [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
-        ]
-      }
-    });
+    try {
+      // Создаем тестовый платеж
+      const paymentUrl = await paymentService.createTestPayment(ctx.chat.id, {
+        name: 'Premium подписка',
+        price: premiumPlan.price
+      });
+
+      ctx.reply(`🚀 *Оформление Premium подписки*\n\n` +
+        `Стоимость: ${premiumPlan.price} руб/мес\n` +
+        `Период: 30 дней\n\n` +
+        `*ТЕСТОВЫЙ РЕЖИМ* - для активации нажмите "Я оплатил(а)"\n\n` +
+        `В реальной версии вы будете перенаправлены на страницу оплаты.`,
+      {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '💳 Тестовая оплата', callback_data: 'test_payment' }],
+            [{ text: '✅ Я оплатил(а)', callback_data: 'payment_confirmed' }],
+            [{ text: '📋 Информация о подписках', callback_data: 'subscription_info' }],
+            [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
+          ]
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Ошибка создания платежа:', error);
+      ctx.reply('❌ Ошибка создания платежа. Попробуйте позже.');
+    }
   }
 
-  // Обработка подтверждения оплаты
+  // Обработка подтверждения оплаты (ТЕСТОВАЯ)
   async handlePaymentConfirmation(ctx) {
     const chatId = ctx.chat.id;
 
     try {
-      // Активируем подписку на 7 дней для теста
+      // В тестовом режиме сразу активируем подписку
       const endDate = new Date();
-      endDate.setDate(endDate.getDate() + 7);
+      endDate.setDate(endDate.getDate() + 7); // 7 дней для теста
 
       await subscriptionService.updateSubscription(chatId, {
         plan: 'premium',
@@ -63,15 +78,15 @@ class SubscriptionController {
         end_date: endDate.toISOString()
       });
 
-      // Очищаем текущую сессию опроса если она есть
+      // Очищаем текущую сессию опроса если есть
       const surveyService = require('../services/surveyService');
       await surveyService.completeSurvey(chatId);
 
-      ctx.reply(`🎉 *Подписка активирована на 7 дней!*\n\n` +
+      ctx.reply(`🎉 *Premium подписка активирована на 7 дней!*\n\n` +
         `Теперь вам доступны:\n` +
         `• 📋 Расширенный опрос (17+ вопросов)\n` +
         `• 💊 Персональные дозировки\n` +
-        `• ⏰ Напоминания о приеме\n` +
+        `• ⏰ Умные напоминания\n` +
         `• 🔄 Неограниченные опросы\n\n` +
         `*Используйте /survey для нового расширенного опроса!*`,
       {
@@ -84,10 +99,12 @@ class SubscriptionController {
       ctx.reply('❌ Ошибка активации подписки. Обратитесь в поддержку.');
     }
   }
+
   // Проверить статус подписки
   async checkSubscriptionStatus(ctx) {
     const chatId = ctx.chat.id;
     const subscription = await subscriptionService.getUserSubscription(chatId);
+    const paymentStatus = await paymentService.getPaymentStatus(chatId);
 
     let message = `📋 *Статус вашей подписки:*\n\n`;
     message += `• План: ${subscription.plan === 'premium' ? '💎 Premium' : '🎁 Free'}\n`;
@@ -98,10 +115,12 @@ class SubscriptionController {
       message += `• Действует до: ${endDate.toLocaleDateString('ru-RU')}\n`;
     }
 
+    if (paymentStatus) {
+      message += `• Платеж: ${paymentStatus === 'succeeded' ? '✅ Успешно' : '⏳ Ожидание'}\n`;
+    }
+
     if (subscription.plan === 'free') {
-      message += `\n💡 Для получения Premium доступа используйте: /subscribe`;
-    } else {
-      message += `\n✨ Вы наслаждаетесь всеми преимуществами Premium подписки!`;
+      message += `\n💡 Для получения Premium доступа: /subscribe`;
     }
 
     ctx.reply(message, {

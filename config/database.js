@@ -104,6 +104,21 @@ db.serialize(() => {
   )`);
 
   console.log('✅ Таблица истории приема создана/проверена');
+
+  // Таблица платежей
+  db.run(`CREATE TABLE IF NOT EXISTS payments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chat_id INTEGER,
+    amount REAL,
+    currency TEXT DEFAULT 'RUB',
+    status TEXT,
+    yookassa_id TEXT,
+    plan TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (chat_id) REFERENCES users (chat_id)
+  )`);
+
+  console.log('✅ Таблица платежей создана');
 });
 
 // Graceful shutdown
