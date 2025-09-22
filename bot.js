@@ -72,32 +72,7 @@ bot.command('clearmydata', (ctx) => testCommands.clearMyData(ctx));
 bot.command('testquestions', (ctx) => testCommands.testQuestions(ctx));
 bot.command('myhistory', (ctx) => testCommands.checkHistory(ctx));
 bot.command('mystats', (ctx) => testCommands.reminderStats(ctx));
-bot.command('testbuttons', async (ctx) => {
-  try {
-    const keyboard = {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            { text: '✅ Принял', callback_data: 'intake_taken_999' },
-            { text: '⏰ Напомнить позже', callback_data: 'intake_later_999' },
-            { text: '❌ Пропустить', callback_data: 'intake_skipped_999' }
-          ]
-        ]
-      }
-    };
-
-    await ctx.reply(
-      `⏰ *ТЕСТ КНОПОК!*\n\n💊 Тестовая добавка\n📏 500 мг\n\nПроверьте кнопки:`,
-      { parse_mode: 'Markdown', ...keyboard }
-    );
-
-    ctx.reply('✅ Тестовые кнопки созданы! Проверьте их работу.');
-
-  } catch (error) {
-    console.error('❌ Ошибка testbuttons:', error);
-    ctx.reply('❌ Ошибка создания тестовых кнопок');
-  }
-});
+bot.command('testbuttons', (ctx) => testCommands.testButtons(ctx));
 
 bot.command('testremindersnow', (ctx) => testCommands.testRemindersNow(ctx));
 bot.command('createremindersfromplan', (ctx) => testCommands.createRemindersFromPlan(ctx));

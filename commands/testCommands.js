@@ -22,6 +22,7 @@ module.exports = {
       const chatId = ctx.chat.id;
       const surveyService = require('../services/surveyService');
       const recommendationService = require('../services/recommendationService');
+      const { ReminderController } = require('../controllers/reminderController');
 
       const answers = await surveyService.getSurveyResults(chatId);
       if (!answers) {
@@ -30,14 +31,42 @@ module.exports = {
       }
 
       const recommendations = recommendationService.generateRecommendations(answers);
-      const reminderController = require('../controllers/reminderController');
+      const reminderController = new ReminderController(ctx.telegram);
 
-      const count = await reminderController.createRemindersFromRecommendations(ctx, recommendations);
-      ctx.reply(`✅ Создано ${count} напоминаний из вашего плана!`);
+      await reminderController.createRemindersFromRecommendations(ctx, recommendations);
+      ctx.reply('✅ Напоминания созданы из вашего плана!');
 
     } catch (error) {
       console.error('❌ Ошибка создания напоминаний из плана:', error);
       ctx.reply('❌ Ошибка создания напоминаний');
+    }
+  },
+
+  // Тест кнопок
+  testButtons: async (ctx) => {
+    try {
+      const keyboard = {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: '✅ Принял', callback_data: 'intake_taken_999' },
+              { text: '⏰ Напомнить позже', callback_data: 'intake_later_999' },
+              { text: '❌ Пропустить', callback_data: 'intake_skipped_999' }
+            ]
+          ]
+        }
+      };
+
+      await ctx.reply(
+        `⏰ *ТЕСТ КНОПОК!*\n\n💊 Тестовая добавка\n📏 500 мг\n\nПроверьте кнопки:`,
+        { parse_mode: 'Markdown', ...keyboard }
+      );
+
+      ctx.reply('✅ Тестовые кнопки созданы! Проверьте их работу.');
+
+    } catch (error) {
+      console.error('❌ Ошибка testbuttons:', error);
+      ctx.reply('❌ Ошибка создания тестовых кнопок');
     }
   },
 
