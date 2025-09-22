@@ -99,6 +99,10 @@ bot.command('testbuttons', async (ctx) => {
   }
 });
 
+bot.command('testremindersnow', (ctx) => testCommands.testRemindersNow(ctx));
+bot.command('createremindersfromplan', (ctx) => testCommands.createRemindersFromPlan(ctx));
+
+
 // ==================== ОБРАБОТКА КНОПОК НАПОМИНАНИЙ ====================
 
 // Обработка кнопки "✅ Принял"

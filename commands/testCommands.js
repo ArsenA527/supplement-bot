@@ -109,7 +109,22 @@ module.exports = {
       const service = new ReminderService(ctx.telegram);
       const history = await service.getIntakeHistory(ctx.chat.id, 1);
 
-      ctx.reply(`📊 Записей в истории: ${history.length}`);
+      if (history.length === 0) {
+        ctx.reply('📊 История приема пуста за последние 7 дней.');
+        return;
+      }
+
+      let message = '📊 *История приема (7 дней):*\n\n';
+      history.forEach((item, index) => {
+        const date = new Date(item.taken_at).toLocaleDateString('ru-RU');
+        const time = new Date(item.taken_at).toLocaleTimeString('ru-RU', {
+          hour: '2-digit', minute: '2-digit'
+        });
+        const statusIcon = item.status === 'taken' ? '✅' : item.status === 'skipped' ? '⏭️' : '❌';
+        message += `${statusIcon} ${date} ${time} - ${item.supplement_name}\n`;
+      });
+
+      ctx.reply(message, { parse_mode: 'Markdown' });
     } catch (error) {
       console.error('❌ Ошибка checkhistory:', error);
       ctx.reply('❌ Ошибка проверки истории');
