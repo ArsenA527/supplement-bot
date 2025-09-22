@@ -26,7 +26,7 @@ function handleHelp(ctx) {
 /subscribe - Информация о подписках
 
 *Напоминания:*
-/reminders - Настройки напоминаний
+/myreminders - Настройки напоминаний
 /myhistory - История приема
 /mystats - Статистика приема
 

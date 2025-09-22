@@ -741,3 +741,19 @@
 2025-09-22T00:01:34: ❌ Telegram client не доступен
 2025-09-22T00:01:34: ❌ Telegram client не доступен
 2025-09-22T00:01:34: ❌ Telegram client не доступен
+2025-09-22T08:15:39: Failed to process updates. TelegramError: 409: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+    at C:\work\supplement-bot\node_modules\telegraf\core\network\client.js:263:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  code: 409,
+  response: {
+    ok: false,
+    error_code: 409,
+    description: 'Conflict: terminated by other getUpdates request; make sure that only one bot instance is running'
+  },
+  description: 'Conflict: terminated by other getUpdates request; make sure that only one bot instance is running',
+  parameters: {},
+  on: {
+    method: 'getUpdates?offset=993480017&limit=100&timeout=30',
+    payload: {}
+  }
+}

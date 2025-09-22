@@ -1,6 +1,7 @@
 const surveyService = require('../services/surveyService');
 const recommendationService = require('../services/recommendationService');
 const { getQuestionKeyboard, getMainMenuKeyboard } = require('../keyboards');
+const { ReminderController } = require('./reminderController');
 
 function handleStartSurvey(ctx) {
   const chatId = ctx.chat.id;
@@ -158,9 +159,16 @@ function completeSurvey(ctx) {
   const chatId = ctx.chat.id;
 
   surveyService.getSurveyResults(chatId)
-    .then(answers => {
+    .then(async (answers) => {
       const recommendations = recommendationService.generateRecommendations(answers);
       const message = recommendationService.formatRecommendations(recommendations);
+
+      try {
+        const reminderController = require('./reminderController');
+        await reminderController.createRemindersFromRecommendations(ctx, recommendations);
+      } catch (error) {
+        console.error('❌ Ошибка создания напоминаний:', error);
+      }
 
       // Добавляем информацию о подписке
       const subscription = ctx.state.subscription || { plan: 'free' };

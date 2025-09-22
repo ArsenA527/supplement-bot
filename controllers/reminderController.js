@@ -22,28 +22,32 @@ class ReminderController {
     const chatId = ctx.chat.id;
 
     try {
-      // Сначала удалим старые напоминания
+      // Сначала удаляем старые напоминания
       await this.clearUserReminders(chatId);
 
-      // Базовые времена приема по умолчанию
-      const defaultTimes = {
-        'утром': '08:00',
-        'утро': '08:00',
-        'днем': '13:00',
-        'дневное': '13:00',
-        'вечером': '20:00',
-        'вечер': '20:00',
-        'перед сном': '22:00',
-        'сон': '22:00',
-        'с едой': '12:00',
-        'еда': '12:00'
+      // Умное распределение времени
+      const timeSlots = {
+        'утром': '08:00', 'утро': '08:00',
+        'днем': '13:00', 'дневное': '13:00',
+        'вечером': '20:00', 'вечер': '20:00',
+        'перед сном': '22:00', 'сон': '22:00',
+        'с едой': '12:00', 'еда': '12:00',
+        'после еды': '13:00'
       };
 
       let createdCount = 0;
+      const usedTimes = new Set();
 
       for (const supplement of recommendations) {
         const timeKey = supplement.time.toLowerCase();
-        const time = defaultTimes[timeKey] || '12:00';
+        let time = timeSlots[timeKey] || '10:00';
+
+        // Если время уже занято, находим свободное
+        if (usedTimes.has(time)) {
+          time = this.findAvailableTime(usedTimes, time);
+        }
+
+        usedTimes.add(time);
 
         try {
           await this.reminderService.createReminder(chatId, {
@@ -53,25 +57,31 @@ class ReminderController {
             days: '1111111'
           });
           createdCount++;
+
         } catch (error) {
           console.error('❌ Ошибка создания напоминания:', error);
         }
       }
 
+      // Отправляем расписание пользователю
       if (createdCount > 0) {
-        ctx.reply(`✅ Создано ${createdCount} напоминаний! Вы будете получать уведомления о приеме добавок.\n\n` +
-                 `Используйте /myreminders для просмотра напоминаний.`,
-          getMainMenuKeyboard()
-        );
-      } else {
-        ctx.reply('❌ Не удалось создать напоминания. Проверьте рекомендации.',
-          getMainMenuKeyboard()
+        const sortedTimes = Array.from(usedTimes).sort();
+        let scheduleMessage = `📅 *Ваше расписание:*\n`;
+
+        sortedTimes.forEach(t => {
+          scheduleMessage += `⏰ ${t}\n`;
+        });
+
+        ctx.reply(`✅ Создано ${createdCount} напоминаний!\n\n${scheduleMessage}\nВы будете получать уведомления в указанное время.`,
+          { parse_mode: 'Markdown' }
         );
       }
 
+      return createdCount;
+
     } catch (error) {
       console.error('❌ Ошибка создания напоминаний:', error);
-      ctx.reply('❌ Ошибка настройки напоминаний. Попробуйте позже.');
+      throw error;
     }
   }
 
@@ -84,6 +94,26 @@ class ReminderController {
         resolve();
       });
     });
+  }
+
+  // Вспомогательный метод для поиска свободного времени
+  findAvailableTime(usedTimes, baseTime) {
+    const [baseHours, baseMinutes] = baseTime.split(':').map(Number);
+
+    // Пробуем сдвинуть на 30 минут
+    for (let i = 1; i <= 6; i++) {
+      const minutes = (baseMinutes + i * 30) % 60;
+      const hours = baseHours + Math.floor((baseMinutes + i * 30) / 60);
+
+      const newTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+
+      if (!usedTimes.has(newTime)) {
+        return newTime;
+      }
+    }
+
+    // Если все занято, возвращаем исходное
+    return baseTime;
   }
 
   // Показать настройки напоминаний
