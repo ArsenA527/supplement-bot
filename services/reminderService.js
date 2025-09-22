@@ -174,6 +174,74 @@ class ReminderService {
     });
   }
 
+  // Получить историю приема
+  async getIntakeHistory(chatId, days = 7) {
+    return new Promise((resolve) => {
+      const sinceDate = new Date();
+      sinceDate.setDate(sinceDate.getDate() - days);
+
+      db.all(
+        `SELECT * FROM intake_history
+        WHERE chat_id = ? AND datetime(taken_at) >= datetime(?)
+        ORDER BY taken_at DESC`,
+        [chatId, sinceDate.toISOString()],
+        (err, history) => {
+          if (err) {
+            console.error('❌ Ошибка получения истории:', err);
+            resolve([]);
+          } else {
+            resolve(history);
+          }
+        }
+      );
+    });
+  }
+
+  // Получить статистику приема
+  async getIntakeStats(chatId, days = 30) {
+    const history = await this.getIntakeHistory(chatId, days);
+
+    const stats = {
+      total: history.length,
+      taken: history.filter(item => item.status === 'taken').length,
+      skipped: history.filter(item => item.status === 'skipped').length,
+      missed: history.filter(item => item.status === 'missed').length,
+      compliance: 0
+    };
+
+    if (stats.total > 0) {
+      stats.compliance = Math.round((stats.taken / stats.total) * 100);
+    }
+
+    return stats;
+  }
+
+  // Получить самые частые пропуски
+  async getMostSkippedSupplements(chatId, days = 30) {
+    return new Promise((resolve) => {
+      const sinceDate = new Date();
+      sinceDate.setDate(sinceDate.getDate() - days);
+
+      db.all(
+        `SELECT supplement_name, COUNT(*) as skip_count
+        FROM intake_history
+        WHERE chat_id = ? AND status = 'skipped' AND taken_at >= ?
+        GROUP BY supplement_name
+        ORDER BY skip_count DESC
+        LIMIT 5`,
+        [chatId, sinceDate.toISOString()],
+        (err, results) => {
+          if (err) {
+            console.error('❌ Ошибка получения статистики пропусков:', err);
+            resolve([]);
+          } else {
+            resolve(results);
+          }
+        }
+      );
+    });
+  }
+
   // Записать прием добавки
   async recordIntake(chatId, intakeData) {
     return new Promise((resolve, reject) => {
