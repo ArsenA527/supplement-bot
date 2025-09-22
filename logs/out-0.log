@@ -345,3 +345,299 @@
 2025-09-18T11:31:47: 📊 User 725240491 is premium: false
 2025-09-18T11:31:47: 📋 Free questions: 8, Premium questions: 16
 2025-09-18T11:31:47: 🎯 Selected 8 questions for user
+2025-09-19T13:52:43: [dotenv@17.2.1] injecting env (1) from .env -- tip: 📡 auto-backup env with Radar: https://dotenvx.com/radar
+2025-09-19T13:52:43: ✅ База данных инициализирована
+2025-09-19T13:52:43: ✅ Таблицы напоминаний созданы
+2025-09-19T13:52:43: 🔧 ReminderService initialized with telegram: true
+2025-09-19T13:52:43: ⏰ Инициализация сервиса напоминаний...
+2025-09-19T13:52:43: ⏰ Напоминание запланировано: Тестовая добавка в 00:01
+2025-09-19T13:52:43: ⏰ Напоминание запланировано: Тестовая добавка в 00:01
+2025-09-19T13:52:43: ⏰ Напоминание запланировано: Тестовая добавка в 00:01
+2025-09-19T13:52:43: ✅ Загружено 3 напоминаний
+2025-09-19T13:52:43: ⏰ Запущен альтернативный проверщик напоминаний
+2025-09-19T13:52:43: ✅ Сервис напоминаний инициализирован
+2025-09-19T13:52:43: ✅ Сервис напоминаний инициализирован
+2025-09-19T13:52:44: 🤖 Бот запущен
+2025-09-19T13:52:48: 📨 Текст получен: "ℹ️ Помощь" от 725240491
+2025-09-19T13:52:48: 🔍 Это команда меню, передаем в botController
+2025-09-19T13:52:48: 🎮 Обработка текстовой команды: "ℹ️ Помощь"
+2025-09-19T13:52:48: ℹ️ Показ помощи
+2025-09-19T13:52:56: 📨 Текст получен: "💳 Подписка" от 725240491
+2025-09-19T13:52:56: 🔍 Это команда меню, передаем в botController
+2025-09-19T13:52:56: 🎮 Обработка текстовой команды: "💳 Подписка"
+2025-09-19T13:52:56: 💳 Информация о подписках
+2025-09-19T14:33:07: 📨 Текст получен: "📋 Пройти опрос" от 1590215063
+2025-09-19T14:33:07: 🔍 Это команда меню, передаем в botController
+2025-09-19T14:33:07: 🎮 Обработка текстовой команды: "📋 Пройти опрос"
+2025-09-19T14:33:07: 🚀 Запуск опроса
+2025-09-19T14:33:07: 📊 User 1590215063 is premium: true
+2025-09-19T14:33:07: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:33:07: 🎯 Selected 16 questions for user
+2025-09-19T14:33:07: 📊 User 1590215063 is premium: true
+2025-09-19T14:33:07: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:33:07: 🎯 Selected 16 questions for user
+2025-09-19T14:33:21: 📨 Текст получен: "40" от 1590215063
+2025-09-19T14:33:21: 📊 User 1590215063 is premium: true
+2025-09-19T14:33:21: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:33:21: 🎯 Selected 16 questions for user
+2025-09-19T14:33:21: 🔍 Пользователь в опросе, передаем в surveyController
+2025-09-19T14:33:21: 📊 User 1590215063 is premium: true
+2025-09-19T14:33:21: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:33:21: 🎯 Selected 16 questions for user
+2025-09-19T14:33:21: 📊 User 1590215063 is premium: true
+2025-09-19T14:33:21: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:33:21: 🎯 Selected 16 questions for user
+2025-09-19T14:33:21: 📊 User 1590215063 is premium: true
+2025-09-19T14:33:21: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:33:21: 🎯 Selected 16 questions for user
+2025-09-19T14:33:26: 📨 Текст получен: "156" от 1590215063
+2025-09-19T14:33:26: 📊 User 1590215063 is premium: true
+2025-09-19T14:33:26: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:33:26: 🎯 Selected 16 questions for user
+2025-09-19T14:33:26: 🔍 Пользователь в опросе, передаем в surveyController
+2025-09-19T14:33:26: 📊 User 1590215063 is premium: true
+2025-09-19T14:33:26: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:33:26: 🎯 Selected 16 questions for user
+2025-09-19T14:33:26: 📊 User 1590215063 is premium: true
+2025-09-19T14:33:26: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:33:26: 🎯 Selected 16 questions for user
+2025-09-19T14:33:26: 📊 User 1590215063 is premium: true
+2025-09-19T14:33:26: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:33:26: 🎯 Selected 16 questions for user
+2025-09-19T14:33:35: 📨 Текст получен: "58" от 1590215063
+2025-09-19T14:33:35: 📊 User 1590215063 is premium: true
+2025-09-19T14:33:35: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:33:35: 🎯 Selected 16 questions for user
+2025-09-19T14:33:35: 🔍 Пользователь в опросе, передаем в surveyController
+2025-09-19T14:33:35: 📊 User 1590215063 is premium: true
+2025-09-19T14:33:35: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:33:35: 🎯 Selected 16 questions for user
+2025-09-19T14:33:35: 📊 User 1590215063 is premium: true
+2025-09-19T14:33:35: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:33:35: 🎯 Selected 16 questions for user
+2025-09-19T14:33:35: 📊 User 1590215063 is premium: true
+2025-09-19T14:33:35: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:33:35: 🎯 Selected 16 questions for user
+2025-09-19T14:33:41: 📨 Callback received: q3a0
+2025-09-19T14:33:41: 🔵 Обработка callback: q3a0
+2025-09-19T14:33:41: 📊 Обработка ответа на вопрос 3: q3a0
+2025-09-19T14:33:41: 📊 User 1590215063 is premium: true
+2025-09-19T14:33:41: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:33:41: 🎯 Selected 16 questions for user
+2025-09-19T14:33:41: ✅ Ответ сохранен: smoking = Курю регулярно
+2025-09-19T14:33:41: 📊 User 1590215063 is premium: true
+2025-09-19T14:33:41: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:33:41: 🎯 Selected 16 questions for user
+2025-09-19T14:33:45: 📨 Callback received: q4a2
+2025-09-19T14:33:45: 🔵 Обработка callback: q4a2
+2025-09-19T14:33:45: 📊 Обработка ответа на вопрос 4: q4a2
+2025-09-19T14:33:45: 📊 User 1590215063 is premium: true
+2025-09-19T14:33:45: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:33:45: 🎯 Selected 16 questions for user
+2025-09-19T14:33:45: ✅ Ответ сохранен: alcohol = Не употребляю
+2025-09-19T14:33:45: 📊 User 1590215063 is premium: true
+2025-09-19T14:33:45: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:33:45: 🎯 Selected 16 questions for user
+2025-09-19T14:34:02: 📨 Callback received: q5a4
+2025-09-19T14:34:02: 🔵 Обработка callback: q5a4
+2025-09-19T14:34:02: 📊 Обработка ответа на вопрос 5: q5a4
+2025-09-19T14:34:02: 📊 User 1590215063 is premium: true
+2025-09-19T14:34:02: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:34:02: 🎯 Selected 16 questions for user
+2025-09-19T14:34:02: ✅ Ответ сохранен: diet = Сбалансированное питание
+2025-09-19T14:34:02: 📊 User 1590215063 is premium: true
+2025-09-19T14:34:02: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:34:02: 🎯 Selected 16 questions for user
+2025-09-19T14:34:08: 📨 Callback received: q6a1
+2025-09-19T14:34:08: 🔵 Обработка callback: q6a1
+2025-09-19T14:34:08: 📊 Обработка ответа на вопрос 6: q6a1
+2025-09-19T14:34:08: 📊 User 1590215063 is premium: true
+2025-09-19T14:34:08: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:34:08: 🎯 Selected 16 questions for user
+2025-09-19T14:34:08: ✅ Ответ сохранен: blood_pressure = Нормальное (110–130/70–85)
+2025-09-19T14:34:08: 📊 User 1590215063 is premium: true
+2025-09-19T14:34:08: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:34:08: 🎯 Selected 16 questions for user
+2025-09-19T14:34:21: 📨 Callback received: q7a0
+2025-09-19T14:34:21: 🔵 Обработка callback: q7a0
+2025-09-19T14:34:21: 📊 Обработка ответа на вопрос 7: q7a0
+2025-09-19T14:34:21: 📊 User 1590215063 is premium: true
+2025-09-19T14:34:21: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:34:21: 🎯 Selected 16 questions for user
+2025-09-19T14:34:21: ✅ Ответ сохранен: chronic = Нет
+2025-09-19T14:34:21: 📊 User 1590215063 is premium: true
+2025-09-19T14:34:21: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:34:21: 🎯 Selected 16 questions for user
+2025-09-19T14:34:29: 📨 Callback received: q8a2
+2025-09-19T14:34:29: 🔵 Обработка callback: q8a2
+2025-09-19T14:34:29: 📊 Обработка ответа на вопрос 8: q8a2
+2025-09-19T14:34:29: 📊 User 1590215063 is premium: true
+2025-09-19T14:34:29: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:34:29: 🎯 Selected 16 questions for user
+2025-09-19T14:34:29: ✅ Ответ сохранен: sleep = Просыпаюсь ночью
+2025-09-19T14:34:29: 📊 User 1590215063 is premium: true
+2025-09-19T14:34:29: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:34:29: 🎯 Selected 16 questions for user
+2025-09-19T14:34:34: 📨 Callback received: q9a1
+2025-09-19T14:34:34: 🔵 Обработка callback: q9a1
+2025-09-19T14:34:34: 📊 Обработка ответа на вопрос 9: q9a1
+2025-09-19T14:34:34: 📊 User 1590215063 is premium: true
+2025-09-19T14:34:34: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:34:34: 🎯 Selected 16 questions for user
+2025-09-19T14:34:34: ✅ Ответ сохранен: energy = Устаю к вечеру
+2025-09-19T14:34:34: 📊 User 1590215063 is premium: true
+2025-09-19T14:34:34: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:34:34: 🎯 Selected 16 questions for user
+2025-09-19T14:34:39: 📨 Callback received: q10a3
+2025-09-19T14:34:39: 🔵 Обработка callback: q10a3
+2025-09-19T14:34:39: 📊 Обработка ответа на вопрос 10: q10a3
+2025-09-19T14:34:39: 📊 User 1590215063 is premium: true
+2025-09-19T14:34:39: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:34:39: 🎯 Selected 16 questions for user
+2025-09-19T14:34:39: ✅ Ответ сохранен: stress = Постоянный стресс
+2025-09-19T14:34:39: 📊 User 1590215063 is premium: true
+2025-09-19T14:34:39: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:34:39: 🎯 Selected 16 questions for user
+2025-09-19T14:34:47: 📨 Callback received: q11a1
+2025-09-19T14:34:47: 🔵 Обработка callback: q11a1
+2025-09-19T14:34:47: 📊 Обработка ответа на вопрос 11: q11a1
+2025-09-19T14:34:47: 📊 User 1590215063 is premium: true
+2025-09-19T14:34:47: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:34:47: 🎯 Selected 16 questions for user
+2025-09-19T14:34:47: ✅ Ответ сохранен: symptoms = Волосы выпадают
+2025-09-19T14:34:47: 📊 User 1590215063 is premium: true
+2025-09-19T14:34:47: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:34:47: 🎯 Selected 16 questions for user
+2025-09-19T14:34:47: 📨 Callback received: q11a1
+2025-09-19T14:34:47: 🔵 Обработка callback: q11a1
+2025-09-19T14:34:47: 📊 Обработка ответа на вопрос 12: q11a1
+2025-09-19T14:34:47: 📊 User 1590215063 is premium: true
+2025-09-19T14:34:47: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:34:47: 🎯 Selected 16 questions for user
+2025-09-19T14:34:47: ⚠️ Несоответствие индекса вопроса
+2025-09-19T14:34:53: 📨 Callback received: q12a1
+2025-09-19T14:34:53: 🔵 Обработка callback: q12a1
+2025-09-19T14:34:53: 📊 Обработка ответа на вопрос 12: q12a1
+2025-09-19T14:34:53: 📊 User 1590215063 is premium: true
+2025-09-19T14:34:53: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:34:53: 🎯 Selected 16 questions for user
+2025-09-19T14:34:53: ✅ Ответ сохранен: libido = Снижение интереса
+2025-09-19T14:34:53: 📊 User 1590215063 is premium: true
+2025-09-19T14:34:53: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:34:53: 🎯 Selected 16 questions for user
+2025-09-19T14:34:59: 📨 Текст получен: "Москва" от 1590215063
+2025-09-19T14:34:59: 📊 User 1590215063 is premium: true
+2025-09-19T14:34:59: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:34:59: 🎯 Selected 16 questions for user
+2025-09-19T14:34:59: 🔍 Пользователь в опросе, передаем в surveyController
+2025-09-19T14:34:59: 📊 User 1590215063 is premium: true
+2025-09-19T14:34:59: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:34:59: 🎯 Selected 16 questions for user
+2025-09-19T14:34:59: 📊 User 1590215063 is premium: true
+2025-09-19T14:34:59: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:34:59: 🎯 Selected 16 questions for user
+2025-09-19T14:34:59: 📊 User 1590215063 is premium: true
+2025-09-19T14:34:59: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:34:59: 🎯 Selected 16 questions for user
+2025-09-19T14:35:04: 📨 Callback received: q14a0
+2025-09-19T14:35:04: 🔵 Обработка callback: q14a0
+2025-09-19T14:35:04: 📊 Обработка ответа на вопрос 14: q14a0
+2025-09-19T14:35:04: 📊 User 1590215063 is premium: true
+2025-09-19T14:35:04: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:35:04: 🎯 Selected 16 questions for user
+2025-09-19T14:35:04: ✅ Ответ сохранен: activity = Минимальный (сидячая работа)
+2025-09-19T14:35:04: 📊 User 1590215063 is premium: true
+2025-09-19T14:35:04: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:35:04: 🎯 Selected 16 questions for user
+2025-09-19T14:35:10: 📨 Callback received: q15a0
+2025-09-19T14:35:10: 🔵 Обработка callback: q15a0
+2025-09-19T14:35:10: 📊 Обработка ответа на вопрос 15: q15a0
+2025-09-19T14:35:10: 📊 User 1590215063 is premium: true
+2025-09-19T14:35:10: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:35:10: 🎯 Selected 16 questions for user
+2025-09-19T14:35:10: ✅ Ответ сохранен: goal = Энергия и бодрость
+2025-09-19T14:35:10: 📊 User 1590215063 is premium: true
+2025-09-19T14:35:10: 📋 Free questions: 8, Premium questions: 16
+2025-09-19T14:35:10: 🎯 Selected 16 questions for user
+2025-09-19T16:09:50: 📨 Текст получен: "ℹ️ Помощь" от 725240491
+2025-09-19T16:09:50: 🔍 Это команда меню, передаем в botController
+2025-09-19T16:09:50: 🎮 Обработка текстовой команды: "ℹ️ Помощь"
+2025-09-19T16:09:50: ℹ️ Показ помощи
+2025-09-19T16:11:03: 🔧 ReminderService initialized with telegram: false
+2025-09-19T16:11:03: ⏰ Напоминание запланировано: Тестовая добавка в 00:01
+2025-09-19T16:20:51: 🔵 Обработка кнопки Принял для reminder: 15
+2025-09-19T16:20:51: 📝 Записываем прием для: Тестовая добавка
+2025-09-19T16:20:51: 🔧 ReminderService initialized with telegram: false
+2025-09-19T16:20:51: ✅ Прием записан в историю
+2025-09-19T16:20:51: 🗑️ Сообщение удалено
+2025-09-19T16:21:24: 📨 Текст получен: "testremindernow" от 1590215063
+2025-09-19T16:21:24: 🔍 Пользователь не в опросе, передаем в botController
+2025-09-19T16:21:24: 🎮 Обработка текстовой команды: "testremindernow"
+2025-09-19T16:21:24: ❓ Неизвестная команда
+2025-09-19T16:23:17: 🔧 ReminderService initialized with telegram: false
+2025-09-19T16:23:17: ⏰ Напоминание запланировано: Тестовая добавка в 00:01
+2025-09-19T16:23:43: 🔵 Обработка кнопки Принял для reminder: 16
+2025-09-19T16:23:43: 📝 Записываем прием для: Тестовая добавка
+2025-09-19T16:23:43: 🔧 ReminderService initialized with telegram: false
+2025-09-19T16:23:43: ✅ Прием записан в историю
+2025-09-19T16:23:43: 🗑️ Сообщение удалено
+2025-09-19T16:24:03: 🔧 ReminderService initialized with telegram: false
+2025-09-19T16:24:03: ⏰ Напоминание запланировано: Тестовая добавка в 00:01
+2025-09-19T16:24:05: 🔵 Обработка кнопки Принял для reminder: 17
+2025-09-19T16:24:05: 📝 Записываем прием для: Тестовая добавка
+2025-09-19T16:24:05: 🔧 ReminderService initialized with telegram: false
+2025-09-19T16:24:05: ✅ Прием записан в историю
+2025-09-19T16:24:05: 🗑️ Сообщение удалено
+2025-09-19T16:24:44: 📨 Текст получен: "testremindernow/" от 1590215063
+2025-09-19T16:24:44: 🔍 Пользователь не в опросе, передаем в botController
+2025-09-19T16:24:44: 🎮 Обработка текстовой команды: "testremindernow/"
+2025-09-19T16:24:44: ❓ Неизвестная команда
+2025-09-19T16:25:00: 🔧 ReminderService initialized with telegram: false
+2025-09-19T16:25:00: ⏰ Напоминание запланировано: Тестовая добавка в 00:01
+2025-09-19T16:25:07: 🔵 Обработка кнопки Принял для reminder: 18
+2025-09-19T16:25:07: 📝 Записываем прием для: Тестовая добавка
+2025-09-19T16:25:07: 🔧 ReminderService initialized with telegram: false
+2025-09-19T16:25:07: ✅ Прием записан в историю
+2025-09-19T16:25:07: 🗑️ Сообщение удалено
+2025-09-19T16:58:29: 🔧 ReminderService initialized with telegram: false
+2025-09-19T16:58:29: ⏰ Напоминание запланировано: Тестовая добавка в 00:01
+2025-09-19T16:58:31: 🔵 Обработка кнопки Пропустить для reminder: 19
+2025-09-19T16:58:31: 🔧 ReminderService initialized with telegram: false
+2025-09-19T20:27:16: 🔧 ReminderService initialized with telegram: false
+2025-09-19T20:27:16: ⏰ Напоминание запланировано: Тестовая добавка в 00:01
+2025-09-19T20:27:19: 🔵 Обработка кнопки Принял для reminder: 20
+2025-09-19T20:27:19: 📝 Записываем прием для: Тестовая добавка
+2025-09-19T20:27:19: 🔧 ReminderService initialized with telegram: false
+2025-09-19T20:27:19: ✅ Прием записан в историю
+2025-09-19T20:27:19: 🗑️ Сообщение удалено
+2025-09-20T00:01:23: 🔍 Найдено 9 напоминаний для времени 00:01
+2025-09-20T00:01:53: 🔍 Найдено 9 напоминаний для времени 00:01
+2025-09-20T19:48:31: 📨 Текст получен: "👤 Мой профиль" от 725240491
+2025-09-20T19:48:31: 🔍 Это команда меню, передаем в botController
+2025-09-20T19:48:31: 🎮 Обработка текстовой команды: "👤 Мой профиль"
+2025-09-20T19:48:31: 👤 Показ профиля
+2025-09-20T19:48:32: 📨 Текст получен: "ℹ️ Помощь" от 725240491
+2025-09-20T19:48:32: 🔍 Это команда меню, передаем в botController
+2025-09-20T19:48:32: 🎮 Обработка текстовой команды: "ℹ️ Помощь"
+2025-09-20T19:48:32: ℹ️ Показ помощи
+2025-09-20T19:48:36: 📨 Текст получен: "💳 Подписка" от 725240491
+2025-09-20T19:48:36: 🔍 Это команда меню, передаем в botController
+2025-09-20T19:48:36: 🎮 Обработка текстовой команды: "💳 Подписка"
+2025-09-20T19:48:36: 💳 Информация о подписках
+2025-09-20T19:48:37: 📨 Текст получен: "💊 Мои рекомендации" от 725240491
+2025-09-20T19:48:37: 🔍 Это команда меню, передаем в botController
+2025-09-20T19:48:37: 🎮 Обработка текстовой команды: "💊 Мои рекомендации"
+2025-09-20T19:48:37: 💊 Показ рекомендаций
+2025-09-21T00:01:13: 🔍 Найдено 9 напоминаний для времени 00:01
+2025-09-21T00:01:43: 🔍 Найдено 9 напоминаний для времени 00:01
+2025-09-21T07:03:29: 📨 Текст получен: "ℹ️ Помощь" от 725240491
+2025-09-21T07:03:29: 🔍 Это команда меню, передаем в botController
+2025-09-21T07:03:29: 🎮 Обработка текстовой команды: "ℹ️ Помощь"
+2025-09-21T07:03:29: ℹ️ Показ помощи
+2025-09-21T07:03:32: 🔧 ReminderService initialized with telegram: false
+2025-09-21T14:53:05: 📨 Текст получен: "👤 Мой профиль" от 725240491
+2025-09-21T14:53:05: 🔍 Это команда меню, передаем в botController
+2025-09-21T14:53:05: 🎮 Обработка текстовой команды: "👤 Мой профиль"
+2025-09-21T14:53:05: 👤 Показ профиля
+2025-09-22T00:01:04: 🔍 Найдено 9 напоминаний для времени 00:01
+2025-09-22T00:01:34: 🔍 Найдено 9 напоминаний для времени 00:01
