@@ -4,14 +4,40 @@ const surveyService = require('../services/surveyService');
 const { getMainMenuKeyboard } = require('../keyboards');
 
 module.exports = {
+  // Тест напоминаний прямо сейчас
   testRemindersNow: async (ctx) => {
     try {
       const service = new ReminderService(ctx.telegram);
       await service.checkDueReminders();
-      ctx.reply('🔍 Проверка напоминаний выполнена');
+      ctx.reply('🔍 Проверка напоминаний выполнена!');
     } catch (error) {
       console.error('❌ Ошибка теста напоминаний:', error);
       ctx.reply('❌ Ошибка проверки напоминаний');
+    }
+  },
+
+  // Принудительно создать напоминания из рекомендаций
+  createRemindersFromPlan: async (ctx) => {
+    try {
+      const chatId = ctx.chat.id;
+      const surveyService = require('../services/surveyService');
+      const recommendationService = require('../services/recommendationService');
+
+      const answers = await surveyService.getSurveyResults(chatId);
+      if (!answers) {
+        ctx.reply('❌ Сначала пройдите опрос: /survey');
+        return;
+      }
+
+      const recommendations = recommendationService.generateRecommendations(answers);
+      const reminderController = require('../controllers/reminderController');
+
+      const count = await reminderController.createRemindersFromRecommendations(ctx, recommendations);
+      ctx.reply(`✅ Создано ${count} напоминаний из вашего плана!`);
+
+    } catch (error) {
+      console.error('❌ Ошибка создания напоминаний из плана:', error);
+      ctx.reply('❌ Ошибка создания напоминаний');
     }
   },
 

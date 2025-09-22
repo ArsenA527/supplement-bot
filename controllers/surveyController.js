@@ -164,7 +164,8 @@ function completeSurvey(ctx) {
       const message = recommendationService.formatRecommendations(recommendations);
 
       try {
-        await ReminderController.createRemindersFromRecommendations(ctx, recommendations);
+        const reminderController = require('./reminderController');
+        await reminderController.createRemindersFromRecommendations(ctx, recommendations);
       } catch (error) {
         console.error('❌ Ошибка создания напоминаний:', error);
       }

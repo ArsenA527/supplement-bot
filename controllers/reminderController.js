@@ -25,70 +25,66 @@ class ReminderController {
       // Сначала удаляем старые напоминания
       await this.clearUserReminders(chatId);
 
-      // Умное распределение времени по умолчанию
+      // Умное распределение времени
       const timeSlots = {
-        'утром': '08:00',
-        'утро': '08:00',
-        'днем': '13:00',
-        'дневное': '13:00',
-        'вечером': '20:00',
-        'вечер': '20:00',
-        'перед сном': '22:00',
-        'сон': '22:00',
-        'с едой': '12:00',
-        'еда': '12:00',
+        'утром': '08:00', 'утро': '08:00',
+        'днем': '13:00', 'дневное': '13:00',
+        'вечером': '20:00', 'вечер': '20:00',
+        'перед сном': '22:00', 'сон': '22:00',
+        'с едой': '12:00', 'еда': '12:00',
         'после еды': '13:00'
       };
 
       let createdCount = 0;
-      const timeDistribution = {};
+      const usedTimes = new Set();
 
-      // Распределяем добавки по разным временам
       for (const supplement of recommendations) {
         const timeKey = supplement.time.toLowerCase();
         let time = timeSlots[timeKey] || '10:00';
 
-        // Если время уже занято, сдвигаем на 30 минут
-        if (timeDistribution[time]) {
-          const [hours, minutes] = time.split(':').map(Number);
-          const newMinutes = (minutes + 30) % 60;
-          const newHours = minutes + 30 >= 60 ? hours + 1 : hours;
-          time = `${String(newHours).padStart(2, '0')}:${String(newMinutes).padStart(2, '0')}`;
+        // Если время уже занято, находим свободное
+        if (usedTimes.has(time)) {
+          time = this.findAvailableTime(usedTimes, time);
         }
 
-        timeDistribution[time] = true;
+        usedTimes.add(time);
 
         try {
           await this.reminderService.createReminder(chatId, {
             supplement_name: supplement.name,
             dosage: supplement.dosage,
             time: time,
-            days: '1111111' // Все дни недели
+            days: '1111111'
           });
           createdCount++;
-
-          console.log(`✅ Создано напоминание: ${supplement.name} в ${time}`);
 
         } catch (error) {
           console.error('❌ Ошибка создания напоминания:', error);
         }
       }
 
+      // Отправляем расписание пользователю
       if (createdCount > 0) {
-        // Сообщение об успешном создании
-        ctx.reply(`✅ Создано ${createdCount} напоминаний! Вы будете получать уведомления:\n\n` +
-                `📅 *Расписание:*\n` +
-                Object.keys(timeDistribution).sort().map(t => `⏰ ${t}`).join('\n') +
-                `\n\nИспользуйте /myreminders для просмотра всех напоминаний.`,
+        const sortedTimes = Array.from(usedTimes).sort();
+        let scheduleMessage = `📅 *Ваше расписание:*\n`;
+
+        sortedTimes.forEach(t => {
+          scheduleMessage += `⏰ ${t}\n`;
+        });
+
+        ctx.reply(`✅ Создано ${createdCount} напоминаний!\n\n${scheduleMessage}\nВы будете получать уведомления в указанное время.`,
           { parse_mode: 'Markdown' }
         );
       }
 
+      return createdCount;
+
     } catch (error) {
-      console.error('❌ Ошибка создания напоминаний из рекомендаций:', error);
-      ctx.reply('❌ Не удалось настроить напоминания. Попробуйте позже вручную: /reminders');
+      console.error('❌ Ошибка создания напоминаний:', error);
+      throw error;
     }
   }
+
   // Очистить напоминания пользователя
   async clearUserReminders(chatId) {
     return new Promise((resolve) => {
@@ -98,6 +94,26 @@ class ReminderController {
         resolve();
       });
     });
+  }
+
+  // Вспомогательный метод для поиска свободного времени
+  findAvailableTime(usedTimes, baseTime) {
+    const [baseHours, baseMinutes] = baseTime.split(':').map(Number);
+
+    // Пробуем сдвинуть на 30 минут
+    for (let i = 1; i <= 6; i++) {
+      const minutes = (baseMinutes + i * 30) % 60;
+      const hours = baseHours + Math.floor((baseMinutes + i * 30) / 60);
+
+      const newTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+
+      if (!usedTimes.has(newTime)) {
+        return newTime;
+      }
+    }
+
+    // Если все занято, возвращаем исходное
+    return baseTime;
   }
 
   // Показать настройки напоминаний
