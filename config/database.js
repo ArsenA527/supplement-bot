@@ -92,6 +92,18 @@ db.serialize(() => {
   )`);
 
   console.log('✅ Таблицы напоминаний созданы');
+
+  db.run(`CREATE TABLE IF NOT EXISTS intake_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chat_id INTEGER,
+    supplement_name TEXT,
+    dosage TEXT,
+    taken_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status TEXT DEFAULT 'taken',
+    FOREIGN KEY (chat_id) REFERENCES users (chat_id)
+  )`);
+
+  console.log('✅ Таблица истории приема создана/проверена');
 });
 
 // Graceful shutdown
