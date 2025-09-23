@@ -178,23 +178,21 @@ bot.action(/intake_taken_(\d+)/, async (ctx) => {
   try {
     const reminderId = ctx.match[1];
 
-    // Получаем информацию о напоминании
     db.get('SELECT * FROM reminders WHERE id = ?', [reminderId], async (err, reminder) => {
       if (err) {
         console.error('❌ Ошибка БД:', err);
-        ctx.answerCbQuery('❌ Ошибка базы данных');
+        await ctx.answerCbQuery('❌ Ошибка базы данных');
         return;
       }
 
       if (!reminder) {
         console.log('❌ Напоминание не найдено ID:', reminderId);
-        ctx.answerCbQuery('❌ Напоминание не найдено');
+        await ctx.answerCbQuery('❌ Напоминание не найдено');
         return;
       }
 
       console.log('📝 Записываем прием для:', reminder.supplement_name);
 
-      // Записываем в историю как "принято"
       try {
         const ReminderService = require('./services/reminderService');
         const service = new ReminderService(ctx.telegram);
@@ -206,8 +204,7 @@ bot.action(/intake_taken_(\d+)/, async (ctx) => {
         });
 
         console.log('✅ Прием записан в историю');
-
-        ctx.answerCbQuery('✅ Прием подтвержден!');
+        await ctx.answerCbQuery('✅ Прием подтвержден!');
 
         // Удаляем сообщение с кнопками
         try {
@@ -218,17 +215,17 @@ bot.action(/intake_taken_(\d+)/, async (ctx) => {
         }
 
         // Отправляем подтверждение
-        await ctx.reply(`💊 Прием "${reminder.supplement_name}" записан!`);
+        await NotificationManager.success(ctx, `💊 Прием "${reminder.supplement_name}" записан!`);
 
       } catch (error) {
         console.error('❌ Ошибка записи приема:', error);
-        ctx.answerCbQuery('❌ Ошибка подтверждения');
+        await ctx.answerCbQuery('❌ Ошибка подтверждения');
       }
     });
 
   } catch (error) {
     console.error('❌ Общая ошибка обработки:', error);
-    ctx.answerCbQuery('❌ Ошибка обработки');
+    await ctx.answerCbQuery('❌ Ошибка обработки');
   }
 });
 
@@ -240,11 +237,10 @@ bot.action(/intake_skipped_(\d+)/, async (ctx) => {
 
     db.get('SELECT * FROM reminders WHERE id = ?', [reminderId], async (err, reminder) => {
       if (err || !reminder) {
-        ctx.answerCbQuery('❌ Напоминание не найдено');
+        await ctx.answerCbQuery('❌ Напоминание не найдено');
         return;
       }
 
-      // Записываем в историю как "пропущено"
       try {
         const ReminderService = require('./services/reminderService');
         const service = new ReminderService(ctx.telegram);
@@ -255,27 +251,25 @@ bot.action(/intake_skipped_(\d+)/, async (ctx) => {
           status: 'skipped'
         });
 
-        ctx.answerCbQuery('⏭️ Прием пропущен');
+        await ctx.answerCbQuery('⏭️ Прием пропущен');
 
-        // Удаляем сообщение с кнопками
         try {
           await ctx.deleteMessage();
         } catch (deleteError) {
-          console.log('Не удалось удалить сообщение');
+          console.log('⚠️ Не удалось удалить сообщение');
         }
 
-        // Отправляем подтверждение
-        await ctx.reply(`💊 Прием "${reminder.supplement_name}" пропущен.`);
+        await NotificationManager.warning(ctx, `💊 Прием "${reminder.supplement_name}" пропущен.`);
 
       } catch (error) {
         console.error('❌ Ошибка записи пропуска:', error);
-        ctx.answerCbQuery('❌ Ошибка обработки пропуска');
+        await ctx.answerCbQuery('❌ Ошибка обработки пропуска');
       }
     });
 
   } catch (error) {
     console.error('❌ Общая ошибка обработки пропуска:', error);
-    ctx.answerCbQuery('❌ Ошибка обработки');
+    await ctx.answerCbQuery('❌ Ошибка обработки');
   }
 });
 
@@ -287,49 +281,41 @@ bot.action(/intake_later_(\d+)/, async (ctx) => {
 
     db.get('SELECT * FROM reminders WHERE id = ?', [reminderId], async (err, reminder) => {
       if (err || !reminder) {
-        ctx.answerCbQuery('❌ Напоминание не найдено');
+        await ctx.answerCbQuery('❌ Напоминание не найдено');
         return;
       }
 
-      ctx.answerCbQuery('⏰ Напомню через 1 минуту');
+      await ctx.answerCbQuery('⏰ Напомню через 10 минут');
 
-      // Удаляем оригинальное сообщение
       try {
         await ctx.deleteMessage();
       } catch (deleteError) {
-        console.log('Сообщение уже удалено');
+        console.log('⚠️ Сообщение уже удалено');
       }
 
-      // Напомнить через 1 минуту (для теста)
+      // Напомнить через 10 минут
       setTimeout(async () => {
         try {
-          const keyboard = {
-            reply_markup: {
-              inline_keyboard: [
-                [
-                  { text: '✅ Принял', callback_data: `intake_taken_${reminder.id}` },
-                  { text: '⏰ Еще раз', callback_data: `intake_later_${reminder.id}` },
-                  { text: '❌ Пропустить', callback_data: `intake_skipped_${reminder.id}` }
-                ]
-              ]
-            }
-          };
+          const { getReminderActionsKeyboard } = require('./keyboards');
 
           await ctx.reply(
             `⏰ *Напоминание (повторно)!*\n\n💊 ${reminder.supplement_name}\n📏 ${reminder.dosage}\n\nПодтвердите прием:`,
-            { parse_mode: 'Markdown', ...keyboard }
+            {
+              parse_mode: 'Markdown',
+              ...getReminderActionsKeyboard(reminder.id)
+            }
           );
         } catch (error) {
           console.error('❌ Ошибка повторного напоминания:', error);
         }
-      }, 60000); // 1 минута
+      }, 600000); // 10 минут
 
-      await ctx.reply(`⏰ Напомню о приеме "${reminder.supplement_name}" через 1 минуту.`);
+      await NotificationManager.info(ctx, `⏰ Напомню о приеме "${reminder.supplement_name}" через 10 минут.`);
     });
 
   } catch (error) {
     console.error('❌ Ошибка обработки напоминания позже:', error);
-    ctx.answerCbQuery('❌ Ошибка отложенного напоминания');
+    await ctx.answerCbQuery('❌ Ошибка отложенного напоминания');
   }
 });
 
