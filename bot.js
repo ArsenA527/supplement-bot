@@ -377,6 +377,20 @@ bot.action('get_detailed_plan', (ctx) => {
   ctx.answerCbQuery();
 });
 
+bot.action('cancel_survey', async (ctx) => {
+  try {
+    const surveyService = require('./services/surveyService');
+    await surveyService.completeSurvey(ctx.chat.id);
+    await ctx.answerCbQuery('❌ Опрос отменен');
+    await ctx.deleteMessage();
+    await NotificationManager.info(ctx, 'Опрос отменен. Можете начать заново когда будете готовы.');
+    botController.showMainMenu(ctx);
+  } catch (error) {
+    console.error('❌ Ошибка отмены опроса:', error);
+    await ctx.answerCbQuery('❌ Ошибка отмены');
+  }
+});
+
 // ==================== ОБРАБОТКА ТЕКСТА ====================
 
 // Обработка текстовых сообщений
