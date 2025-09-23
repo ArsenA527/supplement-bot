@@ -13,14 +13,30 @@ const testCommands = require('./commands/testCommands');
 
 // Middleware
 const { injectSubscriptionData } = require('./middlewares/subscriptionMiddleware');
-// const userState = {};
-// Middleware для инъекции данных подписки
-bot.use(injectSubscriptionData);
+const { getMainMenuKeyboard } = require('./keyboards');
+
+// Утилиты
+const NotificationManager = require('./utils/notifications');
 
 // Инициализация напоминаний
 const reminderController = new ReminderController(bot);
 reminderController.initialize().then(() => {
   console.log('✅ Сервис напоминаний инициализирован');
+});
+
+// ==================== MIDDLEWARE ====================
+
+// Инъекция данных подписки
+bot.use(injectSubscriptionData);
+
+// Логирование всех сообщений
+bot.use(async (ctx, next) => {
+  const chatId = ctx.chat?.id;
+  const username = ctx.from?.username || 'unknown';
+  const text = ctx.message?.text || ctx.callbackQuery?.data || 'no text';
+
+  console.log(`📨 [${username}:${chatId}] ${text}`);
+  await next();
 });
 
 // ==================== ОСНОВНЫЕ КОМАНДЫ ====================
@@ -364,10 +380,15 @@ bot.on('callback_query', (ctx) => {
     }
 });
 
-// Обработка ошибок
+// Глобальный обработчик ошибок
 bot.catch((err, ctx) => {
-  console.error('❌ Ошибка бота:', err);
-  ctx.reply('⚠️ Произошла ошибка. Попробуйте снова: /start');
+  console.error('❌ Глобальная ошибка:', err);
+
+  const NotificationManager = require('./utils/notifications');
+  NotificationManager.error(ctx,
+    `Произошла непредвиденная ошибка. Пожалуйста, попробуйте снова через несколько минут.\n\n` +
+    `Если ошибка повторяется, используйте /help для связи с поддержкой.`
+  );
 });
 
 // Запуск бота
