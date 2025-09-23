@@ -12,6 +12,18 @@
 /testquestions - Тест вопросов
 
 
+testremindernow
+myreminders
+checkhistory
+reminderstats
+debugsub
+activatepremium
+clearmydata
+testquestions
+testbuttons
+testremindersnow
+createremindersfromplan
+
 # Запуск
 pm2 start ecosystem.config.js --env production
 

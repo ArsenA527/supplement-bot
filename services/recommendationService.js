@@ -77,19 +77,39 @@ function generateRecommendations(answers) {
 
 function formatRecommendations(recommendations) {
   if (recommendations.length === 0) {
-    return '🎉 Отличные привычки! Рекомендуем базовый мультивитаминный комплекс.';
+    return `🎉 *Отличные привычки!*\n\nВаш текущий образ жизни достаточно сбалансирован. Рекомендуем базовый мультивитаминный комплекс для поддержания здоровья.`;
   }
 
-  let message = '🌟 *ВАШИ РЕКОМЕНДАЦИИ:*\n\n';
+  let message = `🌟 *ПЕРСОНАЛЬНЫЕ РЕКОМЕНДАЦИИ*\n\n`;
+  message += `На основе ваших ответов мы подобрали оптимальную программу:\n\n`;
 
   recommendations.forEach((supp, index) => {
-    message += `${index + 1}. 💊 *${supp.name}*\n`;
-    message += `   📏 ${supp.dosage} | ⏰ ${supp.time}\n`;
-    message += `   📝 ${supp.reason}\n\n`;
+    const timeEmoji = getTimeEmoji(supp.time);
+    message += `**${index + 1}. ${supp.name}** ${timeEmoji}\n`;
+    message += `   💊 *Дозировка:* ${supp.dosage}\n`;
+    message += `   ⏰ *Время приема:* ${supp.time}\n`;
+    message += `   📝 *Эффект:* ${supp.reason}\n\n`;
   });
 
-  message += '\n⚠️ *Консультация врача обязательна перед приемом!*';
+  message += `---\n`;
+  message += `💡 *Рекомендации по приему:*\n`;
+  message += `• Принимайте добавки регулярно для лучшего эффекта\n`;
+  message += `️• Запивайте достаточным количеством воды\n`;
+  message += `• Соблюдайте рекомендованные дозировки\n\n`;
+  message += `⚠️ *Консультация врача обязательна перед приемом!*`;
+
   return message;
+}
+
+function getTimeEmoji(time) {
+  const emojis = {
+    'утром': '🌅', 'утро': '🌅',
+    'днем': '☀️', 'дневное': '☀️',
+    'вечером': '🌙', 'вечер': '🌙',
+    'перед сном': '😴', 'сон': '😴',
+    'с едой': '🍽️', 'еда': '🍽️'
+  };
+  return emojis[time.toLowerCase()] || '⏰';
 }
 
 module.exports = { generateRecommendations, formatRecommendations };

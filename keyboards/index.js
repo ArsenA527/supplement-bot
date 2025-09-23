@@ -1,63 +1,196 @@
-function getMainMenuKeyboard() {
+function getMainMenuKeyboard(isPremium = false) {
+  const freeUserButtons = [
+    ['📋 Пройти опрос', '💊 Мои рекомендации'],
+    ['👤 Мой профиль', '💎 Апгрейд до Premium'],
+    ['ℹ️ Помощь', '⚙️ Настройки']
+  ];
+
+  const premiumUserButtons = [
+    ['📋 Новый опрос', '💊 Мои рекомендации'],
+    ['⏰ Мои напоминания', '📊 Статистика'],
+    ['👤 Мой профиль', 'ℹ️ Помощь'],
+    ['⚙️ Настройки напоминаний']
+  ];
+
+  const buttons = isPremium ? premiumUserButtons : freeUserButtons;
+
   return {
     reply_markup: {
-      keyboard: [
-        ['📋 Пройти опрос', '💊 Мои рекомендации'],
-        ['👤 Мой профиль', '💳 Подписка'],
-        ['ℹ️ Помощь']
-      ],
+      keyboard: buttons,
       resize_keyboard: true,
       one_time_keyboard: false
     }
   };
 }
 
-function getQuestionKeyboard(question) {
+// Клавиатура для опросов с прогрессом
+function getQuestionKeyboard(question, progress = { current: 0, total: 0 }) {
   if (!question.options) return null;
 
   const keyboard = question.options.map((option, index) => [
     {
-      text: option,
+      text: `${index + 1}. ${option}`,
       callback_data: `q${question.index}a${index}`
     }
   ]);
 
-  return { reply_markup: { inline_keyboard: keyboard } };
-}
+  // Добавляем прогресс и кнопку отмены
+  const progressText = `📊 ${progress.current}/${progress.total}`;
+  keyboard.push([
+    { text: '❌ Отменить опрос', callback_data: 'cancel_survey' },
+    { text: progressText, callback_data: 'progress_info' }
+  ]);
 
-// Добавляем отсутствующую функцию
-function getReminderSettingsKeyboard() {
   return {
     reply_markup: {
-      keyboard: [
-        ['⏰ Утреннее время', '🌅 Дневное время'],
-        ['🌙 Вечернее время', '🔔 Вкл/Выкл уведомления'],
-        ['🏠 Главное меню']
-      ],
-      resize_keyboard: true
+      inline_keyboard: keyboard
     }
   };
 }
 
-function getIntakeHistoryKeyboard() {
+// Клавиатура действий для напоминаний
+function getReminderActionsKeyboard(reminderId) {
   return {
     reply_markup: {
       inline_keyboard: [
         [
-          { text: '📊 За 7 дней', callback_data: 'history_7' },
-          { text: '📈 За 30 дней', callback_data: 'history_30' }
+          {
+            text: '✅ Принял',
+            callback_data: `intake_taken_${reminderId}`,
+            emoji: '✅'
+          },
+          {
+            text: '⏰ Через 10 мин',
+            callback_data: `intake_later_${reminderId}`,
+            emoji: '⏰'
+          }
         ],
         [
-          { text: '🏠 Главное меню', callback_data: 'main_menu' }
+          {
+            text: '❌ Пропустить',
+            callback_data: `intake_skipped_${reminderId}`,
+            emoji: '❌'
+          },
+          {
+            text: '⚙️ Настройки',
+            callback_data: `reminder_settings_${reminderId}`,
+            emoji: '⚙️'
+          }
         ]
       ]
     }
   };
 }
 
+// Клавиатура настроек напоминаний
+function getReminderSettingsKeyboard() {
+  return {
+    reply_markup: {
+      keyboard: [
+        ['⏰ Утреннее время', '🌅 Дневное время'],
+        ['🌙 Вечернее время', '🔔 Вкл/Выкл уведомления'],
+        ['📋 Мои напоминания', '🏠 Главное меню']
+      ],
+      resize_keyboard: true
+    }
+  };
+}
+
+// Клавиатура истории приема
+function getIntakeHistoryKeyboard() {
+  return {
+    reply_markup: {
+      inline_keyboard: [
+        [
+          {
+            text: '📊 За 7 дней',
+            callback_data: 'history_7',
+            emoji: '📊'
+          },
+          {
+            text: '📈 За 30 дней',
+            callback_data: 'history_30',
+            emoji: '📈'
+          }
+        ],
+        [
+          {
+            text: '🏠 Главное меню',
+            callback_data: 'main_menu',
+            emoji: '🏠'
+          }
+        ]
+      ]
+    }
+  };
+}
+
+// Клавиатура после завершения опроса
+function getSurveyCompletionKeyboard(isPremium = false) {
+  const buttons = [
+    [{ text: '💊 Посмотреть рекомендации', callback_data: 'view_recommendations' }],
+    [{ text: '🔄 Пройти заново', callback_data: 'restart_survey' }]
+  ];
+
+  if (!isPremium) {
+    buttons.push([{ text: '💎 Получить Premium', callback_data: 'get_premium' }]);
+  }
+
+  buttons.push([{ text: '🏠 Главное меню', callback_data: 'main_menu' }]);
+
+  return {
+    reply_markup: {
+      inline_keyboard: buttons
+    }
+  };
+}
+
+// Клавиатура подписки
+function getSubscriptionKeyboard() {
+  return {
+    reply_markup: {
+      inline_keyboard: [
+        [
+          {
+            text: '💳 Оформить Premium',
+            callback_data: 'subscribe_premium',
+            emoji: '💳'
+          }
+        ],
+        [
+          {
+            text: '📋 Информация о подписках',
+            callback_data: 'subscription_info',
+            emoji: '📋'
+          },
+          {
+            text: '🏠 Главное меню',
+            callback_data: 'main_menu',
+            emoji: '🏠'
+          }
+        ]
+      ]
+    }
+  };
+}
+
+// Вспомогательная функция для прогресс-бара
+function generateProgressBar(current, total) {
+  if (total === 0) return '';
+
+  const percentage = Math.round((current / total) * 100);
+  const filled = '█'.repeat(Math.round(percentage / 10));
+  const empty = '░'.repeat(10 - filled.length);
+  return `[${filled}${empty}] ${percentage}%`;
+}
+
 module.exports = {
   getMainMenuKeyboard,
   getQuestionKeyboard,
-  getReminderSettingsKeyboard, // Добавляем в экспорт
-  getIntakeHistoryKeyboard
+  getReminderActionsKeyboard,
+  getReminderSettingsKeyboard,
+  getIntakeHistoryKeyboard,
+  getSurveyCompletionKeyboard,
+  getSubscriptionKeyboard,
+  generateProgressBar
 };

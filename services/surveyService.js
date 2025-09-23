@@ -1,6 +1,6 @@
 const db = require('../config/database');
 const subscriptionService = require('./subscriptionService');
-const questions = require('../data/questions'); // Импортируем из отдельного файла
+const questions = require('../data/questions');
 
 class SurveyService {
   // Начать опрос
@@ -8,18 +8,29 @@ class SurveyService {
     const canStart = await this.canStartSurvey(chatId);
 
     if (!canStart) {
-      throw new Error('Вы уже проходили опрос. Для повторного прохождения оформите подписку.');
+      throw new Error('Вы уже проходили опрос. Для повторного прохождения оформите подписку Premium.');
     }
 
     const state = {
       current: 0,
       answers: {},
       userData: userData,
-      startedAt: new Date().toISOString()
+      startedAt: new Date().toISOString(),
+      surveyType: await this.getSurveyType(chatId)
     };
 
     await this.saveUserData(chatId, state);
+
+    // Логируем начало опроса
+    console.log(`📝 Пользователь ${chatId} начал ${state.surveyType} опрос`);
+
     return this.getCurrentQuestion(chatId);
+  }
+
+  // Получить тип опроса (free/premium)
+  async getSurveyType(chatId) {
+    const isPremium = await subscriptionService.isSubscriptionActive(chatId);
+    return isPremium ? 'premium' : 'free';
   }
 
   // Получить текущий вопрос
@@ -29,22 +40,23 @@ class SurveyService {
 
     const userQuestions = await this.getQuestionsForUser(chatId);
 
-    // Используем длину актуального массива вопросов
     if (state.current >= userQuestions.length) return null;
 
     const question = userQuestions[state.current];
-    return question ? { ...question, index: state.current } : null;
+    return question ? {
+      ...question,
+      index: state.current,
+      total: userQuestions.length
+    } : null;
   }
 
   // Получить вопросы в зависимости от подписки
   async getQuestionsForUser(chatId) {
     try {
       const isPremium = await subscriptionService.isSubscriptionActive(chatId);
-      console.log(`📊 User ${chatId} is premium: ${isPremium}`);
-      console.log(`📋 Free questions: ${questions.free.length}, Premium questions: ${questions.premium.length}`);
-
       const selectedQuestions = isPremium ? questions.premium : questions.free;
-      console.log(`🎯 Selected ${selectedQuestions.length} questions for user`);
+
+      console.log(`📋 Загружено ${selectedQuestions.length} вопросов для пользователя ${chatId} (${isPremium ? 'premium' : 'free'})`);
 
       return selectedQuestions;
     } catch (error) {
@@ -67,9 +79,13 @@ class SurveyService {
   async hasCompletedSurvey(chatId) {
     return new Promise((resolve) => {
       db.get(
-        `SELECT answers FROM users WHERE chat_id = ? AND answers IS NOT NULL`,
+        `SELECT answers FROM users WHERE chat_id = ? AND answers IS NOT NULL AND answers != '{}'`,
         [chatId],
-        (err, row) => resolve(!!row && Object.keys(JSON.parse(row.answers)).length > 0)
+        (err, row) => {
+          const hasAnswers = !!row && Object.keys(JSON.parse(row.answers)).length > 0;
+          console.log(`🔍 Пользователь ${chatId} уже проходил опрос: ${hasAnswers}`);
+          resolve(hasAnswers);
+        }
       );
     });
   }
@@ -77,25 +93,35 @@ class SurveyService {
   // Сохранить ответ
   async saveAnswer(chatId, answer) {
     const state = await this.getUserState(chatId);
-    if (!state) throw new Error('Сессия опроса не найдена');
+    if (!state) throw new Error('Сессия опроса не найдена. Начните заново: /survey');
 
     const userQuestions = await this.getQuestionsForUser(chatId);
     const question = userQuestions[state.current];
+
     if (!question) throw new Error('Вопрос не найден');
 
     // Валидация числовых полей
-    if (['age', 'height', 'weight'].includes(question.key)) {
-      const numValue = parseInt(answer);
-      if (isNaN(numValue) || numValue <= 0) {
-        throw new Error('Пожалуйста, введите корректное положительное число');
+    if (['age', 'height', 'weight', 'region'].includes(question.key)) {
+      if (question.key === 'region') {
+        // Для региона просто сохраняем текст
+        state.answers[question.key] = answer;
+      } else {
+        // Для числовых полей проверяем валидность
+        const numValue = parseInt(answer);
+        if (isNaN(numValue) || numValue <= 0) {
+          throw new Error('Пожалуйста, введите корректное положительное число');
+        }
+        state.answers[question.key] = numValue;
       }
-      state.answers[question.key] = numValue;
     } else {
       state.answers[question.key] = answer;
     }
 
     state.current++;
     await this.saveUserData(chatId, state);
+
+    console.log(`💾 Ответ сохранен: ${question.key} = ${answer} (вопрос ${state.current}/${userQuestions.length})`);
+
     return true;
   }
 
@@ -110,7 +136,13 @@ class SurveyService {
             console.error('❌ Ошибка чтения состояния:', err);
             resolve(null);
           } else {
-            resolve(row && row.state ? JSON.parse(row.state) : null);
+            try {
+              const state = row && row.state ? JSON.parse(row.state) : null;
+              resolve(state);
+            } catch (parseError) {
+              console.error('❌ Ошибка парсинга состояния:', parseError);
+              resolve(null);
+            }
           }
         }
       );
@@ -121,9 +153,24 @@ class SurveyService {
   async saveUserData(chatId, state) {
     return new Promise((resolve, reject) => {
       db.run(
-        `UPDATE users SET state = ?, answers = ? WHERE chat_id = ?`,
-        [JSON.stringify(state), JSON.stringify(state.answers), chatId],
-        (err) => err ? reject(err) : resolve()
+        `INSERT OR REPLACE INTO users (chat_id, username, first_name, last_name, state, answers, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        [
+          chatId,
+          state.userData.username,
+          state.userData.first_name,
+          state.userData.last_name,
+          JSON.stringify(state),
+          JSON.stringify(state.answers)
+        ],
+        (err) => {
+          if (err) {
+            console.error('❌ Ошибка сохранения данных:', err);
+            reject(err);
+          } else {
+            resolve();
+          }
+        }
       );
     });
   }
@@ -138,7 +185,12 @@ class SurveyService {
           if (err || !row || !row.answers) {
             resolve(null);
           } else {
-            resolve(JSON.parse(row.answers));
+            try {
+              resolve(JSON.parse(row.answers));
+            } catch (parseError) {
+              console.error('❌ Ошибка парсинга результатов:', parseError);
+              resolve(null);
+            }
           }
         }
       );
@@ -149,43 +201,71 @@ class SurveyService {
   async completeSurvey(chatId) {
     return new Promise((resolve, reject) => {
       db.run(
-        `UPDATE users SET state = NULL WHERE chat_id = ?`,
+        `UPDATE users SET state = NULL, updated_at = CURRENT_TIMESTAMP WHERE chat_id = ?`,
         [chatId],
-        (err) => err ? reject(err) : resolve()
+        (err) => {
+          if (err) {
+            console.error('❌ Ошибка завершения опроса:', err);
+            reject(err);
+          } else {
+            console.log(`✅ Опрос завершен для пользователя ${chatId}`);
+            resolve();
+          }
+        }
       );
     });
   }
 
-  // Получить состояние пользователя
-  async getUserState(chatId) {
-    return new Promise((resolve) => {
-      db.get('SELECT state FROM users WHERE chat_id = ?', [chatId], (err, row) => {
-        if (err) {
-          console.error('❌ Ошибка чтения состояния:', err);
-          resolve(null);
-        } else {
-          resolve(row && row.state ? JSON.parse(row.state) : null);
-        }
-      });
-    });
-  }
-
-  // Синхронное получение состояния (для обработки кнопок)
-  getUserStateSync(chatId) {
-    // Простая синхронная версия для проверки
+  // Получить прогресс опроса
+  async getSurveyProgress(chatId) {
     try {
-      const result = db.prepare('SELECT state FROM users WHERE chat_id = ?').get(chatId);
-      return result && result.state ? JSON.parse(result.state) : null;
+      const state = await this.getUserState(chatId);
+      if (!state) return { current: 0, total: 0, percentage: 0 };
+
+      const questions = await this.getQuestionsForUser(chatId);
+      const percentage = questions.length > 0 ? Math.round((state.current / questions.length) * 100) : 0;
+
+      return {
+        current: state.current,
+        total: questions.length,
+        percentage: percentage
+      };
     } catch (error) {
-      return null;
+      console.error('❌ Ошибка получения прогресса:', error);
+      return { current: 0, total: 0, percentage: 0 };
     }
   }
 
-  // Синхронное получение вопросов
-  getQuestionsForUserSync(chatId) {
-    // Для простоты возвращаем free вопросы
-    // В реальности нужно проверять подписку
-    return questions.free;
+  // Проверить существование пользователя
+  async userExists(chatId) {
+    return new Promise((resolve) => {
+      db.get(
+        'SELECT 1 FROM users WHERE chat_id = ?',
+        [chatId],
+        (err, row) => resolve(!!row)
+      );
+    });
+  }
+
+  // Получить статистику опросов
+  async getSurveyStats() {
+    return new Promise((resolve) => {
+      db.get(
+        `SELECT
+          COUNT(*) as total_users,
+          COUNT(CASE WHEN answers IS NOT NULL AND answers != '{}' THEN 1 END) as completed_surveys,
+          COUNT(CASE WHEN state IS NOT NULL THEN 1 END) as active_surveys
+          FROM users`,
+        (err, row) => {
+          if (err) {
+            console.error('❌ Ошибка получения статистики:', err);
+            resolve({ total_users: 0, completed_surveys: 0, active_surveys: 0 });
+          } else {
+            resolve(row);
+          }
+        }
+      );
+    });
   }
 }
 

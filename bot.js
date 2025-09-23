@@ -13,9 +13,10 @@ const testCommands = require('./commands/testCommands');
 
 // Middleware
 const { injectSubscriptionData } = require('./middlewares/subscriptionMiddleware');
-// const userState = {};
-// Middleware для инъекции данных подписки
-bot.use(injectSubscriptionData);
+const { getMainMenuKeyboard } = require('./keyboards');
+
+// Утилиты
+const NotificationManager = require('./utils/notifications');
 
 // Инициализация напоминаний
 const reminderController = new ReminderController(bot);
@@ -23,16 +24,53 @@ reminderController.initialize().then(() => {
   console.log('✅ Сервис напоминаний инициализирован');
 });
 
+// ==================== MIDDLEWARE ====================
+
+// Инъекция данных подписки
+bot.use(injectSubscriptionData);
+
+// Логирование всех сообщений
+bot.use(async (ctx, next) => {
+  const chatId = ctx.chat?.id;
+  const username = ctx.from?.username || 'unknown';
+  const text = ctx.message?.text || ctx.callbackQuery?.data || 'no text';
+
+  console.log(`📨 [${username}:${chatId}] ${text}`);
+  await next();
+});
+
 // ==================== ОСНОВНЫЕ КОМАНДЫ ====================
 
-bot.start(botController.handleStart);
-bot.help(botController.handleHelp);
-bot.command('survey', (ctx) => {
-  surveyController.handleStartSurvey(ctx);
+bot.start(async (ctx) => {
+  await NotificationManager.welcome(ctx, ctx.from.first_name);
+  botController.handleStart(ctx);
 });
-bot.command('plan', botController.handlePlan);
-bot.command('profile', botController.handleProfile);
-bot.command('help', botController.handleHelp);
+
+bot.help((ctx) => {
+  NotificationManager.info(ctx, 'Вот что я умею:');
+  botController.handleHelp(ctx);
+});
+
+bot.command('survey', (ctx) => {
+  NotificationManager.loading(ctx, 'Загружаем опрос...');
+  setTimeout(() => {
+    surveyController.handleStartSurvey(ctx);
+  }, 500);
+});
+
+bot.command('plan', (ctx) => {
+  NotificationManager.loading(ctx, 'Формируем рекомендации...');
+  setTimeout(() => {
+    botController.handlePlan(ctx);
+  }, 500);
+});
+
+bot.command('profile', (ctx) => {
+  NotificationManager.loading(ctx, 'Загружаем профиль...');
+  setTimeout(() => {
+    botController.handleProfile(ctx);
+  }, 500);
+});
 
 // Команды подписки
 bot.command('subscribe', subscriptionController.handleSubscribe);
@@ -52,11 +90,13 @@ bot.command('mysubscription', async (ctx) => {
 
   if (subscription.plan === 'free') {
     message += `\n💡 Для апгрейда используйте: /subscribe`;
+  } else {
+    message += `\n✨ Вы наслаждаетесь всеми преимуществами Premium подписки!`;
   }
 
   ctx.reply(message, {
     parse_mode: 'Markdown',
-    ...require('./keyboards').getMainMenuKeyboard()
+    ...getMainMenuKeyboard(subscription.plan === 'premium')
   });
 });
 
@@ -70,13 +110,65 @@ bot.command('debugsub', (ctx) => testCommands.debugSubscription(ctx));
 bot.command('activatepremium', (ctx) => testCommands.activatePremium(ctx));
 bot.command('clearmydata', (ctx) => testCommands.clearMyData(ctx));
 bot.command('testquestions', (ctx) => testCommands.testQuestions(ctx));
-bot.command('myhistory', (ctx) => testCommands.checkHistory(ctx));
-bot.command('mystats', (ctx) => testCommands.reminderStats(ctx));
 bot.command('testbuttons', (ctx) => testCommands.testButtons(ctx));
-
 bot.command('testremindersnow', (ctx) => testCommands.testRemindersNow(ctx));
 bot.command('createremindersfromplan', (ctx) => testCommands.createRemindersFromPlan(ctx));
 
+// Команды истории и статистики
+bot.command('myhistory', async (ctx) => {
+  try {
+    const ReminderService = require('./services/reminderService');
+    const service = new ReminderService(ctx.telegram);
+    const history = await service.getIntakeHistory(ctx.chat.id, 7);
+
+    if (history.length === 0) {
+      await NotificationManager.info(ctx, '📊 История приема пуста за последние 7 дней.');
+      return;
+    }
+
+    let message = '📊 *История приема (7 дней):*\n\n';
+    history.forEach((item, index) => {
+      const date = new Date(item.taken_at).toLocaleDateString('ru-RU');
+      const time = new Date(item.taken_at).toLocaleTimeString('ru-RU', {
+        hour: '2-digit', minute: '2-digit'
+      });
+      const statusIcon = item.status === 'taken' ? '✅' : item.status === 'skipped' ? '⏭️' : '❌';
+      message += `${statusIcon} ${date} ${time} - ${item.supplement_name}\n`;
+    });
+
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      ...require('./keyboards').getIntakeHistoryKeyboard()
+    });
+
+  } catch (error) {
+    console.error('❌ Ошибка myhistory:', error);
+    await NotificationManager.error(ctx, 'Ошибка загрузки истории');
+  }
+});
+
+bot.command('mystats', async (ctx) => {
+  try {
+    const ReminderService = require('./services/reminderService');
+    const service = new ReminderService(ctx.telegram);
+    const stats = await service.getIntakeStats(ctx.chat.id, 30);
+
+    const message = `📈 *Ваша статистика за 30 дней:*\n\n` +
+                   `✅ Принято: ${stats.taken}\n` +
+                   `⏭️ Пропущено: ${stats.skipped}\n` +
+                   `❌ Пропущено: ${stats.missed}\n` +
+                   `📊 Соблюдение: ${stats.compliance}%`;
+
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      ...getMainMenuKeyboard()
+    });
+
+  } catch (error) {
+    console.error('❌ Ошибка mystats:', error);
+    await NotificationManager.error(ctx, 'Ошибка загрузки статистики');
+  }
+});
 
 // ==================== ОБРАБОТКА КНОПОК НАПОМИНАНИЙ ====================
 
@@ -86,23 +178,21 @@ bot.action(/intake_taken_(\d+)/, async (ctx) => {
   try {
     const reminderId = ctx.match[1];
 
-    // Получаем информацию о напоминании
     db.get('SELECT * FROM reminders WHERE id = ?', [reminderId], async (err, reminder) => {
       if (err) {
         console.error('❌ Ошибка БД:', err);
-        ctx.answerCbQuery('❌ Ошибка базы данных');
+        await ctx.answerCbQuery('❌ Ошибка базы данных');
         return;
       }
 
       if (!reminder) {
         console.log('❌ Напоминание не найдено ID:', reminderId);
-        ctx.answerCbQuery('❌ Напоминание не найдено');
+        await ctx.answerCbQuery('❌ Напоминание не найдено');
         return;
       }
 
       console.log('📝 Записываем прием для:', reminder.supplement_name);
 
-      // Записываем в историю как "принято"
       try {
         const ReminderService = require('./services/reminderService');
         const service = new ReminderService(ctx.telegram);
@@ -114,8 +204,7 @@ bot.action(/intake_taken_(\d+)/, async (ctx) => {
         });
 
         console.log('✅ Прием записан в историю');
-
-        ctx.answerCbQuery('✅ Прием подтвержден!');
+        await ctx.answerCbQuery('✅ Прием подтвержден!');
 
         // Удаляем сообщение с кнопками
         try {
@@ -126,17 +215,17 @@ bot.action(/intake_taken_(\d+)/, async (ctx) => {
         }
 
         // Отправляем подтверждение
-        await ctx.reply(`💊 Прием "${reminder.supplement_name}" записан!`);
+        await NotificationManager.success(ctx, `💊 Прием "${reminder.supplement_name}" записан!`);
 
       } catch (error) {
         console.error('❌ Ошибка записи приема:', error);
-        ctx.answerCbQuery('❌ Ошибка подтверждения');
+        await ctx.answerCbQuery('❌ Ошибка подтверждения');
       }
     });
 
   } catch (error) {
     console.error('❌ Общая ошибка обработки:', error);
-    ctx.answerCbQuery('❌ Ошибка обработки');
+    await ctx.answerCbQuery('❌ Ошибка обработки');
   }
 });
 
@@ -148,11 +237,10 @@ bot.action(/intake_skipped_(\d+)/, async (ctx) => {
 
     db.get('SELECT * FROM reminders WHERE id = ?', [reminderId], async (err, reminder) => {
       if (err || !reminder) {
-        ctx.answerCbQuery('❌ Напоминание не найдено');
+        await ctx.answerCbQuery('❌ Напоминание не найдено');
         return;
       }
 
-      // Записываем в историю как "пропущено"
       try {
         const ReminderService = require('./services/reminderService');
         const service = new ReminderService(ctx.telegram);
@@ -163,27 +251,25 @@ bot.action(/intake_skipped_(\d+)/, async (ctx) => {
           status: 'skipped'
         });
 
-        ctx.answerCbQuery('⏭️ Прием пропущен');
+        await ctx.answerCbQuery('⏭️ Прием пропущен');
 
-        // Удаляем сообщение с кнопками
         try {
           await ctx.deleteMessage();
         } catch (deleteError) {
-          console.log('Не удалось удалить сообщение');
+          console.log('⚠️ Не удалось удалить сообщение');
         }
 
-        // Отправляем подтверждение
-        await ctx.reply(`💊 Прием "${reminder.supplement_name}" пропущен.`);
+        await NotificationManager.warning(ctx, `💊 Прием "${reminder.supplement_name}" пропущен.`);
 
       } catch (error) {
         console.error('❌ Ошибка записи пропуска:', error);
-        ctx.answerCbQuery('❌ Ошибка обработки пропуска');
+        await ctx.answerCbQuery('❌ Ошибка обработки пропуска');
       }
     });
 
   } catch (error) {
     console.error('❌ Общая ошибка обработки пропуска:', error);
-    ctx.answerCbQuery('❌ Ошибка обработки');
+    await ctx.answerCbQuery('❌ Ошибка обработки');
   }
 });
 
@@ -195,66 +281,60 @@ bot.action(/intake_later_(\d+)/, async (ctx) => {
 
     db.get('SELECT * FROM reminders WHERE id = ?', [reminderId], async (err, reminder) => {
       if (err || !reminder) {
-        ctx.answerCbQuery('❌ Напоминание не найдено');
+        await ctx.answerCbQuery('❌ Напоминание не найдено');
         return;
       }
 
-      ctx.answerCbQuery('⏰ Напомню через 1 минуту');
+      await ctx.answerCbQuery('⏰ Напомню через 10 минут');
 
-      // Удаляем оригинальное сообщение
       try {
         await ctx.deleteMessage();
       } catch (deleteError) {
-        console.log('Сообщение уже удалено');
+        console.log('⚠️ Сообщение уже удалено');
       }
 
-      // Напомнить через 1 минуту (для теста)
+      // Напомнить через 10 минут
       setTimeout(async () => {
         try {
-          const keyboard = {
-            reply_markup: {
-              inline_keyboard: [
-                [
-                  { text: '✅ Принял', callback_data: `intake_taken_${reminder.id}` },
-                  { text: '⏰ Еще раз', callback_data: `intake_later_${reminder.id}` },
-                  { text: '❌ Пропустить', callback_data: `intake_skipped_${reminder.id}` }
-                ]
-              ]
-            }
-          };
+          const { getReminderActionsKeyboard } = require('./keyboards');
 
           await ctx.reply(
             `⏰ *Напоминание (повторно)!*\n\n💊 ${reminder.supplement_name}\n📏 ${reminder.dosage}\n\nПодтвердите прием:`,
-            { parse_mode: 'Markdown', ...keyboard }
+            {
+              parse_mode: 'Markdown',
+              ...getReminderActionsKeyboard(reminder.id)
+            }
           );
         } catch (error) {
           console.error('❌ Ошибка повторного напоминания:', error);
         }
-      }, 60000); // 1 минута
+      }, 600000); // 10 минут
 
-      await ctx.reply(`⏰ Напомню о приеме "${reminder.supplement_name}" через 1 минуту.`);
+      await NotificationManager.info(ctx, `⏰ Напомню о приеме "${reminder.supplement_name}" через 10 минут.`);
     });
 
   } catch (error) {
     console.error('❌ Ошибка обработки напоминания позже:', error);
-    ctx.answerCbQuery('❌ Ошибка отложенного напоминания');
+    await ctx.answerCbQuery('❌ Ошибка отложенного напоминания');
   }
 });
+
+// ==================== ПЛАТЕЖИ И ПОДПИСКИ ====================
 
 // Обработка тестового платежа
 bot.action('test_payment', async (ctx) => {
   try {
-    ctx.answerCbQuery('💳 Тестовый платеж создан!');
+    await ctx.answerCbQuery('💳 Тестовый платеж создан!');
 
     // Имитируем успешный платеж через 2 секунды
     setTimeout(async () => {
-      await ctx.reply('✅ Тестовый платеж успешно обработан!');
+      await NotificationManager.success(ctx, '✅ Тестовый платеж успешно обработан!');
       await subscriptionController.handlePaymentConfirmation(ctx);
     }, 2000);
 
   } catch (error) {
     console.error('❌ Ошибка тестового платежа:', error);
-    ctx.answerCbQuery('❌ Ошибка платежа');
+    await ctx.answerCbQuery('❌ Ошибка платежа');
   }
 });
 
@@ -262,10 +342,10 @@ bot.action('test_payment', async (ctx) => {
 bot.action('payment_confirmed', async (ctx) => {
   try {
     await subscriptionController.handlePaymentConfirmation(ctx);
-    ctx.answerCbQuery('✅ Подписка активирована!');
+    await ctx.answerCbQuery('✅ Подписка активирована!');
   } catch (error) {
     console.error('❌ Ошибка активации подписки:', error);
-    ctx.answerCbQuery('❌ Ошибка активации');
+    await ctx.answerCbQuery('❌ Ошибка активации');
   }
 });
 
@@ -297,77 +377,95 @@ bot.action('get_detailed_plan', (ctx) => {
   ctx.answerCbQuery();
 });
 
+bot.action('cancel_survey', async (ctx) => {
+  try {
+    const surveyService = require('./services/surveyService');
+    await surveyService.completeSurvey(ctx.chat.id);
+    await ctx.answerCbQuery('❌ Опрос отменен');
+    await ctx.deleteMessage();
+    await NotificationManager.info(ctx, 'Опрос отменен. Можете начать заново когда будете готовы.');
+    botController.showMainMenu(ctx);
+  } catch (error) {
+    console.error('❌ Ошибка отмены опроса:', error);
+    await ctx.answerCbQuery('❌ Ошибка отмены');
+  }
+});
+
 // ==================== ОБРАБОТКА ТЕКСТА ====================
 
 // Обработка текстовых сообщений
 bot.on('text', async (ctx) => {
-  const text = ctx.message.text;
-  const chatId = ctx.chat.id;
-
-  console.log(`📨 Текст получен: "${text}" от ${chatId}`);
-
-  // Сначала проверяем, это ли команды главного меню
-  const menuCommands = [
-    '📋 Пройти опрос',
-    '💊 Мои рекомендации',
-    '👤 Мой профиль',
-    '💳 Подписка',
-    'ℹ️ Помощь',
-    '⏰ Утреннее время',
-    '🌅 Дневное время',
-    '🌙 Вечернее время',
-    '🔔 Вкл/Выкл уведомления',
-    '🏠 Главное меню'
-  ];
-
-  if (menuCommands.includes(text)) {
-    console.log('🔍 Это команда меню, передаем в botController');
-    botController.handleTextCommands(ctx);
-    return;
-  }
-
-  // Проверяем, находится ли пользователь в опросе
   try {
+    const text = ctx.message.text;
+    const chatId = ctx.chat.id;
+
+    console.log(`📨 Текст получен: "${text}" от ${chatId}`);
+
+    // Команды главного меню
+    const menuCommands = [
+      '📋 Пройти опрос', '📋 Новый опрос', '💊 Мои рекомендации',
+      '👤 Мой профиль', '💎 Апгрейд до Premium', '💎 Получить Premium',
+      '⏰ Мои напоминания', '📊 Статистика', 'ℹ️ Помощь', '⚙️ Настройки',
+      '⏰ Утреннее время', '🌅 Дневное время', '🌙 Вечернее время',
+      '🔔 Вкл/Выкл уведомления', '📋 Мои напоминания', '🏠 Главное меню'
+    ];
+
+    if (menuCommands.includes(text)) {
+      console.log('🔍 Это команда меню, передаем в botController');
+      await botController.handleTextCommands(ctx);
+      return;
+    }
+
+    // Проверяем, находится ли пользователь в опросе
     const surveyService = require('./services/surveyService');
     const question = await surveyService.getCurrentQuestion(chatId);
 
     if (question) {
       console.log('🔍 Пользователь в опросе, передаем в surveyController');
-      surveyController.handleTextAnswer(ctx);
+      await surveyController.handleTextAnswer(ctx);
     } else {
       console.log('🔍 Пользователь не в опросе, передаем в botController');
-      botController.handleTextCommands(ctx);
+      await botController.handleTextCommands(ctx);
     }
+
   } catch (error) {
-    console.error('❌ Ошибка проверки состояния опроса:', error);
-    botController.handleTextCommands(ctx);
+    console.error('❌ Ошибка обработки текста:', error);
+    await NotificationManager.error(ctx, 'Ошибка обработки сообщения. Попробуйте еще раз.');
   }
 });
 
 // ==================== ЗАПУСК И ОБРАБОТКА ОШИБОК ====================
 
-// Диагностика callback_data
 bot.on('callback_query', (ctx) => {
   const callbackData = ctx.callbackQuery.data;
-  console.log('📨 Callback received:', ctx.callbackQuery.data);
+  console.log('📨 Callback received:', callbackData);
 
-    // Если callback еще не обработан специфическими обработчиками
+  // Если callback еще не обработан специфическими обработчиками
   if (!callbackData.startsWith('intake_') &&
       !callbackData.startsWith('history_') &&
+      !callbackData.startsWith('admin_') &&
       callbackData !== 'subscription_info' &&
       callbackData !== 'main_menu' &&
       callbackData !== 'restart_survey' &&
-      callbackData !== 'get_detailed_plan') {
+      callbackData !== 'get_detailed_plan' &&
+      callbackData !== 'payment_confirmed' &&
+      callbackData !== 'test_payment' &&
+      callbackData !== 'cancel_survey') {
 
-      // Передаем в обработчик опросов
-      require('./controllers/surveyController').handleButtonAnswer(ctx);
-    }
+    // Передаем в обработчик опросов
+    require('./controllers/surveyController').handleButtonAnswer(ctx);
+  }
 });
 
-// Обработка ошибок
+// Глобальный обработчик ошибок
 bot.catch((err, ctx) => {
-  console.error('❌ Ошибка бота:', err);
-  ctx.reply('⚠️ Произошла ошибка. Попробуйте снова: /start');
+  console.error('❌ Глобальная ошибка:', err);
+
+  const NotificationManager = require('./utils/notifications');
+  NotificationManager.error(ctx,
+    `Произошла непредвиденная ошибка. Пожалуйста, попробуйте снова через несколько минут.\n\n` +
+    `Если ошибка повторяется, используйте /help для связи с поддержкой.`
+  );
 });
 
 // Запуск бота
