@@ -29,19 +29,32 @@ function sendQuestion(ctx) {
         return;
       }
 
-      const message = `${question.text}\n\n${question.note || ''}`;
+      // Получаем прогресс
+      surveyService.getSurveyProgress(chatId).then(progress => {
+        const progressBar = generateProgressBar(progress.current, progress.total);
+        const message = `${progressBar}\n\n${question.text}\n\n${question.note || ''}`;
 
-      if (question.options) {
-        ctx.reply(message, getQuestionKeyboard(question));
-      } else {
-        ctx.reply(message);
-      }
+        if (question.options) {
+          ctx.reply(message, getSurveyKeyboard(question, progress));
+        } else {
+          ctx.reply(message);
+        }
+      });
     })
     .catch(err => {
       console.error('❌ Ошибка отправки вопроса:', err);
       ctx.reply('⚠️ Ошибка. Начните заново: /survey', getMainMenuKeyboard());
     });
 }
+
+// Генератор прогресс-бара
+function generateProgressBar(current, total) {
+  const percentage = Math.round((current / total) * 100);
+  const filled = '█'.repeat(Math.round(percentage / 10));
+  const empty = '░'.repeat(10 - filled.length);
+  return `📊 Прогресс: [${filled}${empty}] ${percentage}% (${current}/${total})`;
+}
+
 
 function handleTextAnswer(ctx) {
   const chatId = ctx.chat.id;
