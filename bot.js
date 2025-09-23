@@ -395,67 +395,66 @@ bot.action('cancel_survey', async (ctx) => {
 
 // Обработка текстовых сообщений
 bot.on('text', async (ctx) => {
-  const text = ctx.message.text;
-  const chatId = ctx.chat.id;
-
-  console.log(`📨 Текст получен: "${text}" от ${chatId}`);
-
-  // Сначала проверяем, это ли команды главного меню
-  const menuCommands = [
-    '📋 Пройти опрос',
-    '💊 Мои рекомендации',
-    '👤 Мой профиль',
-    '💳 Подписка',
-    'ℹ️ Помощь',
-    '⏰ Утреннее время',
-    '🌅 Дневное время',
-    '🌙 Вечернее время',
-    '🔔 Вкл/Выкл уведомления',
-    '🏠 Главное меню'
-  ];
-
-  if (menuCommands.includes(text)) {
-    console.log('🔍 Это команда меню, передаем в botController');
-    botController.handleTextCommands(ctx);
-    return;
-  }
-
-  // Проверяем, находится ли пользователь в опросе
   try {
+    const text = ctx.message.text;
+    const chatId = ctx.chat.id;
+
+    console.log(`📨 Текст получен: "${text}" от ${chatId}`);
+
+    // Команды главного меню
+    const menuCommands = [
+      '📋 Пройти опрос', '📋 Новый опрос', '💊 Мои рекомендации',
+      '👤 Мой профиль', '💎 Апгрейд до Premium', '💎 Получить Premium',
+      '⏰ Мои напоминания', '📊 Статистика', 'ℹ️ Помощь', '⚙️ Настройки',
+      '⏰ Утреннее время', '🌅 Дневное время', '🌙 Вечернее время',
+      '🔔 Вкл/Выкл уведомления', '📋 Мои напоминания', '🏠 Главное меню'
+    ];
+
+    if (menuCommands.includes(text)) {
+      console.log('🔍 Это команда меню, передаем в botController');
+      await botController.handleTextCommands(ctx);
+      return;
+    }
+
+    // Проверяем, находится ли пользователь в опросе
     const surveyService = require('./services/surveyService');
     const question = await surveyService.getCurrentQuestion(chatId);
 
     if (question) {
       console.log('🔍 Пользователь в опросе, передаем в surveyController');
-      surveyController.handleTextAnswer(ctx);
+      await surveyController.handleTextAnswer(ctx);
     } else {
       console.log('🔍 Пользователь не в опросе, передаем в botController');
-      botController.handleTextCommands(ctx);
+      await botController.handleTextCommands(ctx);
     }
+
   } catch (error) {
-    console.error('❌ Ошибка проверки состояния опроса:', error);
-    botController.handleTextCommands(ctx);
+    console.error('❌ Ошибка обработки текста:', error);
+    await NotificationManager.error(ctx, 'Ошибка обработки сообщения. Попробуйте еще раз.');
   }
 });
 
 // ==================== ЗАПУСК И ОБРАБОТКА ОШИБОК ====================
 
-// Диагностика callback_data
 bot.on('callback_query', (ctx) => {
   const callbackData = ctx.callbackQuery.data;
-  console.log('📨 Callback received:', ctx.callbackQuery.data);
+  console.log('📨 Callback received:', callbackData);
 
-    // Если callback еще не обработан специфическими обработчиками
+  // Если callback еще не обработан специфическими обработчиками
   if (!callbackData.startsWith('intake_') &&
       !callbackData.startsWith('history_') &&
+      !callbackData.startsWith('admin_') &&
       callbackData !== 'subscription_info' &&
       callbackData !== 'main_menu' &&
       callbackData !== 'restart_survey' &&
-      callbackData !== 'get_detailed_plan') {
+      callbackData !== 'get_detailed_plan' &&
+      callbackData !== 'payment_confirmed' &&
+      callbackData !== 'test_payment' &&
+      callbackData !== 'cancel_survey') {
 
-      // Передаем в обработчик опросов
-      require('./controllers/surveyController').handleButtonAnswer(ctx);
-    }
+    // Передаем в обработчик опросов
+    require('./controllers/surveyController').handleButtonAnswer(ctx);
+  }
 });
 
 // Глобальный обработчик ошибок
