@@ -319,20 +319,22 @@ bot.action(/intake_later_(\d+)/, async (ctx) => {
   }
 });
 
+// ==================== ПЛАТЕЖИ И ПОДПИСКИ ====================
+
 // Обработка тестового платежа
 bot.action('test_payment', async (ctx) => {
   try {
-    ctx.answerCbQuery('💳 Тестовый платеж создан!');
+    await ctx.answerCbQuery('💳 Тестовый платеж создан!');
 
     // Имитируем успешный платеж через 2 секунды
     setTimeout(async () => {
-      await ctx.reply('✅ Тестовый платеж успешно обработан!');
+      await NotificationManager.success(ctx, '✅ Тестовый платеж успешно обработан!');
       await subscriptionController.handlePaymentConfirmation(ctx);
     }, 2000);
 
   } catch (error) {
     console.error('❌ Ошибка тестового платежа:', error);
-    ctx.answerCbQuery('❌ Ошибка платежа');
+    await ctx.answerCbQuery('❌ Ошибка платежа');
   }
 });
 
@@ -340,10 +342,10 @@ bot.action('test_payment', async (ctx) => {
 bot.action('payment_confirmed', async (ctx) => {
   try {
     await subscriptionController.handlePaymentConfirmation(ctx);
-    ctx.answerCbQuery('✅ Подписка активирована!');
+    await ctx.answerCbQuery('✅ Подписка активирована!');
   } catch (error) {
     console.error('❌ Ошибка активации подписки:', error);
-    ctx.answerCbQuery('❌ Ошибка активации');
+    await ctx.answerCbQuery('❌ Ошибка активации');
   }
 });
 
