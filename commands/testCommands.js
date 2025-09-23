@@ -347,5 +347,126 @@ module.exports = {
       console.error('❌ Ошибка просмотра статистики:', error);
       ctx.reply('❌ Ошибка загрузки статистики');
     }
+  },
+
+  // Тест создания напоминания в указанное время
+  createTestReminder: async (ctx, time = null) => {
+    try {
+      const chatId = ctx.chat.id;
+      const ReminderService = require('../services/reminderService');
+      const service = new ReminderService(ctx.telegram);
+
+      // Если время не указано, используем текущее + 2 минуты
+      if (!time) {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() + 2);
+        time = now.toTimeString().slice(0, 5); // "HH:MM"
+      }
+
+      // Валидация формата времени
+      const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+      if (!timeRegex.test(time)) {
+        ctx.reply('❌ Неверный формат времени. Используйте HH:MM (например, 14:30)');
+        return;
+      }
+
+      // Создаем тестовое напоминание
+      const reminder = await service.createTestReminder(
+        chatId,
+        'Тест: Витамин Д',
+        '2000 МЕ',
+        time,
+        '1111111'
+      );
+
+      ctx.reply(
+        `✅ *Тестовое напоминание создано!*\n\n` +
+        `💊 Тест: Витамин Д\n` +
+        `📏 2000 МЕ\n` +
+        `⏰ Время: ${time}\n\n` +
+        `Напоминание придет в указанное время. Проверьте в /myreminders`,
+        { parse_mode: 'Markdown' }
+      );
+
+      // Показываем когда ждать напоминание
+      const now = new Date();
+      const [targetHours, targetMinutes] = time.split(':').map(Number);
+      const targetTime = new Date();
+      targetTime.setHours(targetHours, targetMinutes, 0, 0);
+
+      if (targetTime < now) {
+        targetTime.setDate(targetTime.getDate() + 1); // На завтра
+      }
+
+      const waitTime = Math.round((targetTime - now) / 1000 / 60); // в минутах
+      ctx.reply(`⏳ Ждите напоминание через ~${waitTime} минут`);
+
+    } catch (error) {
+      console.error('❌ Ошибка создания тестового напоминания:', error);
+      ctx.reply('❌ Ошибка создания напоминания: ' + error.message);
+    }
+  },
+
+  // Принудительная отправка всех due напоминаний
+  forceSendReminders: async (ctx) => {
+    try {
+      const ReminderService = require('../services/reminderService');
+      const service = new ReminderService(ctx.telegram);
+
+      await service.checkDueReminders();
+      ctx.reply('🔍 Принудительная проверка напоминаний выполнена');
+
+    } catch (error) {
+      console.error('❌ Ошибка принудительной отправки:', error);
+      ctx.reply('❌ Ошибка отправки напоминаний');
+    }
+  },
+
+  // Очистить тестовые напоминания
+  clearTestReminders: async (ctx) => {
+    try {
+      const ReminderService = require('../services/reminderService');
+      const service = new ReminderService(ctx.telegram);
+
+      await service.clearTestReminders(ctx.chat.id);
+      ctx.reply('✅ Тестовые напоминания очищены');
+
+    } catch (error) {
+      console.error('❌ Ошибка очистки тестовых напоминаний:', error);
+      ctx.reply('❌ Ошибка очистки напоминаний');
+    }
+  },
+
+  // Показать статус напоминаний
+  reminderStatus: async (ctx) => {
+    try {
+      const chatId = ctx.chat.id;
+      const ReminderService = require('../services/reminderService');
+      const service = new ReminderService(ctx.telegram);
+
+      const reminders = await service.getUserReminders(chatId);
+      const now = new Date();
+      const currentTime = now.toTimeString().slice(0, 5);
+
+      let message = `📊 *Статус напоминаний*\n\n`;
+      message += `⏰ Текущее время: ${currentTime}\n\n`;
+
+      if (reminders.length === 0) {
+        message += `📭 Нет активных напоминаний`;
+      } else {
+        reminders.forEach(reminder => {
+          const status = reminder.time === currentTime ? '🟢 СЕЙЧАС' : '⏳ ОЖИДАЕТ';
+          message += `${status} ${reminder.time} - ${reminder.supplement_name}\n`;
+        });
+      }
+
+      message += `\n🔍 Следующая проверка: через 30 секунд`;
+
+      ctx.reply(message, { parse_mode: 'Markdown' });
+
+    } catch (error) {
+      console.error('❌ Ошибка проверки статуса:', error);
+      ctx.reply('❌ Ошибка проверки статуса напоминаний');
+    }
   }
 };

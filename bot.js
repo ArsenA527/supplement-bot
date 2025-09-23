@@ -24,6 +24,8 @@ reminderController.initialize().then(() => {
   console.log('✅ Сервис напоминаний инициализирован');
 });
 
+const ReminderService = require('./services/reminderService');
+const reminderService = new ReminderService(bot); // Явно создаем экземпляр
 // ==================== MIDDLEWARE ====================
 
 // Инъекция данных подписки
@@ -113,6 +115,15 @@ bot.command('testquestions', (ctx) => testCommands.testQuestions(ctx));
 bot.command('testbuttons', (ctx) => testCommands.testButtons(ctx));
 bot.command('testremindersnow', (ctx) => testCommands.testRemindersNow(ctx));
 bot.command('createremindersfromplan', (ctx) => testCommands.createRemindersFromPlan(ctx));
+
+bot.command('createtestreminder', (ctx) => {
+  const time = ctx.message.text.split(' ')[1]; // /createtestreminder 14:30
+  testCommands.createTestReminder(ctx, time);
+});
+
+bot.command('forcereminders', (ctx) => testCommands.forceSendReminders(ctx));
+bot.command('cleartestreminders', (ctx) => testCommands.clearTestReminders(ctx));
+bot.command('reminderstatus', (ctx) => testCommands.reminderStatus(ctx));
 
 // Команды истории и статистики
 bot.command('myhistory', async (ctx) => {
@@ -473,6 +484,26 @@ bot.launch().then(() => {
   console.log('🤖 Бот запущен');
 }).catch(err => {
   console.error('❌ Ошибка запуска бота:', err);
+});
+
+// Добавляем обработку неизвестных команд
+bot.on('message', (ctx) => {
+  if (ctx.message && ctx.message.text && ctx.message.text.startsWith('/')) {
+    console.log(`❓ Неизвестная команда: ${ctx.message.text}`);
+    ctx.reply(
+      '❓ Неизвестная команда. Используйте /help для списка команд.',
+      getMainMenuKeyboard()
+    );
+  }
+});
+
+// Улучшаем обработку ошибок
+process.on('unhandledRejection', (error) => {
+  console.error('🔴 Необработанное исключение:', error);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('🔴 Непойманное исключение:', error);
 });
 
 // Graceful shutdown
