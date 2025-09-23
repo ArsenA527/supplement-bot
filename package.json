@@ -17,7 +17,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@a2seven/yoo-checkout": "^1.1.4",
     "dotenv": "^17.2.1",
+    "express": "^5.1.0",
     "node-cron": "^4.2.1",
     "sqlite3": "^5.1.7",
     "telegraf": "3.32"

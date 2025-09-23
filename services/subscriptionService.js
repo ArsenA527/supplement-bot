@@ -72,7 +72,7 @@ class SubscriptionService {
         ]
       },
       premium: {
-        price: 299,
+        price: 499,
         period: 'month',
         features: [
           'Расширенный опрос (17+ вопросов)',
