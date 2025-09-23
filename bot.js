@@ -41,14 +41,36 @@ bot.use(async (ctx, next) => {
 
 // ==================== ОСНОВНЫЕ КОМАНДЫ ====================
 
-bot.start(botController.handleStart);
-bot.help(botController.handleHelp);
-bot.command('survey', (ctx) => {
-  surveyController.handleStartSurvey(ctx);
+bot.start(async (ctx) => {
+  await NotificationManager.welcome(ctx, ctx.from.first_name);
+  botController.handleStart(ctx);
 });
-bot.command('plan', botController.handlePlan);
-bot.command('profile', botController.handleProfile);
-bot.command('help', botController.handleHelp);
+
+bot.help((ctx) => {
+  NotificationManager.info(ctx, 'Вот что я умею:');
+  botController.handleHelp(ctx);
+});
+
+bot.command('survey', (ctx) => {
+  NotificationManager.loading(ctx, 'Загружаем опрос...');
+  setTimeout(() => {
+    surveyController.handleStartSurvey(ctx);
+  }, 500);
+});
+
+bot.command('plan', (ctx) => {
+  NotificationManager.loading(ctx, 'Формируем рекомендации...');
+  setTimeout(() => {
+    botController.handlePlan(ctx);
+  }, 500);
+});
+
+bot.command('profile', (ctx) => {
+  NotificationManager.loading(ctx, 'Загружаем профиль...');
+  setTimeout(() => {
+    botController.handleProfile(ctx);
+  }, 500);
+});
 
 // Команды подписки
 bot.command('subscribe', subscriptionController.handleSubscribe);
@@ -68,11 +90,13 @@ bot.command('mysubscription', async (ctx) => {
 
   if (subscription.plan === 'free') {
     message += `\n💡 Для апгрейда используйте: /subscribe`;
+  } else {
+    message += `\n✨ Вы наслаждаетесь всеми преимуществами Premium подписки!`;
   }
 
   ctx.reply(message, {
     parse_mode: 'Markdown',
-    ...require('./keyboards').getMainMenuKeyboard()
+    ...getMainMenuKeyboard(subscription.plan === 'premium')
   });
 });
 
@@ -86,13 +110,65 @@ bot.command('debugsub', (ctx) => testCommands.debugSubscription(ctx));
 bot.command('activatepremium', (ctx) => testCommands.activatePremium(ctx));
 bot.command('clearmydata', (ctx) => testCommands.clearMyData(ctx));
 bot.command('testquestions', (ctx) => testCommands.testQuestions(ctx));
-bot.command('myhistory', (ctx) => testCommands.checkHistory(ctx));
-bot.command('mystats', (ctx) => testCommands.reminderStats(ctx));
 bot.command('testbuttons', (ctx) => testCommands.testButtons(ctx));
-
 bot.command('testremindersnow', (ctx) => testCommands.testRemindersNow(ctx));
 bot.command('createremindersfromplan', (ctx) => testCommands.createRemindersFromPlan(ctx));
 
+// Команды истории и статистики
+bot.command('myhistory', async (ctx) => {
+  try {
+    const ReminderService = require('./services/reminderService');
+    const service = new ReminderService(ctx.telegram);
+    const history = await service.getIntakeHistory(ctx.chat.id, 7);
+
+    if (history.length === 0) {
+      await NotificationManager.info(ctx, '📊 История приема пуста за последние 7 дней.');
+      return;
+    }
+
+    let message = '📊 *История приема (7 дней):*\n\n';
+    history.forEach((item, index) => {
+      const date = new Date(item.taken_at).toLocaleDateString('ru-RU');
+      const time = new Date(item.taken_at).toLocaleTimeString('ru-RU', {
+        hour: '2-digit', minute: '2-digit'
+      });
+      const statusIcon = item.status === 'taken' ? '✅' : item.status === 'skipped' ? '⏭️' : '❌';
+      message += `${statusIcon} ${date} ${time} - ${item.supplement_name}\n`;
+    });
+
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      ...require('./keyboards').getIntakeHistoryKeyboard()
+    });
+
+  } catch (error) {
+    console.error('❌ Ошибка myhistory:', error);
+    await NotificationManager.error(ctx, 'Ошибка загрузки истории');
+  }
+});
+
+bot.command('mystats', async (ctx) => {
+  try {
+    const ReminderService = require('./services/reminderService');
+    const service = new ReminderService(ctx.telegram);
+    const stats = await service.getIntakeStats(ctx.chat.id, 30);
+
+    const message = `📈 *Ваша статистика за 30 дней:*\n\n` +
+                   `✅ Принято: ${stats.taken}\n` +
+                   `⏭️ Пропущено: ${stats.skipped}\n` +
+                   `❌ Пропущено: ${stats.missed}\n` +
+                   `📊 Соблюдение: ${stats.compliance}%`;
+
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      ...getMainMenuKeyboard()
+    });
+
+  } catch (error) {
+    console.error('❌ Ошибка mystats:', error);
+    await NotificationManager.error(ctx, 'Ошибка загрузки статистики');
+  }
+});
 
 // ==================== ОБРАБОТКА КНОПОК НАПОМИНАНИЙ ====================
 
