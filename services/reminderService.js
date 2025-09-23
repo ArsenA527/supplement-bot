@@ -8,16 +8,24 @@ class ReminderService {
     this.bot = bot;
     this.telegram = bot ? bot.telegram : null;
     this.checkInterval = null;
+    this.lastCheckTime = null;
 
-    // Сохраняем глобальную ссылку
-    globalBot = bot;
-    console.log('🔧 ReminderService initialized with telegram:', !!this.telegram);
+    console.log('🔧 ReminderService initialized with bot:', !!bot);
+    console.log('🔧 Telegram client available:', !!this.telegram);
   }
 
   // Инициализация сервиса
   async initialize() {
     console.log('⏰ Инициализация упрощенного сервиса напоминаний...');
-    this.startEnhancedReminderChecker();
+
+    // Проверяем доступность Telegram client
+    if (!this.telegram) {
+      console.error('❌ Telegram client не доступен при инициализации!');
+      return false;
+    }
+
+    await this.startEnhancedReminderChecker();
+    console.log('✅ Сервис напоминаний успешно инициализирован');
     return true;
   }
 
@@ -29,6 +37,7 @@ class ReminderService {
     }
 
     // Проверяем напоминания сразу при старте
+    console.log('🔍 Первоначальная проверка напоминаний...');
     await this.checkDueReminders();
 
     // Затем каждые 30 секунд
@@ -55,14 +64,15 @@ class ReminderService {
       const reminders = await this.getDueReminders(currentTime, currentDay);
 
       if (reminders.length > 0) {
-        console.log(`📨 Найдено ${reminders.length} напоминаний для отправки:`);
-        reminders.forEach(reminder => {
-          console.log(`   💊 ${reminder.supplement_name} в ${reminder.time} для пользователя ${reminder.chat_id}`);
-        });
+        console.log(`📨 Найдено ${reminders.length} напоминаний для отправки`);
 
+        let sentCount = 0;
         for (const reminder of reminders) {
-          await this.sendReminderNow(reminder);
+          const sent = await this.sendReminderNow(reminder);
+          if (sent) sentCount++;
         }
+
+        console.log(`✅ Отправлено ${sentCount} из ${reminders.length} напоминаний`);
       }
     } catch (error) {
       console.error('❌ Ошибка проверки напоминаний:', error);
@@ -71,7 +81,7 @@ class ReminderService {
 
   // Получить напоминания для текущего времени и дня
   async getDueReminders(currentTime, currentDay) {
-return new Promise((resolve) => {
+    return new Promise((resolve) => {
       // Конвертируем день недели в формат базы (1-7, где 1=понедельник)
       const dbDayIndex = currentDay === 0 ? 7 : currentDay;
 
