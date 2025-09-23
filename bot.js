@@ -24,6 +24,8 @@ reminderController.initialize().then(() => {
   console.log('✅ Сервис напоминаний инициализирован');
 });
 
+const ReminderService = require('./services/reminderService');
+const reminderService = new ReminderService(bot); // Явно создаем экземпляр
 // ==================== MIDDLEWARE ====================
 
 // Инъекция данных подписки
@@ -113,6 +115,15 @@ bot.command('testquestions', (ctx) => testCommands.testQuestions(ctx));
 bot.command('testbuttons', (ctx) => testCommands.testButtons(ctx));
 bot.command('testremindersnow', (ctx) => testCommands.testRemindersNow(ctx));
 bot.command('createremindersfromplan', (ctx) => testCommands.createRemindersFromPlan(ctx));
+
+bot.command('createtestreminder', (ctx) => {
+  const time = ctx.message.text.split(' ')[1]; // /createtestreminder 14:30
+  testCommands.createTestReminder(ctx, time);
+});
+
+bot.command('forcereminders', (ctx) => testCommands.forceSendReminders(ctx));
+bot.command('cleartestreminders', (ctx) => testCommands.clearTestReminders(ctx));
+bot.command('reminderstatus', (ctx) => testCommands.reminderStatus(ctx));
 
 // Команды истории и статистики
 bot.command('myhistory', async (ctx) => {

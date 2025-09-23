@@ -17,22 +17,26 @@ class ReminderService {
   // Инициализация сервиса
   async initialize() {
     console.log('⏰ Инициализация упрощенного сервиса напоминаний...');
-    this.startSimpleReminderChecker();
+    this.startEnhancedReminderChecker();
     return true;
   }
 
-  // Запускаем простой проверщик напоминаний
-  startSimpleReminderChecker() {
+  // Запускаем улучшенный проверщик напоминаний
+  async startEnhancedReminderChecker() {
     // Останавливаем предыдущий интервал если был
     if (this.checkInterval) {
       clearInterval(this.checkInterval);
     }
 
-    this.checkInterval = setInterval(() => {
-      this.checkDueReminders();
+    // Проверяем напоминания сразу при старте
+    await this.checkDueReminders();
+
+    // Затем каждые 30 секунд
+    this.checkInterval = setInterval(async () => {
+      await this.checkDueReminders();
     }, 30000); // Проверяем каждые 30 секунд
 
-    console.log('✅ Простой проверщик напоминаний запущен');
+    console.log('✅ Улучшенный проверщик напоминаний запущен');
   }
 
   // Проверить due напоминания
@@ -42,12 +46,19 @@ class ReminderService {
       const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
       const currentDay = now.getDay(); // 0-6 (воскресенье-суббота)
 
-      console.log(`🔍 Проверка напоминаний для времени: ${currentTime}, день: ${currentDay}`);
+      // Логируем только если время изменилось
+      if (!this.lastCheckTime || this.lastCheckTime !== currentTime) {
+        console.log(`🔍 Проверка напоминаний для: ${currentTime}, день: ${currentDay}`);
+        this.lastCheckTime = currentTime;
+      }
 
       const reminders = await this.getDueReminders(currentTime, currentDay);
 
       if (reminders.length > 0) {
-        console.log(`📨 Найдено ${reminders.length} напоминаний для отправки`);
+        console.log(`📨 Найдено ${reminders.length} напоминаний для отправки:`);
+        reminders.forEach(reminder => {
+          console.log(`   💊 ${reminder.supplement_name} в ${reminder.time} для пользователя ${reminder.chat_id}`);
+        });
 
         for (const reminder of reminders) {
           await this.sendReminderNow(reminder);
@@ -60,15 +71,24 @@ class ReminderService {
 
   // Получить напоминания для текущего времени и дня
   async getDueReminders(currentTime, currentDay) {
-    return new Promise((resolve) => {
+return new Promise((resolve) => {
       // Конвертируем день недели в формат базы (1-7, где 1=понедельник)
-      const dbDayIndex = currentDay === 0 ? 7 : currentDay; // Воскресенье = 7
+      const dbDayIndex = currentDay === 0 ? 7 : currentDay;
 
+      // Ищем напоминания с точным временем И которые активны
       db.all(
-        `SELECT * FROM reminders
-         WHERE time = ?
-         AND substr(days, ?, 1) = '1'
-         AND is_active = true`,
+        `SELECT r.*
+         FROM reminders r
+         WHERE r.time = ?
+         AND substr(r.days, ?, 1) = '1'
+         AND r.is_active = true
+         AND NOT EXISTS (
+           SELECT 1 FROM intake_history ih
+           WHERE ih.chat_id = r.chat_id
+           AND ih.supplement_name = r.supplement_name
+           AND DATE(ih.taken_at) = DATE('now')
+           AND ih.status = 'taken'
+         )`, // Не показываем если уже приняли сегодня
         [currentTime, dbDayIndex],
         (err, reminders) => {
           if (err) {
@@ -89,20 +109,18 @@ class ReminderService {
 
       if (!telegram) {
         console.error('❌ Telegram client не доступен');
-        return;
+        return false;
       }
 
-      const keyboard = {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              { text: '✅ Принял', callback_data: `intake_taken_${reminder.id}` },
-              { text: '⏰ Через 5 мин', callback_data: `intake_later_${reminder.id}` },
-              { text: '❌ Пропустить', callback_data: `intake_skipped_${reminder.id}` }
-            ]
-          ]
-        }
-      };
+      // Проверяем не отправляли ли уже напоминание сегодня
+      const alreadySent = await this.checkIfReminderSentToday(reminder);
+      if (alreadySent) {
+        console.log(`⚠️ Напоминание уже отправлено сегодня: ${reminder.supplement_name}`);
+        return false;
+      }
+
+      const { getReminderActionsKeyboard } = require('../keyboards');
+      const keyboard = getReminderActionsKeyboard(reminder.id);
 
       await telegram.sendMessage(
         reminder.chat_id,
@@ -112,15 +130,75 @@ class ReminderService {
 
       console.log(`✅ Отправлено напоминание пользователю ${reminder.chat_id}: ${reminder.supplement_name}`);
 
+      // Помечаем как отправленное сегодня
+      await this.markReminderSent(reminder);
+      return true;
+
     } catch (error) {
       console.error('❌ Ошибка отправки напоминания:', error);
 
       // Если пользователь заблокировал бота, деактивируем напоминание
       if (error.response && error.response.error_code === 403) {
         console.log(`🚫 Пользователь ${reminder.chat_id} заблокировал бота, деактивируем напоминания`);
-        this.deactivateUserReminders(reminder.chat_id);
+        await this.deactivateUserReminders(reminder.chat_id);
       }
+      return false;
     }
+  }
+
+  // Проверить отправляли ли напоминание сегодня
+  async checkIfReminderSentToday(reminder) {
+    return new Promise((resolve) => {
+      db.get(
+        `SELECT 1 FROM intake_history
+         WHERE chat_id = ? AND supplement_name = ?
+         AND DATE(taken_at) = DATE('now')
+         AND status IN ('taken', 'skipped')`,
+        [reminder.chat_id, reminder.supplement_name],
+        (err, row) => {
+          resolve(!!row);
+        }
+      );
+    });
+  }
+
+  // Пометить напоминание как отправленное
+  async markReminderSent(reminder) {
+    return new Promise((resolve) => {
+      db.run(
+        `INSERT INTO intake_history (chat_id, supplement_name, dosage, status, taken_at)
+         VALUES (?, ?, ?, 'pending', datetime('now'))`,
+        [reminder.chat_id, reminder.supplement_name, reminder.dosage],
+        (err) => {
+          if (err) console.error('❌ Ошибка отметки напоминания:', err);
+          resolve();
+        }
+      );
+    });
+  }
+
+    // Создать тестовое напоминание
+  async createTestReminder(chatId, supplementName, dosage, time, days = '1111111') {
+    return new Promise((resolve, reject) => {
+      db.run(
+        `INSERT INTO reminders (chat_id, supplement_name, dosage, time, days)
+         VALUES (?, ?, ?, ?, ?)`,
+        [chatId, supplementName, dosage, time, days],
+        function(err) {
+          if (err) {
+            reject(err);
+          } else {
+            console.log(`✅ Тестовое напоминание создано: ${supplementName} в ${time}`);
+
+            // Возвращаем данные созданного напоминания
+            db.get('SELECT * FROM reminders WHERE id = ?', [this.lastID], (err, reminder) => {
+              if (err) reject(err);
+              else resolve(reminder);
+            });
+          }
+        }
+      );
+    });
   }
 
   // Деактивировать все напоминания пользователя
@@ -160,7 +238,7 @@ class ReminderService {
   async getUserReminders(chatId) {
     return new Promise((resolve) => {
       db.all(
-        'SELECT * FROM reminders WHERE chat_id = ? ORDER BY time',
+        'SELECT * FROM reminders WHERE chat_id = ? AND is_active = true ORDER BY time',
         [chatId],
         (err, reminders) => {
           if (err) {
@@ -169,6 +247,24 @@ class ReminderService {
           } else {
             resolve(reminders);
           }
+        }
+      );
+    });
+  }
+
+    // Удалить тестовые напоминания
+  async clearTestReminders(chatId) {
+    return new Promise((resolve) => {
+      db.run(
+        'DELETE FROM reminders WHERE chat_id = ? AND supplement_name LIKE "Тест:%"',
+        [chatId],
+        (err) => {
+          if (err) {
+            console.error('❌ Ошибка удаления тестовых напоминаний:', err);
+          } else {
+            console.log(`✅ Тестовые напоминания пользователя ${chatId} очищены`);
+          }
+          resolve();
         }
       );
     });

@@ -2,27 +2,27 @@
 
 
 *Тестовые команды (для разработки):*
-/testremindernow - Тест напоминания (мгновенно)
-/myreminders - Мои напоминания
-/checkhistory - Проверить историю
-/reminderstats - Статистика напоминаний
-/debugsub - Отладка подписки
-/activatepremium - Активировать premium
-/clearmydata - Очистить мои данные
-/testquestions - Тест вопросов
+# Очистить все данные и начать заново
+/clearmydata
 
+# Активировать Premium для тестирования
+/activatepremium
 
-testremindernow
-myreminders
-checkhistory
-reminderstats
-debugsub
-activatepremium
-clearmydata
-testquestions
-testbuttons
-testremindersnow
-createremindersfromplan
+# Принудительно отправить напоминание
+/testremindernow
+
+# Проверить статистику
+/mystats
+
+# Проверить историю
+/myhistory
+
+# Отладка подписки
+/debugsub
+
+# Тест кнопок
+/testbuttons
+
 
 # Запуск
 pm2 start ecosystem.config.js --env production
