@@ -486,6 +486,26 @@ bot.launch().then(() => {
   console.error('❌ Ошибка запуска бота:', err);
 });
 
+// Добавляем обработку неизвестных команд
+bot.on('message', (ctx) => {
+  if (ctx.message && ctx.message.text && ctx.message.text.startsWith('/')) {
+    console.log(`❓ Неизвестная команда: ${ctx.message.text}`);
+    ctx.reply(
+      '❓ Неизвестная команда. Используйте /help для списка команд.',
+      getMainMenuKeyboard()
+    );
+  }
+});
+
+// Улучшаем обработку ошибок
+process.on('unhandledRejection', (error) => {
+  console.error('🔴 Необработанное исключение:', error);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('🔴 Непойманное исключение:', error);
+});
+
 // Graceful shutdown
 process.once('SIGINT', async () => {
   console.log('🔄 Получен SIGINT, останавливаем бота...');
