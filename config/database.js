@@ -105,18 +105,28 @@ db.serialize(() => {
 
   console.log('✅ Таблица истории приема создана/проверена');
 
-  // Таблица платежей
-  db.run(`CREATE TABLE IF NOT EXISTS payments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    chat_id INTEGER,
-    amount REAL,
-    currency TEXT DEFAULT 'RUB',
-    status TEXT,
-    yookassa_id TEXT,
-    plan TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (chat_id) REFERENCES users (chat_id)
-  )`);
+  db.run(`DROP TABLE IF EXISTS payments`, (err) => {
+    if (err) console.log('ℹ️ Таблица payments не существует');
+
+    // Создаем новую с правильной структурой
+    db.run(`CREATE TABLE payments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      chat_id INTEGER,
+      amount REAL,
+      currency TEXT DEFAULT 'RUB',
+      status TEXT,
+      yookassa_id TEXT,
+      plan TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (chat_id) REFERENCES users (chat_id)
+    )`, (err) => {
+      if (err) {
+        console.error('❌ Ошибка создания таблицы payments:', err);
+      } else {
+        console.log('✅ Таблица payments пересоздана с правильной структурой');
+      }
+    });
+  });
 
   console.log('✅ Таблица платежей создана');
 });

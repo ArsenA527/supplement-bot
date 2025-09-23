@@ -29,7 +29,7 @@ class PaymentService {
     return new Promise((resolve, reject) => {
       db.run(
         `INSERT INTO payments (chat_id, amount, currency, status, yookassa_id, plan)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+        VALUES (?, ?, ?, ?, ?, ?)`,
         [
           chatId,
           plan.price,
@@ -39,8 +39,13 @@ class PaymentService {
           plan.name
         ],
         function(err) {
-          if (err) reject(err);
-          else resolve(this.lastID);
+          if (err) {
+            console.error('❌ Ошибка сохранения платежа:', err);
+            reject(err);
+          } else {
+            console.log('✅ Платеж сохранен в БД, ID:', this.lastID);
+            resolve(this.lastID);
+          }
         }
       );
     });
