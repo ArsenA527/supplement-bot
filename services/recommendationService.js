@@ -6,7 +6,7 @@ const recommendationRules = {
         name: 'Магний',
         dosage: '400 мг',
         time: 'вечером',
-        reason: 'Снижает cortisol, улучшает сон'
+        reason: 'Снижает Кортизол, улучшает сон'
       },
       {
         name: 'L-теанин',
