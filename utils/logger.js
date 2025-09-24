@@ -13,16 +13,33 @@ class Logger {
     }
   }
 
+  getTimestamp() {
+    return new Date().toISOString();
+  }
+
   log(level, message, metadata = {}) {
-    const timestamp = new Date().toISOString();
-    const logMessage = `[${timestamp}] [${level.toUpperCase()}] ${message} ${JSON.stringify(metadata)}`;
+    const timestamp = this.getTimestamp();
+    const logEntry = {
+      timestamp,
+      level: level.toUpperCase(),
+      message,
+      ...metadata
+    };
+    const logLine = JSON.stringify(logEntry);
 
-    // Консоль
-    console.log(logMessage);
+    // Консоль (красиво)
+    const colors = {
+      info: '\x1b[36m',    // cyan
+      error: '\x1b[31m',   // red
+      warn: '\x1b[33m',    // yellow
+      debug: '\x1b[35m'    // magenta
+    };
 
-    // Файл
+    console.log(`${colors[level] || ''}[${timestamp}] ${level.toUpperCase()}: ${message}\x1b[0m`);
+
+    // Файл (JSON)
     const logFile = path.join(this.logDir, `${level}.log`);
-    fs.appendFileSync(logFile, logMessage + '\n');
+    fs.appendFileSync(logFile, logLine + '\n');
   }
 
   info(message, metadata = {}) {

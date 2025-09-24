@@ -1,4 +1,14 @@
-require('dotenv').config();
+require('dotenv').config({
+  path: `.env.${process.env.NODE_ENV || 'development'}`
+});
+
+const logger = require('./utils/logger');
+
+logger.info('🚀 Запуск Supplement Bot', {
+  nodeEnv: process.env.NODE_ENV,
+  timestamp: new Date().toISOString()
+});
+
 const Telegraf = require('telegraf');
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
@@ -470,6 +480,12 @@ bot.on('callback_query', (ctx) => {
 
 // Глобальный обработчик ошибок
 bot.catch((err, ctx) => {
+  logger.error('Ошибка бота', {
+    error: err.message,
+    stack: err.stack,
+    chatId: ctx.chat?.id
+  });
+
   console.error('❌ Глобальная ошибка:', err);
 
   const NotificationManager = require('./utils/notifications');
