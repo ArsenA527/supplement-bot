@@ -1,6 +1,40 @@
+const path = require('path');
+
+const envName = process.env.NODE_ENV || 'development';
+const envFile = `.env.${envName}`;
+
+console.log('🔧 Загрузка окружения:');
+console.log('   NODE_ENV из process.env:', process.env.NODE_ENV);
+console.log('   Будем использовать файл:', envFile);
+
 require('dotenv').config({
-  path: `.env.${process.env.NODE_ENV || 'development'}`
+    path: path.resolve(__dirname, envFile)
 });
+
+console.log('🔍 После загрузки dotenv:');
+console.log('   NODE_ENV:', process.env.NODE_ENV);
+console.log('   BOT_TOKEN exists:', !!process.env.BOT_TOKEN);
+console.log('   BOT_TOKEN length:', process.env.BOT_TOKEN ? process.env.BOT_TOKEN.length : 0);
+
+if (!process.env.BOT_TOKEN) {
+  console.log('⚠️ BOT_TOKEN не найден, пробуем .env');
+  require('dotenv').config(); // Загружаем обычный .env
+
+  if (!process.env.BOT_TOKEN) {
+    console.error('❌ CRITICAL: BOT_TOKEN не найден ни в одном .env файле!');
+    console.log('📁 Проверьте файлы в директории:', __dirname);
+
+    // Покажем какие файлы есть
+    const fs = require('fs');
+    const files = fs.readdirSync(__dirname);
+    console.log('📋 Файлы в директории:', files.filter(f => f.includes('.env')));
+
+    process.exit(1);
+  }
+}
+
+console.log('✅ Окружение загружено успешно!');
+console.log('   BOT_TOKEN:', process.env.BOT_TOKEN ? '***' + process.env.BOT_TOKEN.slice(-5) : 'NOT FOUND');
 
 const logger = require('./utils/logger');
 

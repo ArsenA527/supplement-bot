@@ -4,14 +4,16 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node bot.js",
-    "dev": "nodemon bot.js",
-    "production": "pm2 start ecosystem.config.js --env production",
+    "dev": "cross-env NODE_ENV=development nodemon bot.js",
+    "start": "cross-env NODE_ENV=production node bot.js",
+    "production": "cross-env NODE_ENV=production pm2 start ecosystem.config.js",
     "stop": "pm2 stop supplement-bot",
     "restart": "pm2 restart supplement-bot",
     "status": "pm2 status",
     "logs": "pm2 logs supplement-bot",
-    "monit": "pm2 monit"
+    "monit": "pm2 monit",
+    "backup": "node scripts/backup.js",
+    "deploy": "scripts/deploy-production.sh"
   },
   "keywords": [],
   "author": "",
@@ -23,5 +25,8 @@
     "node-cron": "^4.2.1",
     "sqlite3": "^5.1.7",
     "telegraf": "3.32"
+  },
+  "devDependencies": {
+    "cross-env": "^10.0.0"
   }
 }

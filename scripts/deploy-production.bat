@@ -1,0 +1,23 @@
+@echo off
+echo 🚀 Запуск деплоя Supplement Bot в production...
+
+echo 📦 Обновление кода...
+git pull origin master
+
+echo 📦 Установка зависимостей...
+npm install --production
+
+echo 🔧 Создание папок...
+mkdir logs 2>nul
+mkdir backups 2>nul
+mkdir data 2>nul
+
+echo 🔄 Перезапуск бота...
+pm2 stop supplement-bot
+pm2 start ecosystem.config.js --env production
+
+echo ⏳ Ожидание запуска...
+timeout /t 5 /nobreak
+
+echo 📊 Проверка статуса...
+pm2 list
