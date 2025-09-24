@@ -143,4 +143,16 @@ process.on('SIGINT', () => {
   });
 });
 
+const backupService = require('../services/backupService.js');
+
+// Автоматический бэкап при старте
+backupService.createBackup();
+
+// Бэкап каждые 6 часов
+setInterval(() => {
+  backupService.createBackup();
+}, 6 * 60 * 60 * 1000);
+
+console.log('✅ Сервис бэкапов инициализирован');
+
 module.exports = db;
