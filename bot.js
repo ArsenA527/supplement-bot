@@ -8,7 +8,7 @@ console.log('   NODE_ENV из process.env:', process.env.NODE_ENV);
 console.log('   Будем использовать файл:', envFile);
 
 require('dotenv').config({
-    path: path.resolve(__dirname, envFile)
+  path: path.resolve(__dirname, envFile)
 });
 
 console.log('🔍 После загрузки dotenv:');
@@ -224,6 +224,10 @@ bot.command('mystats', async (ctx) => {
     await NotificationManager.error(ctx, 'Ошибка загрузки статистики');
   }
 });
+
+// Команды бэкапов
+bot.command('backupstatus', (ctx) => testCommands.backupStatus(ctx));
+bot.command('backupnow', (ctx) => testCommands.createBackupNow(ctx));
 
 // ==================== ОБРАБОТКА КНОПОК НАПОМИНАНИЙ ====================
 

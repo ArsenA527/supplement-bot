@@ -468,5 +468,46 @@ module.exports = {
       console.error('❌ Ошибка проверки статуса:', error);
       ctx.reply('❌ Ошибка проверки статуса напоминаний');
     }
+  },
+
+  // Управление бэкапами
+  backupStatus: async (ctx) => {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const backupService = require('../services/backupService');
+      const backups = backupService.getBackupList();
+      let message = '💾 *Статус бэкапов:*\n\n';
+
+      if (backups.length === 0) {
+        message += '📭 Бэкапы не найдены';
+      } else {
+        message += `📊 Всего бэкапов: ${backups.length}\n\n`;
+        message += '📋 Последние 5 бэкапов:\n';
+
+        backups.slice(0, 5).forEach((backup, index) => {
+          const size = fs.statSync(path.join(__dirname, '..', 'backups', backup)).size;
+          const sizeMB = (size / 1024 / 1024).toFixed(2);
+          message += `${index + 1}. ${backup} (${sizeMB} MB)\n`;
+        });
+      }
+
+      ctx.reply(message, { parse_mode: 'Markdown' });
+    } catch (error) {
+      console.error('❌ Ошибка проверки бэкапов:', error);
+      ctx.reply('❌ Ошибка проверки бэкапов');
+    }
+  },
+
+  createBackupNow: async (ctx) => {
+    try {
+      const backupService = require('../services/backupService');
+      backupService.createBackup();
+      ctx.reply('✅ Бэкап создан вручную');
+
+    } catch (error) {
+      console.error('❌ Ошибка создания бэкапа:', error);
+      ctx.reply('❌ Ошибка создания бэкапа');
+    }
   }
 };

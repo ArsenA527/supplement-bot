@@ -4047,3 +4047,169 @@
 2025-09-24T10:32:35: ✅ Таблица payments пересоздана с правильной структурой
 2025-09-24T10:32:35: 🤖 Бот запущен
 2025-09-24T10:33:05: 🔍 Проверка напоминаний для: 10:33, день: 3
+2025-09-24T10:51:27: 🔧 Загрузка окружения:
+2025-09-24T10:51:27: 🔧 Загрузка окружения:
+2025-09-24T10:51:27: 🔧 Загрузка окружения:
+2025-09-24T10:51:27: 🔧 Загрузка окружения:
+2025-09-24T10:51:28: 🔧 Загрузка окружения:
+2025-09-24T10:51:28: 🔧 Загрузка окружения:
+2025-09-24T10:51:28: 🔧 Загрузка окружения:
+2025-09-24T10:51:28: 🔧 Загрузка окружения:
+2025-09-24T10:51:29: 🔧 Загрузка окружения:
+2025-09-24T10:51:29: 🔧 Загрузка окружения:
+2025-09-24T10:52:32: 🔧 Загрузка окружения:
+2025-09-24T10:52:32: 🔧 Загрузка окружения:
+2025-09-24T10:52:33: 🔧 Загрузка окружения:
+2025-09-24T10:52:33: 🔧 Загрузка окружения:
+2025-09-24T10:52:33: 🔧 Загрузка окружения:
+2025-09-24T10:52:33: 🔧 Загрузка окружения:
+2025-09-24T10:52:33: 🔧 Загрузка окружения:
+2025-09-24T10:52:34: 🔧 Загрузка окружения:
+2025-09-24T10:52:34: 🔧 Загрузка окружения:
+2025-09-24T10:52:34: 🔧 Загрузка окружения:
+2025-09-24T10:52:39: 🔧 Загрузка окружения:
+2025-09-24T10:52:39: 🔧 Загрузка окружения:
+2025-09-24T10:52:39: 🔧 Загрузка окружения:
+2025-09-24T10:52:40: 🔧 Загрузка окружения:
+2025-09-24T10:52:40: 🔧 Загрузка окружения:
+2025-09-24T10:52:40: 🔧 Загрузка окружения:
+2025-09-24T10:52:40: 🔧 Загрузка окружения:
+2025-09-24T10:52:41: 🔧 Загрузка окружения:
+2025-09-24T10:52:41: 🔧 Загрузка окружения:
+2025-09-24T10:52:41: 🔧 Загрузка окружения:
+2025-09-24T10:53:44: 🔧 Загрузка окружения:
+2025-09-24T10:53:44:    NODE_ENV из process.env: development
+2025-09-24T10:53:44:    Будем использовать файл: .env.development
+2025-09-24T10:53:44: [dotenv@17.2.1] injecting env (0) from .env.development -- tip: 📡 version env with Radar: https://dotenvx.com/radar
+2025-09-24T10:53:44: 🔍 После загрузки dotenv:
+2025-09-24T10:53:44:    NODE_ENV: development
+2025-09-24T10:53:44:    BOT_TOKEN exists: false
+2025-09-24T10:53:44:    BOT_TOKEN length: 0
+2025-09-24T10:53:44: ⚠️ BOT_TOKEN не найден, пробуем .env
+2025-09-24T10:53:44: [dotenv@17.2.1] injecting env (1) from .env -- tip: 📡 observe env with Radar: https://dotenvx.com/radar
+2025-09-24T10:53:44: ✅ Окружение загружено успешно!
+2025-09-24T10:53:44:    BOT_TOKEN: ***oAVYo
+2025-09-24T10:53:44: [36m[2025-09-24T07:53:44.756Z] INFO: 🚀 Запуск Supplement Bot[0m
+2025-09-24T10:53:44: ✅ База данных инициализирована
+2025-09-24T10:53:44: ✅ Таблицы напоминаний созданы
+2025-09-24T10:53:44: ✅ Таблица истории приема создана/проверена
+2025-09-24T10:53:44: ✅ Таблица платежей создана
+2025-09-24T10:53:44: [36m[2025-09-24T07:53:44.792Z] INFO: Бэкап базы данных создан[0m
+2025-09-24T10:53:44: ✅ Сервис бэкапов инициализирован
+2025-09-24T10:53:44: 🔧 ReminderService initialized with bot: true
+2025-09-24T10:53:44: 🔧 Telegram client available: true
+2025-09-24T10:53:44: ⏰ Инициализация упрощенного сервиса напоминаний...
+2025-09-24T10:53:44: 🔍 Первоначальная проверка напоминаний...
+2025-09-24T10:53:44: 🔍 Проверка напоминаний для: 10:53, день: 3
+2025-09-24T10:53:44: 🔧 ReminderService initialized with bot: true
+2025-09-24T10:53:44: 🔧 Telegram client available: true
+2025-09-24T10:53:44: ✅ Улучшенный проверщик напоминаний запущен
+2025-09-24T10:53:44: ✅ Сервис напоминаний успешно инициализирован
+2025-09-24T10:53:44: ✅ Сервис напоминаний инициализирован
+2025-09-24T10:53:44: ✅ Сервис напоминаний инициализирован
+2025-09-24T10:53:44: ✅ Таблица payments пересоздана с правильной структурой
+2025-09-24T10:53:45: 🤖 Бот запущен
+2025-09-24T10:53:47: 📨 [PrimeKingArs:725240491] /backupstatus
+2025-09-24T10:53:47: ❌ Ошибка проверки бэкапов: ReferenceError: fs is not defined
+    at C:\work\supplement-bot\commands\testCommands.js:487:24
+    at Array.forEach (<anonymous>)
+    at Object.backupStatus (C:\work\supplement-bot\commands\testCommands.js:486:29)
+    at C:\work\supplement-bot\bot.js:229:51
+    at C:\work\supplement-bot\node_modules\telegraf\composer.js:128:56
+    at async C:\work\supplement-bot\bot.js:85:3
+    at async injectSubscriptionData (C:\work\supplement-bot\middlewares\subscriptionMiddleware.js:43:3)
+    at async Promise.all (index 0)
+2025-09-24T10:54:05: 📨 [PrimeKingArs:725240491] /backupnow
+2025-09-24T10:54:05: [36m[2025-09-24T07:54:05.310Z] INFO: Бэкап базы данных создан[0m
+2025-09-24T10:54:08: 📨 [PrimeKingArs:725240491] /backupstatus
+2025-09-24T10:54:08: ❌ Ошибка проверки бэкапов: ReferenceError: fs is not defined
+    at C:\work\supplement-bot\commands\testCommands.js:487:24
+    at Array.forEach (<anonymous>)
+    at Object.backupStatus (C:\work\supplement-bot\commands\testCommands.js:486:29)
+    at C:\work\supplement-bot\bot.js:229:51
+    at C:\work\supplement-bot\node_modules\telegraf\composer.js:128:56
+    at async C:\work\supplement-bot\bot.js:85:3
+    at async injectSubscriptionData (C:\work\supplement-bot\middlewares\subscriptionMiddleware.js:43:3)
+    at async Promise.all (index 0)
+2025-09-24T10:54:14: 🔍 Проверка напоминаний для: 10:54, день: 3
+2025-09-24T10:54:24: 📨 [PrimeKingArs:725240491] /backupstatus
+2025-09-24T10:54:24: ❌ Ошибка проверки бэкапов: ReferenceError: fs is not defined
+    at C:\work\supplement-bot\commands\testCommands.js:487:24
+    at Array.forEach (<anonymous>)
+    at Object.backupStatus (C:\work\supplement-bot\commands\testCommands.js:486:29)
+    at C:\work\supplement-bot\bot.js:229:51
+    at C:\work\supplement-bot\node_modules\telegraf\composer.js:128:56
+    at async C:\work\supplement-bot\bot.js:85:3
+    at async injectSubscriptionData (C:\work\supplement-bot\middlewares\subscriptionMiddleware.js:43:3)
+    at async Promise.all (index 0)
+2025-09-24T10:55:14: 🔍 Проверка напоминаний для: 10:55, день: 3
+2025-09-24T10:56:14: 🔍 Проверка напоминаний для: 10:56, день: 3
+2025-09-24T10:57:14: 🔍 Проверка напоминаний для: 10:57, день: 3
+2025-09-24T10:58:14: 🔍 Проверка напоминаний для: 10:58, день: 3
+2025-09-24T10:59:14: 🔍 Проверка напоминаний для: 10:59, день: 3
+2025-09-24T10:59:47: 📨 [PrimeKingArs:725240491] /backupnow
+2025-09-24T10:59:47: [36m[2025-09-24T07:59:47.188Z] INFO: Бэкап базы данных создан[0m
+2025-09-24T11:00:14: 🔍 Проверка напоминаний для: 11:00, день: 3
+2025-09-24T11:00:26: 📨 [PrimeKingArs:725240491] /backupstatus
+2025-09-24T11:00:26: ❌ Ошибка проверки бэкапов: ReferenceError: fs is not defined
+    at C:\work\supplement-bot\commands\testCommands.js:487:24
+    at Array.forEach (<anonymous>)
+    at Object.backupStatus (C:\work\supplement-bot\commands\testCommands.js:486:29)
+    at C:\work\supplement-bot\bot.js:229:51
+    at C:\work\supplement-bot\node_modules\telegraf\composer.js:128:56
+    at async C:\work\supplement-bot\bot.js:85:3
+    at async injectSubscriptionData (C:\work\supplement-bot\middlewares\subscriptionMiddleware.js:43:3)
+    at async Promise.all (index 0)
+2025-09-24T11:01:12: 📨 [PrimeKingArs:725240491] /backupstatus
+2025-09-24T11:01:12: ❌ Ошибка проверки бэкапов: ReferenceError: fs is not defined
+    at C:\work\supplement-bot\commands\testCommands.js:487:24
+    at Array.forEach (<anonymous>)
+    at Object.backupStatus (C:\work\supplement-bot\commands\testCommands.js:486:29)
+    at C:\work\supplement-bot\bot.js:229:51
+    at C:\work\supplement-bot\node_modules\telegraf\composer.js:128:56
+    at async C:\work\supplement-bot\bot.js:85:3
+    at async injectSubscriptionData (C:\work\supplement-bot\middlewares\subscriptionMiddleware.js:43:3)
+    at async Promise.all (index 0)
+2025-09-24T11:01:14: 🔍 Проверка напоминаний для: 11:01, день: 3
+2025-09-24T11:01:48: 🔧 Загрузка окружения:
+2025-09-24T11:01:48:    NODE_ENV из process.env: development
+2025-09-24T11:01:48:    Будем использовать файл: .env.development
+2025-09-24T11:01:48: [dotenv@17.2.1] injecting env (0) from .env.development -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+2025-09-24T11:01:48: 🔍 После загрузки dotenv:
+2025-09-24T11:01:48:    NODE_ENV: development
+2025-09-24T11:01:48:    BOT_TOKEN exists: false
+2025-09-24T11:01:48:    BOT_TOKEN length: 0
+2025-09-24T11:01:48: ⚠️ BOT_TOKEN не найден, пробуем .env
+2025-09-24T11:01:48: [dotenv@17.2.1] injecting env (1) from .env -- tip: 📡 auto-backup env with Radar: https://dotenvx.com/radar
+2025-09-24T11:01:48: ✅ Окружение загружено успешно!
+2025-09-24T11:01:48:    BOT_TOKEN: ***oAVYo
+2025-09-24T11:01:48: [36m[2025-09-24T08:01:48.036Z] INFO: 🚀 Запуск Supplement Bot[0m
+2025-09-24T11:01:48: ✅ База данных инициализирована
+2025-09-24T11:01:48: ✅ Таблицы напоминаний созданы
+2025-09-24T11:01:48: ✅ Таблица истории приема создана/проверена
+2025-09-24T11:01:48: ✅ Таблица платежей создана
+2025-09-24T11:01:48: [36m[2025-09-24T08:01:48.073Z] INFO: Бэкап базы данных создан[0m
+2025-09-24T11:01:48: ✅ Сервис бэкапов инициализирован
+2025-09-24T11:01:48: 🔧 ReminderService initialized with bot: true
+2025-09-24T11:01:48: 🔧 Telegram client available: true
+2025-09-24T11:01:48: ⏰ Инициализация упрощенного сервиса напоминаний...
+2025-09-24T11:01:48: 🔍 Первоначальная проверка напоминаний...
+2025-09-24T11:01:48: 🔍 Проверка напоминаний для: 11:01, день: 3
+2025-09-24T11:01:48: 🔧 ReminderService initialized with bot: true
+2025-09-24T11:01:48: 🔧 Telegram client available: true
+2025-09-24T11:01:48: ✅ Улучшенный проверщик напоминаний запущен
+2025-09-24T11:01:48: ✅ Сервис напоминаний успешно инициализирован
+2025-09-24T11:01:48: ✅ Сервис напоминаний инициализирован
+2025-09-24T11:01:48: ✅ Сервис напоминаний инициализирован
+2025-09-24T11:01:48: ✅ Таблица payments пересоздана с правильной структурой
+2025-09-24T11:01:48: 🤖 Бот запущен
+2025-09-24T11:01:56: 📨 [PrimeKingArs:725240491] /backupstatus
+2025-09-24T11:01:56: ❌ Ошибка проверки бэкапов: ReferenceError: path is not defined
+    at C:\work\supplement-bot\commands\testCommands.js:488:36
+    at Array.forEach (<anonymous>)
+    at Object.backupStatus (C:\work\supplement-bot\commands\testCommands.js:487:29)
+    at C:\work\supplement-bot\bot.js:229:51
+    at C:\work\supplement-bot\node_modules\telegraf\composer.js:128:56
+    at async C:\work\supplement-bot\bot.js:85:3
+    at async injectSubscriptionData (C:\work\supplement-bot\middlewares\subscriptionMiddleware.js:43:3)
+    at async Promise.all (index 0)

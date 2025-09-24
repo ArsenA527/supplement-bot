@@ -140,3 +140,57 @@
 }
 2025-09-23T08:00:19: ❌ Telegram client не доступен
 2025-09-23T08:00:49: ❌ Telegram client не доступен
+2025-09-24T10:53:47: ❌ Ошибка проверки бэкапов: ReferenceError: fs is not defined
+    at C:\work\supplement-bot\commands\testCommands.js:487:24
+    at Array.forEach (<anonymous>)
+    at Object.backupStatus (C:\work\supplement-bot\commands\testCommands.js:486:29)
+    at C:\work\supplement-bot\bot.js:229:51
+    at C:\work\supplement-bot\node_modules\telegraf\composer.js:128:56
+    at async C:\work\supplement-bot\bot.js:85:3
+    at async injectSubscriptionData (C:\work\supplement-bot\middlewares\subscriptionMiddleware.js:43:3)
+    at async Promise.all (index 0)
+2025-09-24T10:54:08: ❌ Ошибка проверки бэкапов: ReferenceError: fs is not defined
+    at C:\work\supplement-bot\commands\testCommands.js:487:24
+    at Array.forEach (<anonymous>)
+    at Object.backupStatus (C:\work\supplement-bot\commands\testCommands.js:486:29)
+    at C:\work\supplement-bot\bot.js:229:51
+    at C:\work\supplement-bot\node_modules\telegraf\composer.js:128:56
+    at async C:\work\supplement-bot\bot.js:85:3
+    at async injectSubscriptionData (C:\work\supplement-bot\middlewares\subscriptionMiddleware.js:43:3)
+    at async Promise.all (index 0)
+2025-09-24T10:54:24: ❌ Ошибка проверки бэкапов: ReferenceError: fs is not defined
+    at C:\work\supplement-bot\commands\testCommands.js:487:24
+    at Array.forEach (<anonymous>)
+    at Object.backupStatus (C:\work\supplement-bot\commands\testCommands.js:486:29)
+    at C:\work\supplement-bot\bot.js:229:51
+    at C:\work\supplement-bot\node_modules\telegraf\composer.js:128:56
+    at async C:\work\supplement-bot\bot.js:85:3
+    at async injectSubscriptionData (C:\work\supplement-bot\middlewares\subscriptionMiddleware.js:43:3)
+    at async Promise.all (index 0)
+2025-09-24T11:00:26: ❌ Ошибка проверки бэкапов: ReferenceError: fs is not defined
+    at C:\work\supplement-bot\commands\testCommands.js:487:24
+    at Array.forEach (<anonymous>)
+    at Object.backupStatus (C:\work\supplement-bot\commands\testCommands.js:486:29)
+    at C:\work\supplement-bot\bot.js:229:51
+    at C:\work\supplement-bot\node_modules\telegraf\composer.js:128:56
+    at async C:\work\supplement-bot\bot.js:85:3
+    at async injectSubscriptionData (C:\work\supplement-bot\middlewares\subscriptionMiddleware.js:43:3)
+    at async Promise.all (index 0)
+2025-09-24T11:01:12: ❌ Ошибка проверки бэкапов: ReferenceError: fs is not defined
+    at C:\work\supplement-bot\commands\testCommands.js:487:24
+    at Array.forEach (<anonymous>)
+    at Object.backupStatus (C:\work\supplement-bot\commands\testCommands.js:486:29)
+    at C:\work\supplement-bot\bot.js:229:51
+    at C:\work\supplement-bot\node_modules\telegraf\composer.js:128:56
+    at async C:\work\supplement-bot\bot.js:85:3
+    at async injectSubscriptionData (C:\work\supplement-bot\middlewares\subscriptionMiddleware.js:43:3)
+    at async Promise.all (index 0)
+2025-09-24T11:01:56: ❌ Ошибка проверки бэкапов: ReferenceError: path is not defined
+    at C:\work\supplement-bot\commands\testCommands.js:488:36
+    at Array.forEach (<anonymous>)
+    at Object.backupStatus (C:\work\supplement-bot\commands\testCommands.js:487:29)
+    at C:\work\supplement-bot\bot.js:229:51
+    at C:\work\supplement-bot\node_modules\telegraf\composer.js:128:56
+    at async C:\work\supplement-bot\bot.js:85:3
+    at async injectSubscriptionData (C:\work\supplement-bot\middlewares\subscriptionMiddleware.js:43:3)
+    at async Promise.all (index 0)
