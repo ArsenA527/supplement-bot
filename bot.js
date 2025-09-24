@@ -497,6 +497,19 @@ bot.on('message', (ctx) => {
   }
 });
 
+// Команда /myid - только для админа
+bot.command('myid', (ctx) => {
+  const chatId = ctx.chat.id;
+  const adminId = process.env.ADMIN_CHAT_ID;
+
+  if (chatId.toString() === adminId) {
+    ctx.reply(`🆔 Ваш Chat ID: \`${chatId}\`\n\nЭтот ID используется как ADMIN_CHAT_ID`,
+      { parse_mode: 'Markdown' });
+  } else {
+    ctx.reply('🚫 Эта команда доступна только администратору');
+  }
+});
+
 // Улучшаем обработку ошибок
 process.on('unhandledRejection', (error) => {
   console.error('🔴 Необработанное исключение:', error);
