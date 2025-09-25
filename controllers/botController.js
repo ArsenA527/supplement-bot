@@ -120,12 +120,77 @@ function formatKey(key) {
   return keyMap[key] || key;
 }
 
+// Меню настроек
+function showSettingsMenu(ctx) {
+  const message = `⚙️ *Настройки бота*
+
+Здесь вы можете настроить работу бота под свои preferences:
+
+*🔔 Уведомления:*
+• Настройка времени напоминаний
+• Включение/выключение уведомлений
+
+*📊 Данные:*
+• Просмотр ваших данных
+• Очистка истории (если нужно)
+
+*🎨 Интерфейс:*
+• Смена языка (скоро)
+• Настройка формата времени
+
+*Что хотите настроить?*`;
+
+  ctx.reply(message, {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      keyboard: [
+        ['⏰ Настроить напоминания', '🔔 Управление уведомлениями'],
+        ['📊 Мои данные', '🗑️ Очистить историю'],
+        ['🏠 Главное меню']
+      ],
+      resize_keyboard: true
+    }
+  });
+}
+
+// Меню статистики
+function showStatisticsMenu(ctx) {
+  const message = `📊 *Ваша статистика*
+
+Здесь вы можете отслеживать свой прогресс:
+
+*💊 Прием добавок:*
+• История приема за неделю/месяц
+• Процент соблюдения режима
+• Самые частые пропуски
+
+*📈 Прогресс:*
+• Изменение самочувствия
+• Достижение целей
+• Рекомендации по улучшению
+
+*Что вас интересует?*`;
+
+  ctx.reply(message, {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      keyboard: [
+        ['📅 История приема', '📈 Общая статистика'],
+        ['💪 Мой прогресс', '🎯 Мои цели'],
+        ['🏠 Главное меню']
+      ],
+      resize_keyboard: true
+    }
+  });
+}
+
 function handleTextCommands(ctx) {
   const text = ctx.message.text;
   console.log(`🎮 Обработка текстовой команды: "${text}"`);
 
   switch(text) {
     case '📋 Пройти опрос':
+    case '📋 Новый опрос':
       console.log('🚀 Запуск опроса');
       ctx.reply('🧩 Начинаем опрос!');
       require('./surveyController').handleStartSurvey(ctx);
@@ -142,9 +207,26 @@ function handleTextCommands(ctx) {
       console.log('💳 Информация о подписках');
       require('./subscriptionController').showSubscriptionPlans(ctx);
       break;
+    case '💎 Апгрейд до Premium':
+    case '💎 Получить Premium':
+      console.log('💳 Информация о подписках');
+      require('./subscriptionController').showSubscriptionPlans(ctx);
+      break;
+    case '⚙️ Настройки':
+      console.log('⚙️ Показ настроек');
+      showSettingsMenu(ctx);
+      break;
     case 'ℹ️ Помощь':
       console.log('ℹ️ Показ помощи');
       handleHelp(ctx);
+      break;
+    case '⏰ Мои напоминания':
+      console.log('⏰ Показ напоминаний');
+      require('./reminderController').showUserReminders(ctx);
+      break;
+    case '📊 Статистика':
+      console.log('📊 Показ статистики');
+      showStatisticsMenu(ctx);
       break;
     default:
       console.log('❓ Неизвестная команда');
