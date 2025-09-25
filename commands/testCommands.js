@@ -509,5 +509,90 @@ module.exports = {
       console.error('❌ Ошибка создания бэкапа:', error);
       ctx.reply('❌ Ошибка создания бэкапа');
     }
+  },
+
+  // 📊 КОМАНДЫ АНАЛИТИКИ ДЛЯ АДМИНА
+  analyticsDashboard: async (ctx) => {
+    try {
+      if (ctx.chat.id.toString() !== process.env.ADMIN_CHAT_ID) {
+        ctx.reply('🚫 Эта команда доступна только администратору');
+        return;
+      }
+
+      const analyticsService = require('../services/analyticsService');
+      const metrics = await analyticsService.getKeyMetrics(30);
+
+      const message = `📊 *АНАЛИТИКА ЗА 30 ДНЕЙ* 📊
+
+  👥 *Пользователи:*
+  • Всего: ${metrics.totalUsers}
+  • Новые: ${metrics.newUsers}
+  • Активные: ${metrics.activeUsers}
+
+  📝 *Опросник:*
+  • Начато: ${metrics.surveyStarts}
+  • Завершено: ${metrics.surveyCompletions}
+  • Конверсия: ${metrics.surveyCompletionRate}%
+
+  💎 *Premium:*
+  • Конверсий: ${metrics.premiumConversions}
+  • Конверсия: ${metrics.premiumConversionRate}%
+
+  ⏰ *Напоминания:*
+  • Отправлено: ${metrics.reminderSends}
+  • Взаимодействий: ${metrics.reminderInteractions}
+  • Engagement: ${metrics.reminderEngagementRate}%`;
+
+      ctx.reply(message, { parse_mode: 'Markdown' });
+
+    } catch (error) {
+      console.error('❌ Ошибка аналитики:', error);
+      ctx.reply('❌ Ошибка загрузки аналитики');
+    }
+  },
+
+  surveyAnalytics: async (ctx) => {
+    try {
+      if (ctx.chat.id.toString() !== process.env.ADMIN_CHAT_ID) {
+        ctx.reply('🚫 Эта команда доступна только администратору');
+        return;
+      }
+
+      const analyticsService = require('../services/analyticsService');
+      const surveyData = await analyticsService.getSurveyAnalytics();
+
+      let message = `📝 *АНАЛИТИКА ОПРОСНИКА* 📝\n\n`;
+
+      if (surveyData.mostCommonGoals.length > 0) {
+        message += `🎯 *Самые популярные цели:*\n`;
+        surveyData.mostCommonGoals.forEach((goal, index) => {
+          message += `${index + 1}. ${goal.goal}: ${goal.count} раз\n`;
+        });
+        message += `\n`;
+      }
+
+      ctx.reply(message, { parse_mode: 'Markdown' });
+
+    } catch (error) {
+      console.error('❌ Ошибка аналитики опросника:', error);
+      ctx.reply('❌ Ошибка загрузки аналитики опросника');
+    }
+  },
+
+  forceDailyReport: async (ctx) => {
+    try {
+      if (ctx.chat.id.toString() !== process.env.ADMIN_CHAT_ID) {
+        ctx.reply('🚫 Эта команда доступна только администратору');
+        return;
+      }
+
+      const analyticsService = require('../services/analyticsService');
+      await analyticsService.generateDailyReport();
+      ctx.reply('✅ Ежедневный отчет отправлен!');
+
+    } catch (error) {
+      console.error('❌ Ошибка отправки отчета:', error);
+      ctx.reply('❌ Ошибка отправки отчета');
+    }
   }
 };

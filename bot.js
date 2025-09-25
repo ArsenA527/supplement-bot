@@ -70,6 +70,7 @@ reminderController.initialize().then(() => {
 
 const ReminderService = require('./services/reminderService');
 const reminderService = new ReminderService(bot); // Явно создаем экземпляр
+const analyticsService = require('./services/analyticsService');
 // ==================== MIDDLEWARE ====================
 
 // Инъекция данных подписки
@@ -88,6 +89,11 @@ bot.use(async (ctx, next) => {
 // ==================== ОСНОВНЫЕ КОМАНДЫ ====================
 
 bot.start(async (ctx) => {
+  await analyticsService.trackEvent(ctx.chat.id, 'bot_start', {
+    username: ctx.from.username,
+    first_name: ctx.from.first_name
+  });
+
   await NotificationManager.welcome(ctx, ctx.from.first_name);
   botController.handleStart(ctx);
 });
@@ -98,6 +104,7 @@ bot.help((ctx) => {
 });
 
 bot.command('survey', (ctx) => {
+  analyticsService.trackEvent(ctx.chat.id, 'survey_start');
   NotificationManager.loading(ctx, 'Загружаем опрос...');
   setTimeout(() => {
     surveyController.handleStartSurvey(ctx);
@@ -229,6 +236,11 @@ bot.command('mystats', async (ctx) => {
 bot.command('backupstatus', (ctx) => testCommands.backupStatus(ctx));
 bot.command('backupnow', (ctx) => testCommands.createBackupNow(ctx));
 
+// Команды аналитики (только для админа)
+bot.command('analytics', (ctx) => testCommands.analyticsDashboard(ctx));
+bot.command('surveystats', (ctx) => testCommands.surveyAnalytics(ctx));
+bot.command('dailyreport', (ctx) => testCommands.forceDailyReport(ctx));
+
 // ==================== ОБРАБОТКА КНОПОК НАПОМИНАНИЙ ====================
 
 // Обработка кнопки "✅ Принял"
@@ -236,6 +248,11 @@ bot.action(/intake_taken_(\d+)/, async (ctx) => {
   console.log('🔵 Обработка кнопки Принял для reminder:', ctx.match[1]);
   try {
     const reminderId = ctx.match[1];
+
+    analyticsService.trackEvent(ctx.chat.id, 'reminder_interaction', {
+      action: action,
+      reminder_id: ctx.match[2]
+    });
 
     db.get('SELECT * FROM reminders WHERE id = ?', [reminderId], async (err, reminder) => {
       if (err) {
@@ -293,6 +310,11 @@ bot.action(/intake_skipped_(\d+)/, async (ctx) => {
   console.log('🔵 Обработка кнопки Пропустить для reminder:', ctx.match[1]);
   try {
     const reminderId = ctx.match[1];
+
+    analyticsService.trackEvent(ctx.chat.id, 'reminder_interaction', {
+      action: action,
+      reminder_id: ctx.match[2]
+    });
 
     db.get('SELECT * FROM reminders WHERE id = ?', [reminderId], async (err, reminder) => {
       if (err || !reminder) {
@@ -533,9 +555,32 @@ bot.catch((err, ctx) => {
   );
 });
 
+// 🕐 АВТОМАТИЧЕСКИЕ ЕЖЕДНЕВНЫЕ ОТЧЕТЫ
+function setupDailyReports() {
+  // Отчет каждый день в 09:00
+  const now = new Date();
+  const targetTime = new Date();
+  targetTime.setHours(9, 0, 0, 0);
+
+  if (now > targetTime) {
+    targetTime.setDate(targetTime.getDate() + 1);
+  }
+
+  const timeUntilReport = targetTime - now;
+
+  setTimeout(() => {
+    analyticsService.generateDailyReport();
+    // Повторяем каждые 24 часа
+    setInterval(() => analyticsService.generateDailyReport(), 24 * 60 * 60 * 1000);
+  }, timeUntilReport);
+
+  logger.info('Ежедневные отчеты настроены');
+}
+
 // Запуск бота
 bot.launch().then(() => {
   console.log('🤖 Бот запущен');
+  setupDailyReports();
 }).catch(err => {
   console.error('❌ Ошибка запуска бота:', err);
 });
