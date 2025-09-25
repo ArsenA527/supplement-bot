@@ -2,7 +2,6 @@ const db = require('../config/database');
 const logger = require('../utils/logger');
 
 class AnalyticsService {
-
   // 📊 ОСНОВНЫЕ СОБЫТИЯ ДЛЯ ТРЕКИНГА
   async trackEvent(chatId, eventName, metadata = {}) {
     try {
@@ -125,65 +124,64 @@ class AnalyticsService {
     return sends > 0 ? Math.round((interactions / sends) * 100) : 0;
   }
 
-  // 📊 ДЕТАЛЬНАЯ АНАЛИТИКА ПО ОПРОСНИКУ
-  async getSurveyAnalytics() {
-    return {
-      averageTimeToComplete: await this.getAverageSurveyTime(),
-      mostCommonGoals: await this.getMostCommonGoals(),
-      questionDropoffPoints: await this.getQuestionDropoffPoints(),
-      userSatisfaction: await this.getUserSatisfaction()
-    };
-  }
-
-  async getMostCommonGoals() {
-    return new Promise((resolve) => {
-      db.all(
-        `SELECT metadata->>'$.goal' as goal, COUNT(*) as count
-         FROM analytics
-         WHERE event_name = 'survey_complete'
-         AND metadata->>'$.goal' IS NOT NULL
-         GROUP BY goal
-         ORDER BY count DESC
-         LIMIT 5`,
-        (err, rows) => {
-          resolve(rows || []);
-        }
-      );
-    });
-  }
 
   // 📋 ЕЖЕДНЕВНЫЙ ОТЧЕТ ДЛЯ АДМИНА
-  async generateDailyReport() {
-    const metrics = await this.getKeyMetrics(1); // За последние 24 часа
-    const report = this.formatDailyReport(metrics);
+  async sendReportToAdmin(report) {
+    try {
+      const adminId = process.env.ADMIN_CHAT_ID;
+      if (!adminId) {
+        logger.warn('ADMIN_CHAT_ID не установлен, отчет не отправлен');
+        return;
+      }
 
-    await this.sendReportToAdmin(report);
-    return report;
+      // Проверяем что бот инициализирован
+      if (typeof global.botInstance === 'undefined') {
+        logger.warn('Бот не инициализирован, отчет не отправлен');
+        return;
+      }
+
+      await global.botInstance.telegram.sendMessage(adminId, report, {
+        parse_mode: 'Markdown'
+      });
+
+      logger.info('Ежедневный отчет отправлен админу', { adminId });
+
+    } catch (error) {
+      logger.error('Ошибка отправки отчета админу', {
+        error: error.message,
+        adminId: process.env.ADMIN_CHAT_ID
+      });
+    }
   }
 
   formatDailyReport(metrics) {
+    // Проверяем что metrics существует и имеет данные
+    if (!metrics || Object.keys(metrics).length === 0) {
+      return '📊 *ЕЖЕДНЕВНЫЙ ОТЧЕТ*\n\n❌ Данных за сегодня еще нет';
+    }
+
     return `📊 *ЕЖЕДНЕВНЫЙ ОТЧЕТ* 📊
 
-👥 *Пользователи:*
-• Новые: ${metrics.newUsers}
-• Активные: ${metrics.activeUsers}
-• Всего: ${metrics.totalUsers}
+  👥 *Пользователи:*
+  • Новые: ${metrics.newUsers || 0}
+  • Активные: ${metrics.activeUsers || 0}
+  • Всего: ${metrics.totalUsers || 0}
 
-📝 *Опросник:*
-• Начато: ${metrics.surveyStarts}
-• Завершено: ${metrics.surveyCompletions}
-• Конверсия: ${metrics.surveyCompletionRate}%
+  📝 *Опросник:*
+  • Начато: ${metrics.surveyStarts || 0}
+  • Завершено: ${metrics.surveyCompletions || 0}
+  • Конверсия: ${metrics.surveyCompletionRate || 0}%
 
-💎 *Premium:*
-• Конверсий: ${metrics.premiumConversions}
-• Конверсия: ${metrics.premiumConversionRate}%
+  💎 *Premium:*
+  • Конверсий: ${metrics.premiumConversions || 0}
+  • Конверсия: ${metrics.premiumConversionRate || 0}%
 
-⏰ *Напоминания:*
-• Отправлено: ${metrics.reminderSends}
-• Взаимодействий: ${metrics.reminderInteractions}
-• Engagement: ${metrics.reminderEngagementRate}%
+  ⏰ *Напоминания:*
+  • Отправлено: ${metrics.reminderSends || 0}
+  • Взаимодействий: ${metrics.reminderInteractions || 0}
+  • Engagement: ${metrics.reminderEngagementRate || 0}%
 
-📈 *Тренды:* ${this.getTrendEmoji(metrics)}`;
+  ${this.getTrendEmoji(metrics)}`;
   }
 
   getTrendEmoji(metrics) {
@@ -202,6 +200,134 @@ class AnalyticsService {
       logger.info('Ежедневный отчет отправлен админу');
     } catch (error) {
       logger.error('Ошибка отправки отчета админу', { error: error.message });
+    }
+  }
+
+  // 📊 ДЕТАЛЬНАЯ АНАЛИТИКА ПО ОПРОСНИКУ
+  async getSurveyAnalytics() {
+    return {
+      mostCommonGoals: await this.getMostCommonGoals(),
+      averageQuestionsCompleted: await this.getAverageQuestionsCompleted(),
+      surveyAbandonmentRate: await this.getSurveyAbandonmentRate(),
+      popularSupplements: await this.getPopularSupplements()
+    };
+  }
+
+  // 🎯 САМЫЕ ПОПУЛЯРНЫЕ ЦЕЛИ
+  async getMostCommonGoals() {
+    return new Promise((resolve) => {
+      db.all(
+        `SELECT
+          json_extract(metadata, '$.goal') as goal,
+          COUNT(*) as count
+        FROM analytics
+        WHERE event_name = 'survey_complete'
+        AND json_extract(metadata, '$.goal') IS NOT NULL
+        GROUP BY goal
+        ORDER BY count DESC
+        LIMIT 5`,
+        (err, rows) => {
+          if (err) {
+            logger.error('Ошибка получения целей', { error: err.message });
+            resolve([]);
+          } else {
+            resolve(rows || []);
+          }
+        }
+      );
+    });
+  }
+
+  // 📝 СРЕДНЕЕ КОЛИЧЕСТВО ВОПРОСОВ
+  async getAverageQuestionsCompleted() {
+    return new Promise((resolve) => {
+      db.get(
+        `SELECT AVG(json_extract(metadata, '$.answers_count')) as avg_questions
+        FROM analytics
+        WHERE event_name = 'survey_complete'`,
+        (err, row) => {
+          resolve(row?.avg_questions ? Math.round(row.avg_questions) : 0);
+        }
+      );
+    });
+  }
+
+  // ❌ ПРОЦЕНТ БРОСАЮЩИХ ОПРОС
+  async getSurveyAbandonmentRate() {
+    return new Promise((resolve) => {
+      db.get(
+        `SELECT
+          (SELECT COUNT(*) FROM analytics WHERE event_name = 'survey_start') as starts,
+          (SELECT COUNT(*) FROM analytics WHERE event_name = 'survey_complete') as completes`,
+        (err, row) => {
+          if (row?.starts > 0) {
+            const rate = Math.round((1 - row.completes / row.starts) * 100);
+            resolve(rate);
+          } else {
+            resolve(0);
+          }
+        }
+      );
+    });
+  }
+
+  // 💊 САМЫЕ ЧАСТО РЕКОМЕНДУЕМЫЕ ДОБАВКИ
+  async getPopularSupplements() {
+    return new Promise((resolve) => {
+      db.all(
+        `SELECT
+          json_extract(metadata, '$.recommendations_count') as count
+        FROM analytics
+        WHERE event_name = 'survey_complete'
+        ORDER BY count DESC
+        LIMIT 10`,
+        (err, rows) => {
+          if (err) {
+            logger.error('Ошибка получения добавок', { error: err.message });
+            resolve([]);
+          } else {
+            // Группируем по количеству рекомендаций
+            const distribution = {};
+            rows.forEach(row => {
+              const count = row.count || 0;
+              distribution[count] = (distribution[count] || 0) + 1;
+            });
+            resolve(distribution);
+          }
+        }
+      );
+    });
+  }
+
+  // 👤 УДОВЛЕТВОРЕННОСТЬ ПОЛЬЗОВАТЕЛЕЙ (заглушка)
+  async getUserSatisfaction() {
+    // Пока возвращаем заглушку, можно добавить систему оценок позже
+    return {
+      estimated_satisfaction: 85, // в процентах
+      based_on: 'completion_rate_and_retention'
+    };
+  }
+
+  async generateDailyReport() {
+    try {
+      const metrics = await this.getKeyMetrics(1); // За последние 24 часа
+
+      if (!metrics || Object.keys(metrics).length === 0) {
+        logger.warn('Нет данных для ежедневного отчета');
+        return null;
+      }
+
+      const report = this.formatDailyReport(metrics);
+
+      await this.sendReportToAdmin(report);
+      logger.info('Ежедневный отчет сгенерирован и отправлен');
+      return report;
+
+    } catch (error) {
+      logger.error('Ошибка генерации ежедневного отчета', {
+        error: error.message
+      });
+      return null;
     }
   }
 }

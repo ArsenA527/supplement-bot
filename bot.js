@@ -47,7 +47,7 @@ const Telegraf = require('telegraf');
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const db = require('./config/database');
-
+global.botInstance = bot
 // Импорты контроллеров
 const botController = require('./controllers/botController');
 const surveyController = require('./controllers/surveyController');

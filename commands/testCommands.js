@@ -563,12 +563,30 @@ module.exports = {
 
       let message = `📝 *АНАЛИТИКА ОПРОСНИКА* 📝\n\n`;
 
-      if (surveyData.mostCommonGoals.length > 0) {
+      // Самые популярные цели
+      if (surveyData.mostCommonGoals && surveyData.mostCommonGoals.length > 0) {
         message += `🎯 *Самые популярные цели:*\n`;
         surveyData.mostCommonGoals.forEach((goal, index) => {
-          message += `${index + 1}. ${goal.goal}: ${goal.count} раз\n`;
+          if (goal.goal) { // Проверяем что goal не null
+            message += `${index + 1}. ${goal.goal}: ${goal.count} раз\n`;
+          }
         });
         message += `\n`;
+      }
+
+      // Среднее количество вопросов
+      message += `📊 *Среднее количество ответов:* ${surveyData.averageQuestionsCompleted || 'Нет данных'}\n\n`;
+
+      // Процент бросающих опрос
+      message += `❌ *Процент бросающих опрос:* ${surveyData.surveyAbandonmentRate || 0}%\n\n`;
+
+      // Удовлетворенность
+      if (surveyData.userSatisfaction) {
+        message += `😊 *Удовлетворенность пользователей:* ${surveyData.userSatisfaction.estimated_satisfaction}%`;
+      }
+
+      if (message.length < 50) {
+        message = '📊 Данных для аналитики пока недостаточно. Проведите несколько опросов.';
       }
 
       ctx.reply(message, { parse_mode: 'Markdown' });

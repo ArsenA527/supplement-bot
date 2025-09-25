@@ -82,3 +82,9 @@
 {"timestamp":"2025-09-25T10:58:54.283Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-09-24T07-33-15-166Z.db"}
 {"timestamp":"2025-09-25T10:58:54.284Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-09-25T10-58-54-281Z.db"}
 {"timestamp":"2025-09-25T10:58:54.560Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-09-25T11:44:18.105Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-09-25T11:44:18.147Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-09-25T10-52-08-415Z.db"}
+{"timestamp":"2025-09-25T11:44:18.147Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-09-25T11-44-18-145Z.db"}
+{"timestamp":"2025-09-25T11:44:18.433Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-09-25T11:44:39.054Z","level":"INFO","message":"Ежедневный отчет сгенерирован и отправлен"}
+{"timestamp":"2025-09-25T11:44:44.812Z","level":"INFO","message":"Ежедневный отчет сгенерирован и отправлен"}
