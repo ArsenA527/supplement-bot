@@ -54,25 +54,30 @@ async function handleHelp(ctx) {
   });
 }
 
-function handlePlan(ctx) {
+async function handlePlan(ctx) {
   const chatId = ctx.chat.id;
+  const isPremium = await subscriptionService.isSubscriptionActive(chatId);
 
-  surveyService.getSurveyResults(chatId).then(answers => {
+  try {
+    const answers = await surveyService.getSurveyResults(chatId);
+
     if (!answers || Object.keys(answers).length === 0) {
-      ctx.reply('📝 Сначала пройди опрос: /survey', getMainMenuKeyboard());
+      await ctx.reply('📝 Сначала пройди опрос: /survey', getMainMenuKeyboard(isPremium));
       return;
     }
 
     const recommendations = recommendationService.generateRecommendations(answers);
     const message = recommendationService.formatRecommendations(recommendations);
 
-    ctx.reply(message, {
+    await ctx.reply(message, {
       parse_mode: 'Markdown',
-      ...getMainMenuKeyboard() // Добавляем меню к рекомендациям
+      ...getMainMenuKeyboard(isPremium)
     });
-  }).catch(err => {
-    ctx.reply('❌ Ошибка загрузки рекомендаций', getMainMenuKeyboard());
-  });
+
+  } catch (err) {
+    console.error('❌ Ошибка загрузки рекомендаций:', err);
+    await ctx.reply('❌ Ошибка загрузки рекомендаций', getMainMenuKeyboard(isPremium));
+  }
 }
 
 // Добавляем в начало файла вспомогательную функцию
@@ -88,7 +93,7 @@ async function handleProfile(ctx) {
 
   surveyService.getSurveyResults(chatId).then(answers => {
     if (!answers || Object.keys(answers).length === 0) {
-      ctx.reply('📊 Ты еще не проходил опрос. Начни: /survey', getMainMenuKeyboard());
+      ctx.reply('📊 Ты еще не проходил опрос. Начни: /survey', getMainMenuKeyboard(isPremium));
       return;
     }
 
@@ -100,7 +105,7 @@ async function handleProfile(ctx) {
       profileText += `• ${formattedKey}: ${safeValue}\n`;
     }
 
-    profileText += `\n💎 *Подписка:* ${ctx.state.subscription.plan === 'premium' ? 'Premium ✅' : 'Free'}`;
+    profileText += `\n💎 *Подписка:* ${isPremium ? 'Premium ✅' : 'Free'}`; // Используем isPremium
 
     ctx.reply(profileText, {
       parse_mode: 'Markdown',
@@ -108,7 +113,7 @@ async function handleProfile(ctx) {
     });
   }).catch(err => {
     console.error('❌ Ошибка загрузки профиля:', err);
-    ctx.reply('❌ Ошибка загрузки профиля', getMainMenuKeyboard());
+    ctx.reply('❌ Ошибка загрузки профиля', getMainMenuKeyboard(isPremium)); // ПЕРЕДАЕМ isPremium
   });
 }
 
@@ -137,7 +142,9 @@ function formatKey(key) {
 }
 
 // Меню настроек
-function showSettingsMenu(ctx) {
+async function showSettingsMenu(ctx) {
+  const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id); // ДОБАВЛЯЕМ
+
   const message = `⚙️ *Настройки бота*
 
 Здесь вы можете настроить работу бота под свои preferences:
@@ -170,7 +177,9 @@ function showSettingsMenu(ctx) {
 }
 
 // Меню статистики
-function showStatisticsMenu(ctx) {
+async function showStatisticsMenu(ctx) {
+  const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id); // ДОБАВЛЯЕМ
+
   const message = `📊 *Ваша статистика*
 
 Здесь вы можете отслеживать свой прогресс:
@@ -235,7 +244,7 @@ async function handleTextCommands(ctx) {
         require('./subscriptionController').showSubscriptionPlans(ctx);
       } else {
         ctx.reply('💎 У вас уже активирована Premium подписка!');
-        showMainMenu(ctx);
+        await showMainMenu(ctx);
       }
       break;
 
@@ -245,7 +254,7 @@ async function handleTextCommands(ctx) {
         require('./subscriptionController').checkSubscriptionStatus(ctx);
       } else {
         ctx.reply('❌ Эта функция доступна только Premium пользователям');
-        showMainMenu(ctx);
+        await showMainMenu(ctx);
       }
       break;
 
@@ -278,9 +287,7 @@ async function handleTextCommands(ctx) {
     case '📊 Статистика': // Premium кнопка
       if (isPremium) {
         console.log('📊 Показ статистики');
-        // Здесь будет вызов функции статистики
-        ctx.reply('📊 Функция статистики в разработке...');
-        showMainMenu(ctx);
+        await showStatisticsMenu(ctx); // Теперь async
       } else {
         ctx.reply('❌ Детальная статистика доступна только Premium пользователям. /subscribe');
         showMainMenu(ctx);

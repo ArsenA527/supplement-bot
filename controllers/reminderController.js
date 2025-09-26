@@ -139,9 +139,13 @@ class ReminderController {
     const chatId = ctx.chat.id;
     const reminders = await this.reminderService.getUserReminders(chatId);
 
+    // ДОБАВЛЯЕМ ПРОВЕРКУ ПОДПИСКИ
+    const subscriptionService = require('../services/subscriptionService');
+    const isPremium = await subscriptionService.isSubscriptionActive(chatId);
+
     if (reminders.length === 0) {
       ctx.reply('📋 У вас нет активных напоминаний.\n\nНастройте напоминания после прохождения опроса.',
-        getMainMenuKeyboard()
+        getMainMenuKeyboard(isPremium) // ПЕРЕДАЕМ isPremium
       );
       return;
     }
@@ -155,7 +159,7 @@ class ReminderController {
 
     ctx.reply(message, {
       parse_mode: 'Markdown',
-      ...getMainMenuKeyboard()
+      ...getMainMenuKeyboard(isPremium) // ПЕРЕДАЕМ isPremium
     });
   }
 
