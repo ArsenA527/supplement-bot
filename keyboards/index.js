@@ -8,8 +8,8 @@ function getMainMenuKeyboard(isPremium = false) {
   const premiumUserButtons = [
     ['📋 Новый опрос', '💊 Мои рекомендации'],
     ['⏰ Мои напоминания', '📊 Статистика'],
-    ['👤 Мой профиль', 'ℹ️ Помощь'],
-    ['⚙️ Настройки напоминаний']
+    ['👤 Мой профиль', '⚙️ Настройки'],
+    ['ℹ️ Помощь', '💎 Premium статус']
   ];
 
   const buttons = isPremium ? premiumUserButtons : freeUserButtons;

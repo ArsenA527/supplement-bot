@@ -612,5 +612,22 @@ module.exports = {
       console.error('❌ Ошибка отправки отчета:', error);
       ctx.reply('❌ Ошибка отправки отчета');
     }
+  },
+
+  checkMenuStatus: async (ctx) => {
+    try {
+      const subscriptionService = require('../services/subscriptionService');
+      const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
+
+      ctx.reply(`🔍 Статус меню:\n• Premium: ${isPremium ? '✅ Да' : '❌ Нет'}\n• Кнопки: ${isPremium ? 'Premium набор' : 'Free набор'}`);
+
+      // Показываем актуальное меню
+      const { getMainMenuKeyboard } = require('../keyboards');
+      ctx.reply('Актуальное меню:', getMainMenuKeyboard(isPremium));
+
+    } catch (error) {
+      console.error('❌ Ошибка проверки меню:', error);
+      ctx.reply('❌ Ошибка проверки статуса меню');
+    }
   }
 };

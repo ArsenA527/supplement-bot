@@ -3,3 +3,5 @@
 {"timestamp":"2025-09-25T11:44:44.812Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
 {"timestamp":"2025-09-25T11:44:52.268Z","level":"ERROR","message":"Ошибка получения целей","error":"SQLITE_ERROR: no such table: analytics"}
 {"timestamp":"2025-09-25T11:44:52.269Z","level":"ERROR","message":"Ошибка получения добавок","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-25T11:46:19.399Z","level":"ERROR","message":"Ошибка получения целей","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-25T11:46:19.401Z","level":"ERROR","message":"Ошибка получения добавок","error":"SQLITE_ERROR: no such table: analytics"}

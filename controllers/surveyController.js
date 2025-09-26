@@ -344,6 +344,12 @@ async function completeSurvey(ctx) {
       'Ошибка обработки результатов. Попробуйте снова: /survey'
     );
   }
+
+  const isPremium = await subscriptionService.isSubscriptionActive(chatId);
+  ctx.reply(message, {
+    parse_mode: 'Markdown',
+    ...getSurveyCompletionKeyboard(isPremium)
+  });
 }
 
 // Генератор прогресс-бара

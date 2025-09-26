@@ -1,8 +1,22 @@
 const { getMainMenuKeyboard } = require('../keyboards');
 const surveyService = require('../services/surveyService');
 const recommendationService = require('../services/recommendationService');
+const subscriptionService = require('../services/subscriptionService');
+const { ReminderController } = require('./reminderController');
 
-function handleStart(ctx) {
+// Создаем экземпляр для переиспользования
+let reminderControllerInstance = null;
+
+function getReminderController() {
+  if (!reminderControllerInstance) {
+    reminderControllerInstance = new ReminderController();
+  }
+  return reminderControllerInstance;
+}
+
+async function handleStart(ctx) {
+  const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
+
   const welcomeText = `👋 Привет! Я твой персональный консультант по БАДам.
 
 ✨ Что я умею:
@@ -12,10 +26,11 @@ function handleStart(ctx) {
 
 Выбери действие:`;
 
-  ctx.reply(welcomeText, getMainMenuKeyboard());
+  ctx.reply(welcomeText, getMainMenuKeyboard(isPremium));
 }
 
-function handleHelp(ctx) {
+async function handleHelp(ctx) {
+  const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
   const helpText = `💡 *Доступные команды:*
 
 *Основные:*
@@ -35,7 +50,7 @@ function handleHelp(ctx) {
 
   ctx.reply(helpText, {
     parse_mode: 'Markdown',
-    ...getMainMenuKeyboard()
+    ...getMainMenuKeyboard(isPremium)
   });
 }
 
@@ -67,7 +82,8 @@ function escapeMarkdown(text) {
 }
 
 // Обновляем handleProfile
-function handleProfile(ctx) {
+async function handleProfile(ctx) {
+  const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
   const chatId = ctx.chat.id;
 
   surveyService.getSurveyResults(chatId).then(answers => {
@@ -88,7 +104,7 @@ function handleProfile(ctx) {
 
     ctx.reply(profileText, {
       parse_mode: 'Markdown',
-      ...getMainMenuKeyboard()
+      ...getMainMenuKeyboard(isPremium)
     });
   }).catch(err => {
     console.error('❌ Ошибка загрузки профиля:', err);
@@ -184,8 +200,10 @@ function showStatisticsMenu(ctx) {
   });
 }
 
-function handleTextCommands(ctx) {
+async function handleTextCommands(ctx) {
   const text = ctx.message.text;
+  const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
+
   console.log(`🎮 Обработка текстовой команды: "${text}"`);
 
   switch(text) {
@@ -195,48 +213,89 @@ function handleTextCommands(ctx) {
       ctx.reply('🧩 Начинаем опрос!');
       require('./surveyController').handleStartSurvey(ctx);
       break;
+
     case '💊 Мои рекомендации':
       console.log('💊 Показ рекомендаций');
       handlePlan(ctx);
       break;
+
     case '👤 Мой профиль':
       console.log('👤 Показ профиля');
-      handleProfile(ctx);
+      await handleProfile(ctx);
       break;
+
     case '💳 Подписка':
       console.log('💳 Информация о подписках');
       require('./subscriptionController').showSubscriptionPlans(ctx);
       break;
+
     case '💎 Апгрейд до Premium':
-    case '💎 Получить Premium':
-      console.log('💳 Информация о подписках');
-      require('./subscriptionController').showSubscriptionPlans(ctx);
+      if (!isPremium) {
+        console.log('💳 Информация о подписках');
+        require('./subscriptionController').showSubscriptionPlans(ctx);
+      } else {
+        ctx.reply('💎 У вас уже активирована Premium подписка!');
+        showMainMenu(ctx);
+      }
       break;
+
+    case '💎 Premium статус': // Premium кнопка
+      if (isPremium) {
+        console.log('💎 Показ статуса Premium');
+        require('./subscriptionController').checkSubscriptionStatus(ctx);
+      } else {
+        ctx.reply('❌ Эта функция доступна только Premium пользователям');
+        showMainMenu(ctx);
+      }
+      break;
+
     case '⚙️ Настройки':
       console.log('⚙️ Показ настроек');
-      showSettingsMenu(ctx);
+      await showSettingsMenu(ctx);
       break;
+
     case 'ℹ️ Помощь':
       console.log('ℹ️ Показ помощи');
       handleHelp(ctx);
       break;
-    case '⏰ Мои напоминания':
-      console.log('⏰ Показ напоминаний');
-      require('./reminderController').showUserReminders(ctx);
+
+    case '⏰ Мои напоминания': // Premium кнопка
+      if (isPremium) {
+        console.log('⏰ Показ напоминаний');
+        try {
+          const reminderController = getReminderController();
+          await reminderController.showUserReminders(ctx);
+        } catch (error) {
+          console.error('❌ Ошибка показа напоминаний:', error);
+          ctx.reply('❌ Ошибка загрузки напоминаний');
+        }
+      } else {
+        ctx.reply('❌ Напоминания доступны только Premium пользователям. /subscribe');
+        showMainMenu(ctx);
+      }
       break;
-    case '📊 Статистика':
-      console.log('📊 Показ статистики');
-      showStatisticsMenu(ctx);
+
+    case '📊 Статистика': // Premium кнопка
+      if (isPremium) {
+        console.log('📊 Показ статистики');
+        // Здесь будет вызов функции статистики
+        ctx.reply('📊 Функция статистики в разработке...');
+        showMainMenu(ctx);
+      } else {
+        ctx.reply('❌ Детальная статистика доступна только Premium пользователям. /subscribe');
+        showMainMenu(ctx);
+      }
       break;
     default:
       console.log('❓ Неизвестная команда');
-      ctx.reply('Используй кнопки меню для навигации 👆', getMainMenuKeyboard());
+      ctx.reply('Используй кнопки меню для навигации 👆', getMainMenuKeyboard(isPremium));
   }
 }
 
 // Новая функция для принудительного показа меню
-function showMainMenu(ctx) {
-  ctx.reply('Главное меню:', getMainMenuKeyboard());
+async function showMainMenu(ctx) {
+  const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
+  ctx.reply('Главное меню:', getMainMenuKeyboard(isPremium));
 }
 
 module.exports = {
