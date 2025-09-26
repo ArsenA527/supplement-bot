@@ -233,17 +233,12 @@ async function handleTextCommands(ctx) {
       await handleProfile(ctx);
       break;
 
-    case '💳 Подписка':
-      console.log('💳 Информация о подписках');
-      require('./subscriptionController').showSubscriptionPlans(ctx);
-      break;
-
     case '💎 Апгрейд до Premium':
       if (!isPremium) {
         console.log('💳 Информация о подписках');
-        require('./subscriptionController').showSubscriptionPlans(ctx);
+        await require('./subscriptionController').showSubscriptionPlans(ctx);
       } else {
-        ctx.reply('💎 У вас уже активирована Premium подписка!');
+        await ctx.reply('💎 У вас уже активирована Premium подписка!');
         await showMainMenu(ctx);
       }
       break;
@@ -251,17 +246,22 @@ async function handleTextCommands(ctx) {
     case '💎 Premium статус': // Premium кнопка
       if (isPremium) {
         console.log('💎 Показ статуса Premium');
-        require('./subscriptionController').checkSubscriptionStatus(ctx);
+        await require('./subscriptionController').checkSubscriptionStatus(ctx);
       } else {
-        ctx.reply('❌ Эта функция доступна только Premium пользователям');
+        await ctx.reply('❌ Эта функция доступна только Premium пользователям');
         await showMainMenu(ctx);
       }
       break;
 
-    case '⚙️ Настройки':
-      console.log('⚙️ Показ настроек');
-      await showSettingsMenu(ctx);
+    case '💳 Подписка':
+      console.log('💳 Информация о подписках');
+      await require('./subscriptionController').showSubscriptionPlans(ctx);
       break;
+
+    case '⚙️ Настройки':
+        console.log('⚙️ Показ настроек');
+        await showSettingsMenu(ctx);
+        break;
 
     case 'ℹ️ Помощь':
       console.log('ℹ️ Показ помощи');

@@ -69,6 +69,7 @@ reminderController.initialize().then(() => {
 });
 
 const ReminderService = require('./services/reminderService');
+const subscriptionService = require('./services/subscriptionService');
 const reminderService = new ReminderService(bot); // Явно создаем экземпляр
 const analyticsService = require('./services/analyticsService');
 // ==================== MIDDLEWARE ====================
@@ -420,7 +421,7 @@ bot.action('test_payment', async (ctx) => {
   }
 });
 
-// Обработка "Я оплатил(а)"
+// Обработка "✅ Я оплатил(а)"
 bot.action('payment_confirmed', async (ctx) => {
   try {
     await subscriptionController.handlePaymentConfirmation(ctx);
@@ -439,14 +440,17 @@ bot.action(/history_(\d+)/, (ctx) => {
   ctx.answerCbQuery();
 });
 
-bot.action('subscription_info', (ctx) => {
-  subscriptionController.showSubscriptionPlans(ctx);
-  ctx.answerCbQuery();
+bot.action('subscription_info', async (ctx) => {
+  const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
+  await subscriptionController.showSubscriptionPlans(ctx);
+  await ctx.answerCbQuery();
 });
 
-bot.action('main_menu', (ctx) => {
-  botController.showMainMenu(ctx);
-  ctx.answerCbQuery();
+bot.action('main_menu', async (ctx) => {
+  const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
+  const { showMainMenu } = require('./controllers/botController');
+  await showMainMenu(ctx);
+  await ctx.answerCbQuery();
 });
 
 bot.action('restart_survey', (ctx) => {
