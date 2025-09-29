@@ -4,6 +4,7 @@ const recommendationService = require('../services/recommendationService');
 const subscriptionService = require('../services/subscriptionService');
 const { ReminderController } = require('./reminderController');
 const goalService = require('../services/goalService');
+const settingsController = require('./settingsController');
 
 // Создаем экземпляр для переиспользования
 let reminderControllerInstance = null;
@@ -540,7 +541,6 @@ async function handleTextCommands(ctx) {
       break;
 
     case '🎯 Мои цели':
-
       if (isPremium) {
         console.log('🎯 Показ целей');
         await handleMyGoals(ctx);
@@ -548,6 +548,61 @@ async function handleTextCommands(ctx) {
         ctx.reply('❌ Эта функция доступна только Premium пользователям. /subscribe');
         await showMainMenu(ctx);
       }
+      break;
+
+    case '⏰ Настроить напоминания':
+      console.log('⏰ Настройка напоминаний');
+      await settingsController.showReminderSettings(ctx);
+      break;
+
+    case '🔔 Управление уведомлениями':
+      console.log('🔔 Управление уведомлениями');
+      await settingsController.showNotificationSettings(ctx);
+      break;
+
+    case '📊 Мои данные':
+      console.log('📊 Управление данными');
+      await settingsController.showDataManagement(ctx);
+      break;
+
+    case '🗑️ Очистить историю':
+      console.log('🗑️ Очистка истории');
+      await settingsController.showClearDataConfirmation(ctx);
+      break;
+
+    // Дополнительные кейсы для подменю настроек
+    case '🌅 Утреннее время':
+      await settingsController.handleTimeSetting(ctx, 'morning_time');
+      break;
+
+    case '☀️ Дневное время':
+      await settingsController.handleTimeSetting(ctx, 'afternoon_time');
+      break;
+
+    case '🌙 Вечернее время':
+      await settingsController.handleTimeSetting(ctx, 'evening_time');
+      break;
+
+    case '✅ Включить уведомления':
+    case '❌ Выключить уведомления':
+      await settingsController.toggleNotifications(ctx);
+      break;
+
+    case '📁 Экспорт данных':
+      await settingsController.exportUserData(ctx);
+      break;
+
+    case '🔄 Сбросить настройки':
+      await settingsController.resetSettings(ctx);
+      break;
+
+    case '✅ Да, очистить все данные':
+      await settingsController.clearUserData(ctx);
+      break;
+
+    case '❌ Нет, отменить':
+    case '↩️ Назад к настройкам':
+      await settingsController.showReminderSettings(ctx);
       break;
 
     default:

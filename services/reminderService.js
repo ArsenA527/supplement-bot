@@ -115,6 +115,14 @@ class ReminderService {
   // Отправить напоминание сразу
   async sendReminderNow(reminder) {
     try {
+
+      // Проверяем разрешены ли уведомления
+      const canSend = await this.canSendNotification(reminder.chat_id);
+      if (!canSend) {
+        console.log(`🔕 Уведомления отключены для пользователя ${reminder.chat_id}`);
+        return false;
+      }
+
       const telegram = globalBot ? globalBot.telegram : this.telegram;
 
       if (!telegram) {
@@ -426,6 +434,17 @@ class ReminderService {
 
     // По умолчанию - первое свободное время
     return this.findAvailableTime('10:00', usedTimes, availableSlots);
+  }
+
+  async canSendNotification(chatId) {
+    try {
+      const settingsService = require('./settingsService');
+      const settings = await settingsService.getUserSettings(chatId);
+      return settings.allow_notifications;
+    } catch (error) {
+      console.error('❌ Ошибка проверки настроек уведомлений:', error);
+      return true; // По умолчанию разрешаем
+    }
   }
 }
 

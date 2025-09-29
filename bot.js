@@ -76,6 +76,30 @@ const analyticsService = require('./services/analyticsService');
 global.botInstance = bot;
 global.reminderBot = bot; // Для сервиса напоминаний
 
+// Простая система сессий в памяти
+const sessions = new Map();
+
+bot.use(async (ctx, next) => {
+  const chatId = ctx.chat?.id;
+  if (chatId) {
+    if (!sessions.has(chatId)) {
+      sessions.set(chatId, {});
+    }
+    ctx.session = sessions.get(chatId);
+  }
+  await next();
+});
+
+// Очистка старых сессий каждые 24 часа
+setInterval(() => {
+  const now = Date.now();
+  for (const [chatId, session] of sessions.entries()) {
+    if (session.lastActivity && now - session.lastActivity > 24 * 60 * 60 * 1000) {
+      sessions.delete(chatId);
+    }
+  }
+}, 60 * 60 * 1000); // Каждый час
+
 
 const reminderService = new ReminderService(bot);
 // Инъекция данных подписки
@@ -246,6 +270,27 @@ bot.command('backupnow', (ctx) => testCommands.createBackupNow(ctx));
 bot.command('analytics', (ctx) => testCommands.analyticsDashboard(ctx));
 bot.command('surveystats', (ctx) => testCommands.surveyAnalytics(ctx));
 bot.command('dailyreport', (ctx) => testCommands.forceDailyReport(ctx));
+
+// ДОБАВЬТЕ в раздел основных команд:
+bot.command('settings', (ctx) => {
+  analyticsService.trackEvent(ctx.chat.id, 'settings_opened');
+  showSettingsMenu(ctx);
+});
+
+bot.command('notifications', (ctx) => {
+  analyticsService.trackEvent(ctx.chat.id, 'notifications_settings_opened');
+  settingsController.showNotificationSettings(ctx);
+});
+
+bot.command('export', (ctx) => {
+  analyticsService.trackEvent(ctx.chat.id, 'data_export_requested');
+  settingsController.exportUserData(ctx);
+});
+
+bot.command('clear', (ctx) => {
+  analyticsService.trackEvent(ctx.chat.id, 'clear_data_confirmation');
+  settingsController.showClearDataConfirmation(ctx);
+});
 
 // ==================== ОБРАБОТКА КНОПОК НАПОМИНАНИЙ ====================
 
@@ -494,13 +539,29 @@ bot.on('text', async (ctx) => {
 
     console.log(`📨 Текст получен: "${text}" от ${chatId}`);
 
+    // Проверяем, ожидается ли выбор времени
+    if (ctx.session && ctx.session.waitingForTime) {
+      // Проверяем, является ли текст временем (формат HH:MM)
+      const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+      if (timeRegex.test(text)) {
+        await settingsController.processTimeSelection(ctx, text);
+        return;
+      }
+    }
+
     // Команды главного меню
     const menuCommands = [
       '📋 Пройти опрос', '📋 Новый опрос', '💊 Мои рекомендации',
       '👤 Мой профиль', '💎 Апгрейд до Premium', '💎 Получить Premium',
       '⏰ Мои напоминания', '📊 Статистика', 'ℹ️ Помощь', '⚙️ Настройки',
       '⏰ Утреннее время', '🌅 Дневное время', '🌙 Вечернее время',
-      '🔔 Вкл/Выкл уведомления', '📋 Мои напоминания', '🏠 Главное меню'
+      '🔔 Вкл/Выкл уведомления', '📋 Мои напоминания', '🏠 Главное меню',
+      '⏰ Настроить напоминания', '🔔 Управление уведомлениями',
+      '📊 Мои данные', '🗑️ Очистить историю',
+      '🌅 Утреннее время', '☀️ Дневное время', '🌙 Вечернее время',
+      '✅ Включить уведомления', '❌ Выключить уведомления',
+      '📁 Экспорт данных', '🔄 Сбросить настройки',
+      '✅ Да, очистить все данные', '❌ Нет, отменить', '↩️ Назад к настройкам'
     ];
 
     if (menuCommands.includes(text)) {
