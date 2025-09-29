@@ -1,6 +1,7 @@
 const surveyService = require('../services/surveyService');
 const recommendationService = require('../services/recommendationService');
 const progressService = require('../services/progressService');
+const goalService = require('../services/goalService');
 const { getQuestionKeyboard, getMainMenuKeyboard, getSurveyCompletionKeyboard } = require('../keyboards');
 const NotificationManager = require('../utils/notifications');
 
