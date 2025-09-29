@@ -1187,3 +1187,6 @@
 2025-09-29T08:01:22:     at async C:\work\supplement-bot\bot.js:87:3
 2025-09-29T08:01:22:     at async injectSubscriptionData (C:\work\supplement-bot\middlewares\subscriptionMiddleware.js:43:3)
 2025-09-29T08:01:22:     at async Promise.all (index 0)
+2025-09-29T09:00:00: (node:14420) Warning: Accessing non-existent property 'telegram' of module exports inside circular dependency
+2025-09-29T09:00:00: (Use `node --trace-warnings ...` to show where the warning was created)
+2025-09-29T09:27:22: (node:14420) Warning: Accessing non-existent property 'telegram' of module exports inside circular dependency

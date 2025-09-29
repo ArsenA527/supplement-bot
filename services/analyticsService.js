@@ -134,8 +134,7 @@ class AnalyticsService {
         return;
       }
 
-      // Проверяем что бот инициализирован
-      if (typeof global.botInstance === 'undefined') {
+      if (typeof global.botInstance === 'undefined' || !global.botInstance.telegram) {
         logger.warn('Бот не инициализирован, отчет не отправлен');
         return;
       }
@@ -310,6 +309,11 @@ class AnalyticsService {
 
   async generateDailyReport() {
     try {
+      if (!global.botInstance || !global.botInstance.telegram) {
+        logger.warn('Бот не готов для отправки отчета');
+        return null;
+      }
+
       const metrics = await this.getKeyMetrics(1); // За последние 24 часа
 
       if (!metrics || Object.keys(metrics).length === 0) {
