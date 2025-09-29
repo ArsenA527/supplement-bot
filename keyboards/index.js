@@ -125,6 +125,34 @@ function getIntakeHistoryKeyboard() {
   };
 }
 
+// Клавиатура настроек времени
+function getTimeSettingsKeyboard() {
+  return {
+    reply_markup: {
+      keyboard: [
+        ['🌅 Утреннее время', '☀️ Дневное время'],
+        ['🌙 Вечернее время', '🔔 Уведомления'],
+        ['🏠 Главное меню']
+      ],
+      resize_keyboard: true
+    }
+  };
+}
+
+// Клавиатура основных настроек
+function getSettingsKeyboard() {
+  return {
+    reply_markup: {
+      keyboard: [
+        ['⏰ Настроить напоминания', '🔔 Управление уведомлениями'],
+        ['📊 Мои данные', '🗑️ Очистить историю'],
+        ['🏠 Главное меню']
+      ],
+      resize_keyboard: true
+    }
+  };
+}
+
 // Клавиатура после завершения опроса
 function getSurveyCompletionKeyboard(isPremium = false) {
   const buttons = [
@@ -192,5 +220,7 @@ module.exports = {
   getIntakeHistoryKeyboard,
   getSurveyCompletionKeyboard,
   getSubscriptionKeyboard,
+  getTimeSettingsKeyboard,
+  getSettingsKeyboard,
   generateProgressBar
 };
