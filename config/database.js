@@ -119,6 +119,18 @@ db.serialize(() => {
   });
 
   console.log('✅ Таблица платежей создана');
+
+  // Таблица целей пользователя
+  db.run(`CREATE TABLE IF NOT EXISTS user_goals (
+    chat_id INTEGER PRIMARY KEY,
+    main_goal TEXT DEFAULT 'Общее оздоровление',
+    secondary_goals TEXT DEFAULT '[]',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (chat_id) REFERENCES users (chat_id)
+  )`);
+
+  console.log('✅ Таблица целей создана/проверена');
 });
 
 // Graceful shutdown

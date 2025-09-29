@@ -3,6 +3,7 @@ const surveyService = require('../services/surveyService');
 const recommendationService = require('../services/recommendationService');
 const subscriptionService = require('../services/subscriptionService');
 const { ReminderController } = require('./reminderController');
+const goalService = require('../services/goalService');
 
 // Создаем экземпляр для переиспользования
 let reminderControllerInstance = null;
@@ -115,6 +116,206 @@ async function handleProfile(ctx) {
     console.error('❌ Ошибка загрузки профиля:', err);
     ctx.reply('❌ Ошибка загрузки профиля', getMainMenuKeyboard(isPremium)); // ПЕРЕДАЕМ isPremium
   });
+}
+
+// 📅 История приема (расширенная версия)
+async function handleIntakeHistory(ctx) {
+  try {
+    const chatId = ctx.chat.id;
+    const reminderService = require('../services/reminderService');
+    const service = new reminderService(ctx.telegram);
+
+    const history = await service.getIntakeHistory(chatId, 7);
+    const stats = await service.getIntakeStats(chatId, 7);
+
+    if (history.length === 0) {
+      await ctx.reply(
+        `📊 *История приема пуста*\n\nНачните прием добавок, чтобы отслеживать свой прогресс! 💪`,
+        {
+          parse_mode: 'Markdown',
+          ...getMainMenuKeyboard(true)
+        }
+      );
+      return;
+    }
+
+    let message = `📅 *История приема за неделю*\n\n`;
+
+    // Группируем по дням
+    const dailyHistory = {};
+    history.forEach(item => {
+      const date = new Date(item.taken_at).toLocaleDateString('ru-RU');
+      if (!dailyHistory[date]) dailyHistory[date] = [];
+      dailyHistory[date].push(item);
+    });
+
+    Object.keys(dailyHistory).forEach(date => {
+      message += `*${date}:*\n`;
+      dailyHistory[date].forEach(item => {
+        const time = new Date(item.taken_at).toLocaleTimeString('ru-RU', {
+          hour: '2-digit', minute: '2-digit'
+        });
+        const statusIcon = item.status === 'taken' ? '✅' :
+                          item.status === 'skipped' ? '⏭️' : '❌';
+        message += `${statusIcon} ${time} - ${item.supplement_name}\n`;
+      });
+      message += `\n`;
+    });
+
+    message += `📈 *Статистика за неделю:*\n`;
+    message += `• Принято: ${stats.taken} ✅\n`;
+    message += `• Пропущено: ${stats.skipped} ⏭️\n`;
+    message += `• Соблюдение: ${stats.compliance}%\n`;
+    message += `• Всего приемов: ${stats.total}`;
+
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      ...getMainMenuKeyboard(true)
+    });
+
+  } catch (error) {
+    console.error('❌ Ошибка загрузки истории:', error);
+    await ctx.reply('❌ Ошибка загрузки истории приема', getMainMenuKeyboard(true));
+  }
+}
+
+// 📈 Общая статистика
+async function handleGeneralStats(ctx) {
+  try {
+    const chatId = ctx.chat.id;
+    const reminderService = require('../services/reminderService');
+    const service = new reminderService(ctx.telegram);
+
+    const weeklyStats = await service.getIntakeStats(chatId, 7);
+    const monthlyStats = await service.getIntakeStats(chatId, 30);
+    const mostSkipped = await service.getMostSkippedSupplements(chatId, 30);
+
+    let message = `📊 *Общая статистика*\n\n`;
+
+    message += `📅 *За последнюю неделю:*\n`;
+    message += `✅ Принято: ${weeklyStats.taken}\n`;
+    message += `⏭️ Пропущено: ${weeklyStats.skipped}\n`;
+    message += `📈 Соблюдение: ${weeklyStats.compliance}%\n\n`;
+
+    message += `📅 *За последний месяц:*\n`;
+    message += `✅ Принято: ${monthlyStats.taken}\n`;
+    message += `⏭️ Пропущено: ${monthlyStats.skipped}\n`;
+    message += `📈 Соблюдение: ${monthlyStats.compliance}%\n\n`;
+
+    if (mostSkipped.length > 0) {
+      message += `⚠️ *Чаще всего пропускаете:*\n`;
+      mostSkipped.forEach((item, index) => {
+        message += `${index + 1}. ${item.supplement_name} - ${item.skip_count} раз\n`;
+      });
+      message += `\n`;
+    }
+
+    // Добавляем рекомендации
+    if (monthlyStats.compliance < 70) {
+      message += `💡 *Рекомендация:* Старайтесь принимать добавки регулярнее для лучших результатов!`;
+    } else if (monthlyStats.compliance >= 90) {
+      message += `🎉 *Отлично!* Вы проявляете замечательную дисциплину!`;
+    } else {
+      message += `💪 *Хорошая работа!* Продолжайте в том же духе!`;
+    }
+
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      ...getMainMenuKeyboard(true)
+    });
+
+  } catch (error) {
+    console.error('❌ Ошибка загрузки статистики:', error);
+    await ctx.reply('❌ Ошибка загрузки статистики', getMainMenuKeyboard(true));
+  }
+}
+
+// 💪 Мой прогресс
+async function handleMyProgress(ctx) {
+  try {
+    const chatId = ctx.chat.id;
+    const progress = await goalService.getDetailedProgress(chatId);
+
+    let message = `💪 *Мой прогресс*\n\n`;
+
+    message += `🎯 *Основная цель:* ${progress.goals.mainGoal}\n\n`;
+
+    message += `📊 *За неделю:*\n`;
+    message += `• Соблюдение: ${progress.weekly.compliance}%\n`;
+    message += `• Серия дней: ${progress.weekly.streak}\n`;
+    message += `• Успешных приемов: ${progress.weekly.successfulIntakes}\n\n`;
+
+    message += `📊 *За месяц:*\n`;
+    message += `• Соблюдение: ${progress.monthly.compliance}%\n`;
+    message += `• Всего приемов: ${progress.monthly.totalIntakes}\n`;
+    message += `• Успешных приемов: ${progress.monthly.successfulIntakes}\n\n`;
+
+    message += `💡 *Рекомендации:*\n`;
+    progress.recommendations.forEach((rec, index) => {
+      message += `${index + 1}. ${rec}\n`;
+    });
+
+    // Визуализация прогресса
+    const weeklyBar = generateProgressBar(progress.weekly.compliance);
+    const monthlyBar = generateProgressBar(progress.monthly.compliance);
+
+    message += `\n📈 *Визуализация:*\n`;
+    message += `Неделя: ${weeklyBar}\n`;
+    message += `Месяц:  ${monthlyBar}`;
+
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      ...getMainMenuKeyboard(true)
+    });
+
+  } catch (error) {
+    console.error('❌ Ошибка загрузки прогресса:', error);
+    await ctx.reply('❌ Ошибка загрузки прогресса', getMainMenuKeyboard(true));
+  }
+}
+
+// 🎯 Мои цели
+async function handleMyGoals(ctx) {
+  try {
+    const chatId = ctx.chat.id;
+    const goals = await goalService.getUserGoals(chatId);
+
+    let message = `🎯 *Мои цели*\n\n`;
+
+    message += `⭐ *Основная цель:*\n${goals.mainGoal}\n\n`;
+
+    if (goals.secondaryGoals && goals.secondaryGoals.length > 0) {
+      message += `📋 *Дополнительные цели:*\n`;
+      goals.secondaryGoals.forEach((goal, index) => {
+        message += `${index + 1}. ${goal}\n`;
+      });
+      message += `\n`;
+    }
+
+    message += `💪 *Как достичь целей:*\n`;
+    message += `• Принимайте добавки регулярно\n`;
+    message += `• Следите за своим самочувствием\n`;
+    message += `• Корректируйте план при необходимости\n`;
+    message += `• Отмечайте положительные изменения\n\n`;
+
+    message += `📝 *Совет:* Пройдите опрос заново через месяц, чтобы оценить прогресс и скорректировать цели!`;
+
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      ...getMainMenuKeyboard(true)
+    });
+
+  } catch (error) {
+    console.error('❌ Ошибка загрузки целей:', error);
+    await ctx.reply('❌ Ошибка загрузки целей', getMainMenuKeyboard(true));
+  }
+}
+
+// Вспомогательная функция для прогресс-бара
+function generateProgressBar(percentage) {
+  const filled = '█'.repeat(Math.round(percentage / 10));
+  const empty = '░'.repeat(10 - filled.length);
+  return `[${filled}${empty}] ${percentage}%`;
 }
 
 function formatKey(key) {
@@ -290,9 +491,51 @@ async function handleTextCommands(ctx) {
         await showStatisticsMenu(ctx); // Теперь async
       } else {
         ctx.reply('❌ Детальная статистика доступна только Premium пользователям. /subscribe');
-        showMainMenu(ctx);
+        await showMainMenu(ctx);
       }
       break;
+
+    case '📅 История приема':
+      if (isPremium) {
+        console.log('📅 Показ истории приема');
+        await handleIntakeHistory(ctx);
+      } else {
+        ctx.reply('❌ Эта функция доступна только Premium пользователям. /subscribe');
+        await showMainMenu(ctx);
+      }
+      break;
+
+    case '📈 Общая статистика':
+      if (isPremium) {
+        console.log('📈 Показ общей статистики');
+        await handleGeneralStats(ctx);
+      } else {
+        ctx.reply('❌ Эта функция доступна только Premium пользователям. /subscribe');
+        await showMainMenu(ctx);
+      }
+      break;
+
+    case '💪 Мой прогресс':
+      if (isPremium) {
+        console.log('💪 Показ прогресса');
+        await handleMyProgress(ctx);
+      } else {
+        ctx.reply('❌ Эта функция доступна только Premium пользователям. /subscribe');
+        await showMainMenu(ctx);
+      }
+      break;
+
+    case '🎯 Мои цели':
+
+      if (isPremium) {
+        console.log('🎯 Показ целей');
+        await handleMyGoals(ctx);
+      } else {
+        ctx.reply('❌ Эта функция доступна только Premium пользователям. /subscribe');
+        await showMainMenu(ctx);
+      }
+      break;
+
     default:
       console.log('❓ Неизвестная команда');
       ctx.reply('Используй кнопки меню для навигации 👆', getMainMenuKeyboard(isPremium));
