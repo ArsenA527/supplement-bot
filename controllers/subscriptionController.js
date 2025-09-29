@@ -1,5 +1,3 @@
-// const subscriptionService = require('../services/subscriptionService');
-// const { getMainMenuKeyboard } = require('../keyboards');
 const subscriptionService = require('../services/subscriptionService');
 const paymentService = require('../services/paymentService');
 const { getMainMenuKeyboard } = require('../keyboards');

@@ -1175,3 +1175,15 @@
 2025-09-29T07:59:12:     at async C:\work\supplement-bot\bot.js:87:3
 2025-09-29T07:59:12:     at async injectSubscriptionData (C:\work\supplement-bot\middlewares\subscriptionMiddleware.js:43:3)
 2025-09-29T07:59:12:     at async Promise.all (index 0)
+2025-09-29T08:00:35: ❌ Общая ошибка обработки: ReferenceError: action is not defined
+2025-09-29T08:00:35:     at C:\work\supplement-bot\bot.js:255:15
+2025-09-29T08:00:35:     at C:\work\supplement-bot\node_modules\telegraf\composer.js:128:56
+2025-09-29T08:00:35:     at async C:\work\supplement-bot\bot.js:87:3
+2025-09-29T08:00:35:     at async injectSubscriptionData (C:\work\supplement-bot\middlewares\subscriptionMiddleware.js:43:3)
+2025-09-29T08:00:35:     at async Promise.all (index 0)
+2025-09-29T08:01:22: ❌ Общая ошибка обработки: ReferenceError: action is not defined
+2025-09-29T08:01:22:     at C:\work\supplement-bot\bot.js:255:15
+2025-09-29T08:01:22:     at C:\work\supplement-bot\node_modules\telegraf\composer.js:128:56
+2025-09-29T08:01:22:     at async C:\work\supplement-bot\bot.js:87:3
+2025-09-29T08:01:22:     at async injectSubscriptionData (C:\work\supplement-bot\middlewares\subscriptionMiddleware.js:43:3)
+2025-09-29T08:01:22:     at async Promise.all (index 0)

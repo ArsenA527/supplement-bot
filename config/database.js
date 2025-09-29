@@ -79,6 +79,8 @@ db.serialize(() => {
     FOREIGN KEY (chat_id) REFERENCES users (chat_id)
   )`);
 
+  console.log('✅ Таблица истории приема создана/проверена');
+
   // Таблица настроек уведомлений
   db.run(`CREATE TABLE IF NOT EXISTS notification_settings (
     chat_id INTEGER PRIMARY KEY,
@@ -92,18 +94,6 @@ db.serialize(() => {
   )`);
 
   console.log('✅ Таблицы напоминаний созданы');
-
-  db.run(`CREATE TABLE IF NOT EXISTS intake_history (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    chat_id INTEGER,
-    supplement_name TEXT,
-    dosage TEXT,
-    taken_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    status TEXT DEFAULT 'taken',
-    FOREIGN KEY (chat_id) REFERENCES users (chat_id)
-  )`);
-
-  console.log('✅ Таблица истории приема создана/проверена');
 
   db.run(`DROP TABLE IF EXISTS payments`, (err) => {
     if (err) console.log('ℹ️ Таблица payments не существует');

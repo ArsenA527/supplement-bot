@@ -70,13 +70,14 @@ reminderController.initialize().then(() => {
 
 const ReminderService = require('./services/reminderService');
 const subscriptionService = require('./services/subscriptionService');
-const reminderService = new ReminderService(bot); // Явно создаем экземпляр
 const analyticsService = require('./services/analyticsService');
 // ==================== MIDDLEWARE ====================
 
 global.botInstance = bot;
 global.reminderBot = bot; // Для сервиса напоминаний
 
+
+const reminderService = new ReminderService(bot);
 // Инъекция данных подписки
 bot.use(injectSubscriptionData);
 
