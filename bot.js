@@ -589,10 +589,77 @@ function setupDailyReports() {
   logger.info('Ежедневные отчеты настроены');
 }
 
+// После функции setupDailyReports ДОБАВЬТЕ:
+function setupWeeklyMotivation() {
+  const motivationService = require('./services/motivationService');
+
+  // Каждый понедельник в 10:00
+  const now = new Date();
+  const nextMonday = new Date();
+  nextMonday.setDate(now.getDate() + ((1 + 7 - now.getDay()) % 7));
+  nextMonday.setHours(10, 0, 0, 0);
+
+  if (now > nextMonday) {
+    nextMonday.setDate(nextMonday.getDate() + 7);
+  }
+
+  const timeUntilMotivation = nextMonday - now;
+
+  setTimeout(() => {
+    // Отправляем мотивацию всем активным пользователям
+    sendMotivationToActiveUsers();
+
+    // Повторяем каждую неделю
+    setInterval(sendMotivationToActiveUsers, 7 * 24 * 60 * 60 * 1000);
+  }, timeUntilMotivation);
+
+  logger.info('Еженедельная мотивация настроена');
+}
+
+async function sendMotivationToActiveUsers() {
+  const db = require('./config/database');
+  const motivationService = require('./services/motivationService');
+
+  // Получаем пользователей, активных за последние 30 дней
+  db.all(
+    `SELECT DISTINCT chat_id FROM analytics
+     WHERE created_at > datetime('now', '-30 days')`,
+    async (err, rows) => {
+      if (err) {
+        logger.error('Ошибка получения активных пользователей', { error: err.message });
+        return;
+      }
+
+      for (const row of rows) {
+        try {
+          // Создаем контекст для отправки сообщения
+          const fakeCtx = {
+            chat: { id: row.chat_id },
+            reply: (message, options) => {
+              return global.botInstance.telegram.sendMessage(row.chat_id, message, options);
+            }
+          };
+
+          await motivationService.sendWeeklyMotivation(fakeCtx);
+
+          // Пауза между отправками, чтобы не превысить лимиты Telegram
+          await new Promise(resolve => setTimeout(resolve, 100));
+        } catch (error) {
+          logger.error('Ошибка отправки мотивации пользователю', {
+            chatId: row.chat_id,
+            error: error.message
+          });
+        }
+      }
+    }
+  );
+}
+
 // Запуск бота
 bot.launch().then(() => {
   console.log('🤖 Бот запущен');
   setupDailyReports();
+  setupWeeklyMotivation();
 }).catch(err => {
   console.error('❌ Ошибка запуска бота:', err);
 });

@@ -18,6 +18,20 @@ function getReminderController() {
 async function handleStart(ctx) {
   const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
 
+  // Получаем краткую статистику для мотивации
+  let motivationText = '';
+  try {
+    const reminderService = require('../services/reminderService');
+    const service = new reminderService(ctx.telegram);
+    const stats = await service.getIntakeStats(ctx.chat.id, 7);
+
+    if (stats.total > 0) {
+      motivationText = `\n\n📊 На этой неделе: ${stats.compliance}% соблюдения режима`;
+    }
+  } catch (error) {
+    // Игнорируем ошибки статистики для новых пользователей
+  }
+
   const welcomeText = `👋 Привет! Я твой персональный консультант по БАДам.
 
 ✨ Что я умею:

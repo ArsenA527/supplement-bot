@@ -131,6 +131,16 @@ db.serialize(() => {
   )`);
 
   console.log('✅ Таблица целей создана/проверена');
+
+  // Таблица достижений
+  db.run(`CREATE TABLE IF NOT EXISTS achievements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chat_id INTEGER,
+    achievement_id TEXT,
+    awarded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(chat_id, achievement_id),
+    FOREIGN KEY (chat_id) REFERENCES users (chat_id)
+  )`);
 });
 
 // Graceful shutdown

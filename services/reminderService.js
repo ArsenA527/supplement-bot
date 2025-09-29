@@ -262,7 +262,7 @@ class ReminderService {
     });
   }
 
-    // Удалить тестовые напоминания
+  // Удалить тестовые напоминания
   async clearTestReminders(chatId) {
     return new Promise((resolve) => {
       db.run(
@@ -383,6 +383,49 @@ class ReminderService {
       clearInterval(this.checkInterval);
       console.log('✅ Сервис напоминаний остановлен');
     }
+  }
+
+  // Умное распределение времени напоминаний
+  async optimizeReminderTimes(chatId, supplements) {
+    const existingReminders = await this.getUserReminders(chatId);
+    const usedTimes = new Set(existingReminders.map(r => r.time));
+
+    const optimizedSchedule = [];
+    const timeSlots = ['08:00', '12:00', '18:00', '20:00']; // Оптимальные слоты
+
+    supplements.forEach(supplement => {
+      let bestTime = this.findBestTime(supplement, usedTimes, timeSlots);
+      optimizedSchedule.push({
+        ...supplement,
+        optimizedTime: bestTime
+      });
+      usedTimes.add(bestTime);
+    });
+
+    return optimizedSchedule;
+  }
+
+  // Умный подбор времени based на типе добавки
+  findBestTime(supplement, usedTimes, availableSlots) {
+    const name = supplement.name.toLowerCase();
+
+    // Утренние добавки (энергия, витамины)
+    if (name.includes('витамин') || name.includes('коэнзим') || name.includes('энергия')) {
+      return this.findAvailableTime('08:00', usedTimes, availableSlots);
+    }
+
+    // Дневные (с едой)
+    if (name.includes('омега') || name.includes('железо') || name.includes('цинк')) {
+      return this.findAvailableTime('12:00', usedTimes, availableSlots);
+    }
+
+    // Вечерние (сон, релакс)
+    if (name.includes('магний') || name.includes('мелатонин') || name.includes('глицин')) {
+      return this.findAvailableTime('20:00', usedTimes, availableSlots);
+    }
+
+    // По умолчанию - первое свободное время
+    return this.findAvailableTime('10:00', usedTimes, availableSlots);
   }
 }
 
