@@ -250,6 +250,7 @@ bot.action(/intake_taken_(\d+)/, async (ctx) => {
   console.log('🔵 Обработка кнопки Принял для reminder:', ctx.match[1]);
   try {
     const reminderId = ctx.match[1];
+    const action = 'taken';
 
     analyticsService.trackEvent(ctx.chat.id, 'reminder_interaction', {
       action: action,
@@ -312,6 +313,8 @@ bot.action(/intake_skipped_(\d+)/, async (ctx) => {
   console.log('🔵 Обработка кнопки Пропустить для reminder:', ctx.match[1]);
   try {
     const reminderId = ctx.match[1];
+    const action = 'skipped';
+
 
     analyticsService.trackEvent(ctx.chat.id, 'reminder_interaction', {
       action: action,
