@@ -1,0 +1,281 @@
+const settingsService = require('../services/settingsService');
+const { getMainMenuKeyboard, getSettingsKeyboard, getTimeSettingsKeyboard } = require('../keyboards');
+const NotificationManager = require('../utils/notification');
+
+class SettingsController {
+
+  // ⏰ Настроить напоминания
+  async showReminderSettings(ctx) {
+    const settings = await settingsService.getUserSettings(ctx.chat.id);
+
+    const message = `⏰ *Настройка времени напоминаний*\n\n` +
+      `Текущие настройки:\n` +
+      `🌅 Утро: ${settings.morning_time}\n` +
+      `☀️ День: ${settings.afternoon_time}\n` +
+      `🌙 Вечер: ${settings.evening_time}\n\n` +
+      `*Выберите, что хотите изменить:*`;
+
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      ...getTimeSettingsKeyboard()
+    });
+  }
+
+  // 🔔 Управление уведомлениями
+  async showNotificationSettings(ctx) {
+    const settings = await settingsService.getUserSettings(ctx.chat.id);
+    const status = settings.allow_notifications ? '✅ Включены' : '❌ Выключены';
+
+    const message = `🔔 *Управление уведомлениями*\n\n` +
+      `Текущий статус: ${status}\n\n` +
+      `Здесь вы можете включить или выключить все уведомления бота.`;
+
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        keyboard: [
+          [settings.allow_notifications ? '❌ Выключить уведомления' : '✅ Включить уведомления'],
+          ['⏰ Настроить время', '📊 Мои данные'],
+          ['🏠 Главное меню']
+        ],
+        resize_keyboard: true
+      }
+    });
+  }
+
+  // Переключить уведомления
+  async toggleNotifications(ctx) {
+    try {
+      const newStatus = await settingsService.toggleNotifications(ctx.chat.id);
+      const statusText = newStatus ? 'включены' : 'выключены';
+
+      await NotificationManager.success(ctx,
+        `🔔 Уведомления ${statusText}!`
+      );
+
+      // Показываем обновленные настройки
+      await this.showNotificationSettings(ctx);
+
+    } catch (error) {
+      console.error('❌ Ошибка переключения уведомлений:', error);
+      await NotificationManager.error(ctx,
+        '❌ Ошибка изменения настроек уведомлений'
+      );
+    }
+  }
+
+  // 📊 Мои данные
+  async showDataManagement(ctx) {
+    const message = `📊 *Управление данными*\n\n` +
+      `Здесь вы можете управлять своими данными:\n\n` +
+      `• 📁 **Экспорт данных** - скачайте все ваши данные в формате JSON\n` +
+      `• 🗑️ **Очистка истории** - удалите историю приема и прогресс\n` +
+      `• 🔄 **Сброс настроек** - верните настройки к значениям по умолчанию\n\n` +
+      `*Выберите действие:*`;
+
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        keyboard: [
+          ['📁 Экспорт данных', '🗑️ Очистить историю'],
+          ['🔄 Сбросить настройки', '🔔 Уведомления'],
+          ['🏠 Главное меню']
+        ],
+        resize_keyboard: true
+      }
+    });
+  }
+
+  // 📁 Экспорт данных
+  async exportUserData(ctx) {
+    try {
+      await NotificationManager.loading(ctx, 'Подготавливаю ваши данные...');
+
+      const userData = await settingsService.exportUserData(ctx.chat.id);
+      const jsonData = JSON.stringify(userData, null, 2);
+
+      // Отправляем как файл
+      await ctx.replyWithDocument({
+        source: Buffer.from(jsonData),
+        filename: `supplement_bot_data_${ctx.chat.id}_${new Date().toISOString().split('T')[0]}.json`
+      }, {
+        caption: `📁 *Экспорт ваших данных*\n\n` +
+          `Файл содержит всю вашу информацию из бота:\n` +
+          `• Профиль и настройки\n` +
+          `• Напоминания и историю приема\n` +
+          `• Цели и прогресс\n\n` +
+          `*Дата экспорта:* ${new Date().toLocaleDateString('ru-RU')}`,
+        parse_mode: 'Markdown'
+      });
+
+    } catch (error) {
+      console.error('❌ Ошибка экспорта данных:', error);
+      await NotificationManager.error(ctx,
+        '❌ Ошибка экспорта данных. Попробуйте позже.'
+      );
+    }
+  }
+
+  // 🗑️ Очистить историю
+  async showClearDataConfirmation(ctx) {
+    const message = `🗑️ *Очистка данных*\n\n` +
+      `⚠️ *Внимание!* Это действие:\n` +
+      `• Удалит всю историю приема добавок\n` +
+      `• Удалит ваш прогресс и достижения\n` +
+      `• Сбросит текущий опрос (если есть)\n` +
+      `• *Не затронет* вашу подписку и основные настройки\n\n` +
+      `Данное действие *нельзя отменить*!\n\n` +
+      `Вы уверены, что хотите очистить все данные?`;
+
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        keyboard: [
+          ['✅ Да, очистить все данные'],
+          ['❌ Нет, отменить'],
+          ['🏠 Главное меню']
+        ],
+        resize_keyboard: true
+      }
+    });
+  }
+
+  // Подтверждение очистки данных
+  async clearUserData(ctx) {
+    try {
+      await settingsService.clearUserData(ctx.chat.id);
+
+      await NotificationManager.success(ctx,
+        `✅ Все ваши данные успешно очищены!\n\n` +
+        `Вы можете начать заново с опроса: /survey`
+      );
+
+      // Показываем главное меню
+      const { showMainMenu } = require('./botController');
+      await showMainMenu(ctx);
+
+    } catch (error) {
+      console.error('❌ Ошибка очистки данных:', error);
+      await NotificationManager.error(ctx,
+        '❌ Ошибка очистки данных. Попробуйте позже.'
+      );
+    }
+  }
+
+  // 🔄 Сброс настроек
+  async resetSettings(ctx) {
+    try {
+      // Удаляем настройки и создаем заново
+      const db = require('../config/database');
+
+      await new Promise((resolve, reject) => {
+        db.run('DELETE FROM notification_settings WHERE chat_id = ?', [ctx.chat.id], (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+
+      // Создаем настройки по умолчанию
+      await settingsService.createDefaultSettings(ctx.chat.id);
+
+      await NotificationManager.success(ctx,
+        `🔄 Настройки сброшены к значениям по умолчанию!`
+      );
+
+      // Показываем обновленные настройки
+      await this.showNotificationSettings(ctx);
+
+    } catch (error) {
+      console.error('❌ Ошибка сброса настроек:', error);
+      await NotificationManager.error(ctx,
+        '❌ Ошибка сброса настроек.'
+      );
+    }
+  }
+
+  // ⏰ Обработка выбора времени
+  async handleTimeSetting(ctx, timeType) {
+    const timeSlots = settingsService.getAvailableTimeSlots();
+
+    const timeLabels = {
+      morning_time: 'утреннего',
+      afternoon_time: 'дневного',
+      evening_time: 'вечернего'
+    };
+
+    const message = `⏰ Выберите время для ${timeLabels[timeType]} напоминания:`;
+
+    // Создаем клавиатуру с временными слотами (группируем по 4)
+    const keyboard = [];
+    for (let i = 0; i < timeSlots.length; i += 4) {
+      keyboard.push(timeSlots.slice(i, i + 4));
+    }
+    keyboard.push(['↩️ Назад к настройкам']);
+
+    await ctx.reply(message, {
+      reply_markup: {
+        keyboard: keyboard,
+        resize_keyboard: true
+      }
+    });
+
+    // Сохраняем состояние выбора времени
+    ctx.session = ctx.session || {};
+    ctx.session.waitingForTime = timeType;
+  }
+
+  // Обработка выбранного времени
+  async processTimeSelection(ctx, time) {
+    if (!ctx.session || !ctx.session.waitingForTime) {
+      await NotificationManager.warning(ctx, 'Сначала выберите, какое время хотите изменить.');
+      return;
+    }
+
+    const timeType = ctx.session.waitingForTime;
+
+    try {
+      // Валидация времени
+      settingsService.validateTime(time);
+
+      // Обновляем настройки
+      await settingsService.updateNotificationSettings(ctx.chat.id, {
+        [timeType]: time
+      });
+
+      // Очищаем состояние
+      delete ctx.session.waitingForTime;
+
+      await NotificationManager.success(ctx,
+        `✅ Время ${this.getTimeLabel(timeType)} напоминания изменено на ${time}`
+      );
+
+      // Показываем обновленные настройки
+      await this.showReminderSettings(ctx);
+
+    } catch (error) {
+      await NotificationManager.error(ctx,
+        `❌ ${error.message}\n\nПожалуйста, выберите время из предложенных вариантов.`
+      );
+    }
+  }
+
+  getTimeLabel(timeType) {
+    const labels = {
+      morning_time: 'утреннего',
+      afternoon_time: 'дневного',
+      evening_time: 'вечернего'
+    };
+    return labels[timeType] || '';
+  }
+
+  // Отмена операции
+  async cancelOperation(ctx) {
+    if (ctx.session) {
+      delete ctx.session.waitingForTime;
+    }
+
+    await this.showReminderSettings(ctx);
+  }
+}
+
+module.exports = new SettingsController();
