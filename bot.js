@@ -47,7 +47,7 @@ const Telegraf = require('telegraf');
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const db = require('./config/database');
-global.botInstance = bot
+
 // Импорты контроллеров
 const botController = require('./controllers/botController');
 const surveyController = require('./controllers/surveyController');
@@ -73,6 +73,9 @@ const subscriptionService = require('./services/subscriptionService');
 const reminderService = new ReminderService(bot); // Явно создаем экземпляр
 const analyticsService = require('./services/analyticsService');
 // ==================== MIDDLEWARE ====================
+
+global.botInstance = bot;
+global.reminderBot = bot; // Для сервиса напоминаний
 
 // Инъекция данных подписки
 bot.use(injectSubscriptionData);

@@ -9,7 +9,7 @@ class ReminderService {
     this.telegram = bot ? bot.telegram : null;
     this.checkInterval = null;
     this.lastCheckTime = null;
-
+    global.reminderBot = bot;
     console.log('🔧 ReminderService initialized with bot:', !!bot);
     console.log('🔧 Telegram client available:', !!this.telegram);
   }
