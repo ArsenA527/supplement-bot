@@ -327,7 +327,7 @@ bot.command('analytics', (ctx) => testCommands.analyticsDashboard(ctx));
 bot.command('surveystats', (ctx) => testCommands.surveyAnalytics(ctx));
 bot.command('dailyreport', (ctx) => testCommands.forceDailyReport(ctx));
 
-// ДОБАВЬТЕ в раздел основных команд:
+/*
 bot.command('settings', (ctx) => {
   analyticsService.trackEvent(ctx.chat.id, 'settings_opened');
   showSettingsMenu(ctx);
@@ -346,7 +346,7 @@ bot.command('export', (ctx) => {
 bot.command('clear', (ctx) => {
   analyticsService.trackEvent(ctx.chat.id, 'clear_data_confirmation');
   settingsController.showClearDataConfirmation(ctx);
-});
+});*/
 
 // ==================== ОБРАБОТКА КНОПОК НАПОМИНАНИЙ ====================
 
@@ -595,6 +595,7 @@ bot.on('text', async (ctx) => {
 
     console.log(`📨 Текст получен: "${text}" от ${chatId}`);
 
+    /*
     // Проверяем, ожидается ли выбор времени
     if (ctx.session && ctx.session.waitingForTime) {
       // Проверяем, является ли текст временем (формат HH:MM)
@@ -603,7 +604,7 @@ bot.on('text', async (ctx) => {
         await settingsController.processTimeSelection(ctx, text);
         return;
       }
-    }
+    }*/
 
     // Команды главного меню
     const menuCommands = [

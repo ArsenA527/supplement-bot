@@ -90,3 +90,14 @@
 {"timestamp":"2025-09-30T06:23:41.957Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
 {"timestamp":"2025-09-30T06:23:45.752Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
 {"timestamp":"2025-09-30T06:25:04.532Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:35:32.192Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:35:37.675Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:35:41.533Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:35:42.903Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:35:47.655Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:35:57.656Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:36:04.835Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:36:12.601Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:36:15.001Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:36:16.199Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:41:30.717Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}

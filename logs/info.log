@@ -403,3 +403,33 @@
 {"timestamp":"2025-09-30T06:23:31.271Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-09-30T06-23-31-268Z.db"}
 {"timestamp":"2025-09-30T06:23:31.611Z","level":"INFO","message":"Ежедневные отчеты настроены"}
 {"timestamp":"2025-09-30T06:23:31.616Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-09-30T06:35:31.721Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-09-30T06:35:31.763Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-09-30T06-10-38-865Z.db"}
+{"timestamp":"2025-09-30T06:35:31.763Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-09-30T06-35-31-761Z.db"}
+{"timestamp":"2025-09-30T06:35:32.036Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-09-30T06:35:32.037Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-09-30T06:41:26.796Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-09-30T06:41:26.838Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-09-30T06-13-09-427Z.db"}
+{"timestamp":"2025-09-30T06:41:26.839Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-09-30T06-41-26-836Z.db"}
+{"timestamp":"2025-09-30T06:41:27.234Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-09-30T06:41:27.235Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-09-30T06:41:58.970Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-09-30T06:41:59.013Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-09-30T06-13-59-641Z.db"}
+{"timestamp":"2025-09-30T06:41:59.013Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-09-30T06-41-59-011Z.db"}
+{"timestamp":"2025-09-30T06:41:59.275Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-09-30T06:41:59.277Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-09-30T06:42:21.295Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-09-30T06:42:21.337Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-09-30T06-18-13-632Z.db"}
+{"timestamp":"2025-09-30T06:42:21.338Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-09-30T06-42-21-335Z.db"}
+{"timestamp":"2025-09-30T06:42:21.614Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-09-30T06:42:21.615Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-09-30T06:42:53.851Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-09-30T06:42:53.893Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-09-30T06-17-55-717Z.db"}
+{"timestamp":"2025-09-30T06:42:53.894Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-09-30T06-42-53-891Z.db"}
+{"timestamp":"2025-09-30T06:42:54.174Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-09-30T06:42:54.175Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-09-30T06:43:31.326Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-09-30T06:43:31.369Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-09-30T06-19-39-865Z.db"}
+{"timestamp":"2025-09-30T06:43:31.369Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-09-30T06-43-31-366Z.db"}
+{"timestamp":"2025-09-30T06:43:31.707Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-09-30T06:43:31.708Z","level":"INFO","message":"Еженедельная мотивация настроена"}
