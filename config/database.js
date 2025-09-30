@@ -155,7 +155,6 @@ db.serialize(() => {
   )`);
 });
 
-
 // Graceful shutdown
 process.on('SIGINT', () => {
   db.close((err) => {

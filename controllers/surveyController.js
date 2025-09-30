@@ -4,6 +4,7 @@ const progressService = require('../services/progressService');
 const goalService = require('../services/goalService');
 const { getQuestionKeyboard, getMainMenuKeyboard, getSurveyCompletionKeyboard } = require('../keyboards');
 const NotificationManager = require('../utils/notifications');
+const subscriptionService = require('../services/subscriptionService');
 
 // Начать опрос
 async function handleStartSurvey(ctx) {
@@ -346,11 +347,6 @@ async function completeSurvey(ctx) {
     );
   }
 
-  const isPremium = await subscriptionService.isSubscriptionActive(chatId);
-  ctx.reply(message, {
-    parse_mode: 'Markdown',
-    ...getSurveyCompletionKeyboard(isPremium)
-  });
 }
 
 // Генератор прогресс-бара
