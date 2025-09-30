@@ -6,6 +6,8 @@ const { getQuestionKeyboard, getMainMenuKeyboard, getSurveyCompletionKeyboard } 
 const NotificationManager = require('../utils/notifications');
 const subscriptionService = require('../services/subscriptionService');
 
+const lastSurveyMessages = new Map();
+
 // Начать опрос
 async function handleStartSurvey(ctx) {
   const chatId = ctx.chat.id;
@@ -57,7 +59,6 @@ async function handleStartSurvey(ctx) {
   }
 }
 
-// Отправить вопрос пользователю
 async function sendQuestion(ctx) {
   const chatId = ctx.chat.id;
 
@@ -69,11 +70,12 @@ async function sendQuestion(ctx) {
       return;
     }
 
-    // Получаем прогресс опроса
+    // УДАЛЯЕМ предыдущее сообщение ПЕРЕД отправкой нового
+    await deletePreviousSurveyMessage(ctx);
+
     const progress = await surveyService.getSurveyProgress(chatId);
     const progressBar = generateProgressBar(progress.current, progress.total);
 
-    // Форматируем сообщение
     let message = `${progressBar}\n\n`;
     message += `*Вопрос ${progress.current + 1} из ${progress.total}*\n\n`;
     message += `📝 ${question.text}\n`;
@@ -82,16 +84,16 @@ async function sendQuestion(ctx) {
       message += `\n💡 *${question.note}*`;
     }
 
-    // Отправляем вопрос с соответствующей клавиатурой
+    // ОТПРАВЛЯЕМ новый вопрос
+    let sentMessage;
     if (question.options) {
-      await ctx.reply(message, {
+      sentMessage = await ctx.reply(message, {
         parse_mode: 'Markdown',
         ...getQuestionKeyboard(question, progress)
       });
     } else {
-      await ctx.reply(message, { parse_mode: 'Markdown' });
+      sentMessage = await ctx.reply(message, { parse_mode: 'Markdown' });
 
-      // Для текстовых вопросов добавляем подсказку
       if (['age', 'height', 'weight'].includes(question.key)) {
         await ctx.reply('💡 *Введите число:*', { parse_mode: 'Markdown' });
       } else if (question.key === 'region') {
@@ -99,13 +101,37 @@ async function sendQuestion(ctx) {
       }
     }
 
-    console.log(`📨 Отправлен вопрос ${progress.current + 1}/${progress.total} пользователю ${chatId}`);
+    // СОХРАНЯЕМ ID для следующего удаления (в Map)
+    if (sentMessage && sentMessage.message_id) {
+      lastSurveyMessages.set(chatId, sentMessage.message_id);
+      console.log(`💾 Сохранен ID ${sentMessage.message_id} в Map`);
+    }
+
+    console.log(`📨 Отправлен вопрос ${progress.current + 1}/${progress.total}`);
 
   } catch (error) {
     console.error('❌ Ошибка отправки вопроса:', error);
-    await NotificationManager.error(ctx,
-      'Ошибка загрузки вопроса. Начните заново: /survey'
-    );
+    await NotificationManager.error(ctx, 'Ошибка загрузки вопроса.');
+  }
+}
+
+async function deletePreviousSurveyMessage(ctx) {
+  try {
+    const chatId = ctx.chat.id;
+
+    // Используем глобальную Map вместо БД
+    if (lastSurveyMessages.has(chatId)) {
+      const previousMessageId = lastSurveyMessages.get(chatId);
+      console.log(`🗑️ Удаляю предыдущее сообщение ${previousMessageId}...`);
+
+      await ctx.deleteMessage(previousMessageId);
+      console.log(`✅ Сообщение ${previousMessageId} удалено`);
+
+      // Удаляем из Map после успешного удаления
+      lastSurveyMessages.delete(chatId);
+    }
+  } catch (error) {
+    console.log(`⚠️ Не удалось удалить сообщение: ${error.message}`);
   }
 }
 
@@ -303,6 +329,10 @@ async function completeSurvey(ctx) {
   const chatId = ctx.chat.id;
 
   try {
+    await deletePreviousSurveyMessage(ctx);
+    // Очищаем из Map
+    lastSurveyMessages.delete(chatId);
+
     await NotificationManager.loading(ctx, 'Анализируем ваши ответы...');
 
     const answers = await surveyService.getSurveyResults(chatId);
@@ -325,12 +355,12 @@ async function completeSurvey(ctx) {
         await reminderController.createRemindersFromRecommendations(ctx, recommendations);
       } catch (reminderError) {
         console.error('❌ Ошибка создания напоминаний:', reminderError);
-        // Не прерываем процесс из-за ошибки напоминаний
       }
     }
 
     // Завершаем опрос
     await surveyService.completeSurvey(chatId);
+    await surveyService.clearSurveyMessageId(chatId);
 
     // Отправляем результаты
     await ctx.reply(message, {
@@ -341,12 +371,41 @@ async function completeSurvey(ctx) {
     console.log(`🎉 Опрос завершен для пользователя ${chatId}, дано рекомендаций: ${recommendations.length}`);
 
   } catch (error) {
+    // Очищаем ID сообщения при ошибке
+    await surveyService.clearSurveyMessageId(chatId);
+    lastSurveyMessages.delete(chatId);
     console.error('❌ Ошибка завершения опроса:', error);
     await NotificationManager.error(ctx,
       'Ошибка обработки результатов. Попробуйте снова: /survey'
     );
   }
+}
 
+async function handleCancelSurvey(ctx) {
+  try {
+    const chatId = ctx.chat.id;
+
+    // Удаляем сообщение опросника
+    await deletePreviousSurveyMessage(ctx);
+
+    // Завершаем опрос
+    await surveyService.completeSurvey(chatId);
+    await surveyService.clearSurveyMessageId(chatId);
+
+    await ctx.answerCbQuery('❌ Опрос отменен');
+
+    await NotificationManager.info(ctx,
+      'Опрос отменен. Вы можете начать заново когда будете готовы: /survey'
+    );
+
+    // Показываем главное меню
+    const { showMainMenu } = require('./botController');
+    showMainMenu(ctx);
+
+  } catch (error) {
+    console.error('❌ Ошибка отмены опроса:', error);
+    await ctx.answerCbQuery('❌ Ошибка отмены опроса');
+  }
 }
 
 // Генератор прогресс-бара

@@ -27,6 +27,48 @@ class SurveyService {
     return this.getCurrentQuestion(chatId);
   }
 
+  async saveSurveyMessageId(chatId, messageId) {
+    return new Promise((resolve, reject) => {
+      const db = require('../config/database');
+      db.run(
+        `UPDATE users SET survey_message_id = ? WHERE chat_id = ?`,
+        [messageId, chatId],
+        function(err) {
+          if (err) reject(err);
+          else resolve(this.changes);
+        }
+      );
+    });
+  }
+
+  async getSurveyMessageId(chatId) {
+    return new Promise((resolve) => {
+      const db = require('../config/database');
+      db.get(
+        `SELECT survey_message_id FROM users WHERE chat_id = ?`,
+        [chatId],
+        (err, row) => {
+          if (err || !row) resolve(null);
+          else resolve(row.survey_message_id);
+        }
+      );
+    });
+  }
+
+  async clearSurveyMessageId(chatId) {
+    return new Promise((resolve) => {
+      const db = require('../config/database');
+      db.run(
+        `UPDATE users SET survey_message_id = NULL WHERE chat_id = ?`,
+        [chatId],
+        (err) => {
+          if (err) console.error('Ошибка очистки survey_message_id:', err);
+          resolve();
+        }
+      );
+    });
+  }
+
   // Получить тип опроса (free/premium)
   async getSurveyType(chatId) {
     const isPremium = await subscriptionService.isSubscriptionActive(chatId);
@@ -200,8 +242,9 @@ class SurveyService {
   // Завершить опрос
   async completeSurvey(chatId) {
     return new Promise((resolve, reject) => {
+      const db = require('../config/database');
       db.run(
-        `UPDATE users SET state = NULL, updated_at = CURRENT_TIMESTAMP WHERE chat_id = ?`,
+        `UPDATE users SET state = NULL, survey_message_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE chat_id = ?`,
         [chatId],
         (err) => {
           if (err) {

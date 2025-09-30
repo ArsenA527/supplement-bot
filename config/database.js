@@ -21,6 +21,7 @@ db.serialize(() => {
     last_name TEXT,
     state TEXT,
     answers TEXT,
+    survey_message_id INTEGER,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
