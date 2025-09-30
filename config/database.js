@@ -81,7 +81,6 @@ db.serialize(() => {
 
   console.log('✅ Таблица истории приема создана/проверена');
 
-  // Таблица настроек уведомлений
   db.run(`CREATE TABLE IF NOT EXISTS notification_settings (
     chat_id INTEGER PRIMARY KEY,
     morning_time TEXT DEFAULT '08:00',
@@ -90,8 +89,21 @@ db.serialize(() => {
     allow_notifications BOOLEAN DEFAULT true,
     timezone TEXT DEFAULT 'Europe/Moscow',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (chat_id) REFERENCES users (chat_id)
-  )`);
+  )`, (err) => {
+    if (err) {
+      console.error('❌ Ошибка создания таблицы notification_settings:', err);
+    }
+  });
+
+  // Миграция для существующих таблиц
+  db.run(`ALTER TABLE notification_settings ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP`, (err) => {
+    // Игнорируем ошибку "duplicate column", если колонка уже есть
+    if (err && !err.message.includes('duplicate column name')) {
+      console.log('ℹ️ Колонка updated_at уже существует или не может быть добавлена');
+    }
+  });
 
   console.log('✅ Таблицы напоминаний созданы');
 
@@ -142,6 +154,7 @@ db.serialize(() => {
     FOREIGN KEY (chat_id) REFERENCES users (chat_id)
   )`);
 });
+
 
 // Graceful shutdown
 process.on('SIGINT', () => {

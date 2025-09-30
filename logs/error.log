@@ -66,3 +66,15 @@
 {"timestamp":"2025-09-30T05:41:34.976Z","level":"ERROR","message":"Ошибка обновления настроек","chatId":725240491,"updates":{"afternoon_time":"10:00"},"error":"SQLITE_ERROR: no such column: updated_at"}
 {"timestamp":"2025-09-30T06:00:00.013Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
 {"timestamp":"2025-09-30T06:01:35.195Z","level":"ERROR","message":"Ошибка обновления настроек","chatId":725240491,"updates":{"afternoon_time":"10:00"},"error":"SQLITE_ERROR: no such column: updated_at"}
+{"timestamp":"2025-09-30T06:04:10.382Z","level":"ERROR","message":"Ошибка обновления настроек","chatId":725240491,"updates":{"afternoon_time":"06:00"},"error":"SQLITE_ERROR: no such column: updated_at"}
+{"timestamp":"2025-09-30T06:04:11.866Z","level":"ERROR","message":"Ошибка обновления настроек","chatId":725240491,"updates":{"afternoon_time":"14:00"},"error":"SQLITE_ERROR: no such column: updated_at"}
+{"timestamp":"2025-09-30T06:05:54.389Z","level":"ERROR","message":"Ошибка обновления настроек","chatId":725240491,"updates":{"afternoon_time":"13:00"},"error":"SQLITE_ERROR: no such column: updated_at"}
+{"timestamp":"2025-09-30T06:14:10.792Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:14:12.641Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:14:15.439Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:14:19.229Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:14:22.176Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:14:23.110Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:14:25.379Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:14:27.049Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:14:29.993Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}

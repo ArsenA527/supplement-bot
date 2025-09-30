@@ -48,20 +48,25 @@ const Telegraf = require('telegraf');
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const db = require('./config/database');
 
-// Импорты контроллеров
+global.botInstance = bot;
+global.reminderBot = bot; // Для сервиса напоминаний
+
+// ==================== ИМПОРТЫ КОНТРОЛЛЕРОВ И СЕРВИСОВ ====================
 const botController = require('./controllers/botController');
 const surveyController = require('./controllers/surveyController');
 const subscriptionController = require('./controllers/subscriptionController');
 const { ReminderController } = require('./controllers/reminderController');
 const settingsController = require('./controllers/settingsController');
 const testCommands = require('./commands/testCommands');
+const analyticsService = require('./services/analyticsService');
 
 // Middleware
-const { injectSubscriptionData } = require('./middlewares/subscriptionMiddleware');
 const { getMainMenuKeyboard } = require('./keyboards');
-
-// Утилиты
 const NotificationManager = require('./utils/notifications');
+
+// Сервисы
+const subscriptionService = require('./services/subscriptionService');
+const ReminderService = require('./services/reminderService');
 
 // Инициализация напоминаний
 const reminderController = new ReminderController(bot);
@@ -69,42 +74,77 @@ reminderController.initialize().then(() => {
   console.log('✅ Сервис напоминаний инициализирован');
 });
 
-const ReminderService = require('./services/reminderService');
-const subscriptionService = require('./services/subscriptionService');
-const analyticsService = require('./services/analyticsService');
-// ==================== MIDDLEWARE ====================
+const reminderService = new ReminderService(bot);
 
-global.botInstance = bot;
-global.reminderBot = bot; // Для сервиса напоминаний
+// ==================== MIDDLEWARE ====================
 
 // Простая система сессий в памяти
 const sessions = new Map();
 
 bot.use(async (ctx, next) => {
   const chatId = ctx.chat?.id;
+  const username = ctx.from?.username || 'unknown';
+  const text = ctx.message?.text || ctx.callbackQuery?.data || 'no text';
+
+  // 1. Логирование
+  console.log(`📨 [${username}:${chatId}] ${text}`);
+
+  // 2. Система сессий
   if (chatId) {
     if (!sessions.has(chatId)) {
-      sessions.set(chatId, {});
+      sessions.set(chatId, {
+        created: Date.now(),
+        lastActivity: Date.now()
+      });
     }
     ctx.session = sessions.get(chatId);
+    ctx.session.lastActivity = Date.now(); // Обновляем активность
   }
+
+  // 3. Инъекция данных подписки
+  try {
+    ctx.state.subscription = await subscriptionService.getUserSubscription(chatId);
+  } catch (error) {
+    console.error('❌ Ошибка инъекции данных подписки:', error);
+    ctx.state.subscription = { plan: 'free', status: 'active' };
+  }
+
   await next();
+
+  // 4. Базовая валидация
+  if (ctx.message && ctx.message.text && ctx.message.text.length > 4000) {
+    console.log('⚠️ Слишком длинное сообщение от', chatId);
+    await NotificationManager.warning(ctx, 'Сообщение слишком длинное. Максимум 4000 символов.');
+    return;
+  }
+
+  // 5. Обновление активности пользователя в БД
+  if (chatId && ctx.message) {
+    // Можно добавить запись в БД для аналитики
+    setTimeout(() => {
+      analyticsService.trackEvent(chatId, 'user_activity', {
+        type: ctx.message.text ? 'text_message' : 'other'
+      });
+    }, 100);
+  }
 });
 
 // Очистка старых сессий каждые 24 часа
 setInterval(() => {
   const now = Date.now();
+  let clearedCount = 0;
+
   for (const [chatId, session] of sessions.entries()) {
     if (session.lastActivity && now - session.lastActivity > 24 * 60 * 60 * 1000) {
       sessions.delete(chatId);
+      clearedCount++;
     }
   }
+
+  if (clearedCount > 0) {
+    console.log(`🧹 Очищено ${clearedCount} старых сессий`);
+  }
 }, 60 * 60 * 1000); // Каждый час
-
-
-const reminderService = new ReminderService(bot);
-// Инъекция данных подписки
-bot.use(injectSubscriptionData);
 
 // Логирование всех сообщений
 bot.use(async (ctx, next) => {
