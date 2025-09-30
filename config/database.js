@@ -25,6 +25,14 @@ db.serialize(() => {
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
+  db.run(`ALTER TABLE users ADD COLUMN survey_message_id INTEGER`, (err) => {
+    if (err && !err.message.includes('duplicate column name')) {
+      console.log('ℹ️ Колонка survey_message_id уже существует или не может быть добавлена');
+    } else {
+      console.log('✅ Колонка survey_message_id добавлена в users');
+    }
+  });
+
   // Таблица подписок
   db.run(`CREATE TABLE IF NOT EXISTS subscriptions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
