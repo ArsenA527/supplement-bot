@@ -1190,3 +1190,26 @@
 2025-09-29T09:00:00: (node:14420) Warning: Accessing non-existent property 'telegram' of module exports inside circular dependency
 2025-09-29T09:00:00: (Use `node --trace-warnings ...` to show where the warning was created)
 2025-09-29T09:27:22: (node:14420) Warning: Accessing non-existent property 'telegram' of module exports inside circular dependency
+2025-09-30T08:35:09: ❌ Ошибка обработки текста: ReferenceError: settingsController is not defined
+2025-09-30T08:35:09:     at C:\work\supplement-bot\bot.js:547:9
+2025-09-30T08:35:09:     at C:\work\supplement-bot\node_modules\telegraf\composer.js:128:56
+2025-09-30T08:35:09:     at async C:\work\supplement-bot\bot.js:115:3
+2025-09-30T08:35:09:     at async injectSubscriptionData (C:\work\supplement-bot\middlewares\subscriptionMiddleware.js:43:3)
+2025-09-30T08:35:09:     at async C:\work\supplement-bot\bot.js:90:3
+2025-09-30T08:35:09:     at async Promise.all (index 0)
+2025-09-30T08:40:56: ❌ Ошибка обработки текста: ReferenceError: settingsController is not defined
+2025-09-30T08:40:56:     at C:\work\supplement-bot\bot.js:547:9
+2025-09-30T08:40:56:     at C:\work\supplement-bot\node_modules\telegraf\composer.js:128:56
+2025-09-30T08:40:56:     at async C:\work\supplement-bot\bot.js:115:3
+2025-09-30T08:40:56:     at async injectSubscriptionData (C:\work\supplement-bot\middlewares\subscriptionMiddleware.js:43:3)
+2025-09-30T08:40:56:     at async C:\work\supplement-bot\bot.js:90:3
+2025-09-30T08:40:56:     at async Promise.all (index 0)
+2025-09-30T08:40:58: ❌ Ошибка обработки текста: ReferenceError: settingsController is not defined
+2025-09-30T08:40:58:     at C:\work\supplement-bot\bot.js:547:9
+2025-09-30T08:40:58:     at C:\work\supplement-bot\node_modules\telegraf\composer.js:128:56
+2025-09-30T08:40:58:     at async C:\work\supplement-bot\bot.js:115:3
+2025-09-30T08:40:58:     at async injectSubscriptionData (C:\work\supplement-bot\middlewares\subscriptionMiddleware.js:43:3)
+2025-09-30T08:40:58:     at async C:\work\supplement-bot\bot.js:90:3
+2025-09-30T08:40:58:     at async Promise.all (index 0)
+2025-09-30T09:00:00: (node:12000) Warning: Accessing non-existent property 'telegram' of module exports inside circular dependency
+2025-09-30T09:00:00: (Use `node --trace-warnings ...` to show where the warning was created)

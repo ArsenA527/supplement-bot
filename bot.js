@@ -53,6 +53,7 @@ const botController = require('./controllers/botController');
 const surveyController = require('./controllers/surveyController');
 const subscriptionController = require('./controllers/subscriptionController');
 const { ReminderController } = require('./controllers/reminderController');
+const settingsController = require('./controllers/settingsController');
 const testCommands = require('./commands/testCommands');
 
 // Middleware
