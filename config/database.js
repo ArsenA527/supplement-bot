@@ -153,6 +153,15 @@ db.serialize(() => {
     UNIQUE(chat_id, achievement_id),
     FOREIGN KEY (chat_id) REFERENCES users (chat_id)
   )`);
+
+  // Добавьте в config/database.js
+  db.run(`CREATE TABLE IF NOT EXISTS analytics (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chat_id INTEGER,
+    event_name TEXT,
+    metadata TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
 });
 
 // Graceful shutdown
