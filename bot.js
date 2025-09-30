@@ -69,12 +69,27 @@ const subscriptionService = require('./services/subscriptionService');
 const ReminderService = require('./services/reminderService');
 
 // Инициализация напоминаний
-const reminderController = new ReminderController(bot);
-reminderController.initialize().then(() => {
-  console.log('✅ Сервис напоминаний инициализирован');
-});
-
 const reminderService = new ReminderService(bot);
+
+// Инициализация напоминаний с защитой от дублирования
+let reminderInitialized = false;
+
+function initializeReminders() {
+  if (reminderInitialized) {
+    console.log('⚠️ Напоминания уже инициализированы, пропускаем...');
+    return;
+  }
+
+  reminderService.initialize().then(() => {
+    console.log('✅ Сервис напоминаний инициализирован');
+    reminderInitialized = true;
+  }).catch(error => {
+    console.error('❌ Ошибка инициализации напоминаний:', error);
+  });
+}
+
+// Запускаем инициализацию
+initializeReminders();
 
 // ==================== MIDDLEWARE ====================
 
@@ -802,6 +817,15 @@ process.on('uncaughtException', (error) => {
 // Graceful shutdown
 process.once('SIGINT', async () => {
   console.log('🔄 Получен SIGINT, останавливаем бота...');
+
+  // Останавливаем сервис напоминаний
+  if (reminderService && reminderService.stop) {
+    reminderService.stop();
+  }
+
+  // Очищаем глобальные переменные
+  global.sentReminders = {};
+
   try {
     await bot.stop();
     console.log('✅ Бот корректно остановлен');
@@ -821,6 +845,13 @@ process.once('SIGINT', async () => {
 
 process.once('SIGTERM', async () => {
   console.log('🔄 Получен SIGTERM, останавливаем бота...');
+
+  if (reminderService && reminderService.stop) {
+    reminderService.stop();
+  }
+
+  global.sentReminders = {};
+
   try {
     await bot.stop();
     console.log('✅ Бот корректно остановлен');

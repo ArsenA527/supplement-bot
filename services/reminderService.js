@@ -5,17 +5,32 @@ let globalBot = null;
 
 class ReminderService {
   constructor(bot) {
+    // Защита от множественной инициализации
+    if (global.reminderServiceInstance) {
+      console.log('⚠️ ReminderService уже инициализирован, возвращаем существующий экземпляр');
+      return global.reminderServiceInstance;
+    }
+
     this.bot = bot;
     this.telegram = bot ? bot.telegram : null;
     this.checkInterval = null;
     this.lastCheckTime = null;
-    global.reminderBot = bot;
+    this.isInitialized = false;
+
+    // Сохраняем экземпляр глобально
+    global.reminderServiceInstance = this;
+
     console.log('🔧 ReminderService initialized with bot:', !!bot);
     console.log('🔧 Telegram client available:', !!this.telegram);
   }
 
   // Инициализация сервиса
   async initialize() {
+    if (this.isInitialized) {
+      console.log('⚠️ ReminderService уже инициализирован');
+      return true;
+    }
+
     console.log('⏰ Инициализация упрощенного сервиса напоминаний...');
 
     // Проверяем доступность Telegram client
@@ -24,26 +39,42 @@ class ReminderService {
       return false;
     }
 
+    // Останавливаем предыдущий интервал если был
+    if (this.checkInterval) {
+      clearInterval(this.checkInterval);
+      this.checkInterval = null;
+    }
+
     await this.startEnhancedReminderChecker();
+    this.isInitialized = true;
+
     console.log('✅ Сервис напоминаний успешно инициализирован');
     return true;
   }
 
   // Запускаем улучшенный проверщик напоминаний
   async startEnhancedReminderChecker() {
-    // Останавливаем предыдущий интервал если был
-    if (this.checkInterval) {
-      clearInterval(this.checkInterval);
-    }
+    console.log('🔍 Запуск проверщика напоминаний...');
 
     // Проверяем напоминания сразу при старте
-    console.log('🔍 Первоначальная проверка напоминаний...');
     await this.checkDueReminders();
 
-    // Затем каждые 30 секунд
+    // Затем каждые 30 секунд с защитой от наложения
     this.checkInterval = setInterval(async () => {
-      await this.checkDueReminders();
-    }, 30000); // Проверяем каждые 30 секунд
+      // Проверяем что предыдущая проверка завершилась
+      if (!this.checkInProgress) {
+        this.checkInProgress = true;
+        try {
+          await this.checkDueReminders();
+        } catch (error) {
+          console.error('❌ Ошибка в проверке напоминаний:', error);
+        } finally {
+          this.checkInProgress = false;
+        }
+      } else {
+        console.log('⚠️ Проверка напоминаний уже выполняется, пропускаем...');
+      }
+    }, 30000); // 30 секунд
 
     console.log('✅ Улучшенный проверщик напоминаний запущен');
   }
@@ -115,6 +146,24 @@ class ReminderService {
   // Отправить напоминание сразу
   async sendReminderNow(reminder) {
     try {
+      // 🔒 ЗАЩИТА ОТ ДУБЛИРОВАНИЯ - проверяем не отправляли ли уже это напоминание
+      const reminderKey = `sent_${reminder.chat_id}_${reminder.supplement_name}_${reminder.time}`;
+
+      if (global.sentReminders && global.sentReminders[reminderKey]) {
+        console.log(`⚠️ Напоминание уже отправлено: ${reminder.supplement_name} для ${reminder.chat_id}`);
+        return false;
+      }
+
+      // Помечаем как отправленное
+      if (!global.sentReminders) global.sentReminders = {};
+      global.sentReminders[reminderKey] = Date.now();
+
+      // Очищаем через 5 минут (на случай если бот перезапустится)
+      setTimeout(() => {
+        if (global.sentReminders && global.sentReminders[reminderKey]) {
+          delete global.sentReminders[reminderKey];
+        }
+      }, 5 * 60 * 1000);
 
       // Проверяем разрешены ли уведомления
       const canSend = await this.canSendNotification(reminder.chat_id);
@@ -123,17 +172,17 @@ class ReminderService {
         return false;
       }
 
-      const telegram = globalBot ? globalBot.telegram : this.telegram;
-
-      if (!telegram) {
-        console.error('❌ Telegram client не доступен');
-        return false;
-      }
-
       // Проверяем не отправляли ли уже напоминание сегодня
       const alreadySent = await this.checkIfReminderSentToday(reminder);
       if (alreadySent) {
         console.log(`⚠️ Напоминание уже отправлено сегодня: ${reminder.supplement_name}`);
+        return false;
+      }
+
+      const telegram = global.reminderBot ? global.reminderBot.telegram : this.telegram;
+
+      if (!telegram) {
+        console.error('❌ Telegram client не доступен');
         return false;
       }
 
@@ -387,10 +436,22 @@ class ReminderService {
 
   // Остановить сервис
   stop() {
+    console.log('🛑 Остановка сервиса напоминаний...');
+
     if (this.checkInterval) {
       clearInterval(this.checkInterval);
-      console.log('✅ Сервис напоминаний остановлен');
+      this.checkInterval = null;
+      console.log('✅ Интервал проверки остановлен');
     }
+
+    this.isInitialized = false;
+
+    // Очищаем глобальный экземпляр
+    if (global.reminderServiceInstance === this) {
+      global.reminderServiceInstance = null;
+    }
+
+    console.log('✅ Сервис напоминаний остановлен');
   }
 
   // Умное распределение времени напоминаний

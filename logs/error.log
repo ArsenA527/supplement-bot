@@ -78,3 +78,15 @@
 {"timestamp":"2025-09-30T06:14:25.379Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
 {"timestamp":"2025-09-30T06:14:27.049Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
 {"timestamp":"2025-09-30T06:14:29.993Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:21:17.204Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:21:25.378Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:21:27.575Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:21:28.668Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:21:29.883Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:21:30.866Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:21:31.628Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:21:32.218Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:21:34.281Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:23:41.957Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:23:45.752Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
+{"timestamp":"2025-09-30T06:25:04.532Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
