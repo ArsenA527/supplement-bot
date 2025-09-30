@@ -2,14 +2,16 @@ function getMainMenuKeyboard(isPremium = false) {
   const freeUserButtons = [
     ['📋 Пройти опрос', '💊 Мои рекомендации'],
     ['👤 Мой профиль', '💎 Апгрейд до Premium'],
-    ['ℹ️ Помощь', '⚙️ Настройки']
+    // ['ℹ️ Помощь', '⚙️ Настройки']
+    ['ℹ️ Помощь']
   ];
 
   const premiumUserButtons = [
     ['📋 Новый опрос', '💊 Мои рекомендации'],
     ['⏰ Мои напоминания', '📊 Статистика'],
-    ['👤 Мой профиль', '⚙️ Настройки'],
-    ['ℹ️ Помощь', '💎 Premium статус']
+    // ['👤 Мой профиль', '⚙️ Настройки'],
+    ['👤 Мой профиль', 'ℹ️ Помощь'],
+    ['💎 Premium статус']
   ];
 
   const buttons = isPremium ? premiumUserButtons : freeUserButtons;
