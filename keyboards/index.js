@@ -29,34 +29,14 @@ function getMainMenuKeyboard(isPremium = false) {
 function getQuestionKeyboard(question, progress = { current: 0, total: 0 }) {
   if (!question.options) return null;
 
-  let keyboard = [];
 
   // Для множественного выбора - особый формат
-  if (question.multiple) {
-    question.options.forEach((option, index) => {
-      const isSelected = question.currentAnswers.includes(option);
-      keyboard.push([{
-        text: `${isSelected ? '✅ ' : '☑️ '}${option}`,
-        callback_data: `q${question.index}a${index}_add`
-      }]);
-    });
-
-    // Кнопка продолжения (только если есть выбранные ответы)
-    if (question.currentAnswers.length > 0) {
-      keyboard.push([
-        {
-          text: `✅ Продолжить (${question.currentAnswers.length} выбрано)`,
-          callback_data: `q${question.index}_continue`
-        }
-      ]);
-    }
-  } else {
-    // Обычный одиночный выбор
-    keyboard = question.options.map((option, index) => [{
+  const keyboard = question.options.map((option, index) => [
+    {
       text: `${index + 1}. ${option}`,
       callback_data: `q${question.index}a${index}`
-    }]);
-  }
+    }
+  ])
 
   // Кнопка отмены и прогресс
   const progressText = `📊 ${progress.current}/${progress.total}`;

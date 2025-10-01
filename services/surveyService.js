@@ -88,18 +88,12 @@ class SurveyService {
     const currentAnswers = state.answers[question.key];
 
 
-    return {
+    return question ? {
       ...question,
       index: state.current,
-      total: userQuestions.length,
-      currentAnswers: currentAnswers || [],
-      isMultiple: question.multiple || false
-    };
-    // return question ? {
-    //   ...question,
-    //   index: state.current,
-    //   total: userQuestions.length
-    // } : null;
+      total: userQuestions.length
+    } : null;
+
   }
 
   // Получить вопросы в зависимости от подписки
