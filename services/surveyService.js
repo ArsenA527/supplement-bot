@@ -85,11 +85,21 @@ class SurveyService {
     if (state.current >= userQuestions.length) return null;
 
     const question = userQuestions[state.current];
-    return question ? {
+    const currentAnswers = state.answers[question.key];
+
+
+    return {
       ...question,
       index: state.current,
-      total: userQuestions.length
-    } : null;
+      total: userQuestions.length,
+      currentAnswers: currentAnswers || [],
+      isMultiple: question.multiple || false
+    };
+    // return question ? {
+    //   ...question,
+    //   index: state.current,
+    //   total: userQuestions.length
+    // } : null;
   }
 
   // Получить вопросы в зависимости от подписки
@@ -142,19 +152,17 @@ class SurveyService {
 
     if (!question) throw new Error('Вопрос не найден');
 
-    // Валидация числовых полей
-    if (['age', 'height', 'weight', 'region'].includes(question.key)) {
-      if (question.key === 'region') {
-        // Для региона просто сохраняем текст
-        state.answers[question.key] = answer;
-      } else {
-        // Для числовых полей проверяем валидность
-        const numValue = parseInt(answer);
-        if (isNaN(numValue) || numValue <= 0) {
-          throw new Error('Пожалуйста, введите корректное положительное число');
+    if (question.isMultiple) {
+      state.answers[question.key] = state.answers[question.key] || [];
+
+      if (answerData.action === 'add') {
+        if (!state.answers[question.key].includes(answer)) {
+          state.answers[question.key].push(answer);
         }
-        state.answers[question.key] = numValue;
+      } else if (answerData.action === 'continue') {
+        state.current++;
       }
+
     } else {
       state.answers[question.key] = answer;
     }
@@ -162,7 +170,7 @@ class SurveyService {
     state.current++;
     await this.saveUserData(chatId, state);
 
-    console.log(`💾 Ответ сохранен: ${question.key} = ${answer} (вопрос ${state.current}/${userQuestions.length})`);
+    // console.log(`💾 Ответ сохранен: ${question.key} = ${answer} (вопрос ${state.current}/${userQuestions.length})`);
 
     return true;
   }
