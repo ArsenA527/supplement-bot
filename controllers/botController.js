@@ -386,6 +386,37 @@ async function handleMyGoals(ctx) {
   }
 }
 
+async function handleViewRecommendations(ctx) {
+  const chatId = ctx.chat.id;
+
+  try {
+    await ctx.answerCbQuery('📋 Загружаю ваши рекомендации...');
+
+    // Получаем результаты опроса
+    const answers = await surveyService.getSurveyResults(chatId);
+
+    if (!answers || Object.keys(answers).length === 0) {
+      await ctx.reply('❌ Рекомендации не найдены. Пройдите опрос заново: /survey');
+      return;
+    }
+
+    // Генерируем рекомендации (как в completeSurvey)
+    const recommendations = recommendationService.generateRecommendations(answers);
+    const message = recommendationService.formatRecommendations(recommendations);
+
+    // Отправляем рекомендации
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      ...getMainMenuKeyboard(true) // Предполагаем что пользователь premium после опроса
+    });
+
+  } catch (error) {
+    console.error('❌ Ошибка загрузки рекомендаций:', error);
+    await ctx.answerCbQuery('❌ Ошибка загрузки рекомендаций');
+    await ctx.reply('❌ Не удалось загрузить рекомендации. Попробуйте позже.');
+  }
+}
+
 // Вспомогательная функция для прогресс-бара
 function generateProgressBar(percentage) {
   const filled = '█'.repeat(Math.round(percentage / 10));
@@ -696,5 +727,6 @@ module.exports = {
   handlePlan,
   handleProfile,
   handleTextCommands,
+  handleViewRecommendations,
   showMainMenu
 };
