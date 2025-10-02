@@ -132,13 +132,6 @@ async function handlePlan(ctx) {
   }
 }
 
-// Добавляем в начало файла вспомогательную функцию
-function escapeMarkdown(text) {
-  if (typeof text !== 'string') return text;
-  return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
-}
-
-// Обновляем handleProfile
 async function handleProfile(ctx) {
   const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
   const chatId = ctx.chat.id;
@@ -149,23 +142,54 @@ async function handleProfile(ctx) {
       return;
     }
 
-    let profileText = `👤 *Твой профиль:*\n\n`;
+    let profileText = `<b>👤 Твой профиль</b>\n\n`;
 
-    for (const [key, value] of Object.entries(answers)) {
-      const safeValue = escapeMarkdown(String(value));
-      const formattedKey = formatKey(key);
-      profileText += `• ${formattedKey}: ${safeValue}\n`;
+    const categories = {
+      '📋 ОСНОВНАЯ ИНФОРМАЦИЯ': [
+        'age_range', 'height_range', 'weight_category'
+      ],
+      '💪 ОБРАЗ ЖИЗНИ': [
+        'diet_type', 'physical_activity', 'sleep_quality',
+        'energy_level', 'stress_level'
+      ],
+      '🚭 ПРИВЫЧКИ': [
+        'smoking_habits', 'alcohol_consumption'
+      ],
+      '🏥 ЗДОРОВЬЕ': [
+        'blood_pressure', 'chronic_conditions', 'memory_concentration',
+        'joint_health', 'digestion', 'skin_health', 'immune_health'
+      ],
+      '🎯 ЦЕЛИ': [
+        'main_goal'
+      ]
+    };
+
+    for (const [categoryName, fields] of Object.entries(categories)) {
+      const categoryAnswers = [];
+
+      fields.forEach(field => {
+        if (answers[field]) {
+          const formattedKey = formatKey(field);
+          const value = String(answers[field]);
+          categoryAnswers.push(`• ${formattedKey}: ${value}`);
+        }
+      });
+
+      if (categoryAnswers.length > 0) {
+        profileText += `<b>${categoryName}</b>\n${categoryAnswers.join('\n')}\n\n`;
+      }
     }
 
-    profileText += `\n💎 *Подписка:* ${isPremium ? 'Premium ✅' : 'Free'}`; // Используем isPremium
+    profileText += `<b>💎 Подписка</b>: ${isPremium ? 'Premium ✅' : 'Free'}`;
 
+    // Используем HTML вместо Markdown
     ctx.reply(profileText, {
-      parse_mode: 'Markdown',
+      parse_mode: 'HTML', // МЕНЯЕМ НА HTML
       ...getMainMenuKeyboard(isPremium)
     });
   }).catch(err => {
     console.error('❌ Ошибка загрузки профиля:', err);
-    ctx.reply('❌ Ошибка загрузки профиля', getMainMenuKeyboard(isPremium)); // ПЕРЕДАЕМ isPremium
+    ctx.reply('❌ Ошибка загрузки профиля', getMainMenuKeyboard(isPremium));
   });
 }
 
@@ -371,27 +395,38 @@ function generateProgressBar(percentage) {
 
 function formatKey(key) {
   const keyMap = {
-    'age': '📅 Возраст',
-    'height': '📏 Рост',
-    'weight': '⚖️ Вес',
-    'smoking': '🚬 Курение',
-    'alcohol': '🍷 Алкоголь',
-    'diet': '🥗 Питание',
+    // БАЗОВАЯ ИНФОРМАЦИЯ
+    'age_range': '📅 Возраст',
+    'height_range': '📏 Рост',
+    'weight_category': '⚖️ Вес',
+
+    // ОБРАЗ ЖИЗНИ
+    'diet_type': '🥗 Тип питания',
+    'physical_activity': '🏃‍♂️ Активность',
+    'sleep_quality': '😴 Качество сна',
+    'energy_level': '⚡ Уровень энергии',
+    'stress_level': '😵‍💫 Уровень стресса',
+
+    // ПРИВЫЧКИ
+    'smoking_habits': '🚬 Курение',
+    'alcohol_consumption': '🍷 Алкоголь',
+
+    // ЗДОРОВЬЕ
     'blood_pressure': '🩸 Давление',
-    'chronic': '🏥 Хронические болезни',
-    'sleep': '😴 Сон',
-    'energy': '⚡ Энергия',
-    'stress': '😵‍💫 Стресс',
-    'symptoms': '⚠️ Симптомы',
-    'libido': '❤️ Либидо',
-    'region': '🌍 Регион',
-    'activity': '🏃 Активность',
-    'goal': '🎯 Цель',
-    'stimulants': '☕ Стимуляторы'
+    'chronic_conditions': '🏥 Хронические заболевания',
+    'memory_concentration': '🧠 Память и концентрация',
+    'joint_health': '🦵 Состояние суставов',
+    'digestion': '🍽️ Пищеварение',
+    'skin_health': '✨ Состояние кожи',
+    'immune_health': '🛡️ Иммунитет',
+
+    // ЦЕЛИ
+    'main_goal': '🎯 Главная цель',
   };
 
   return keyMap[key] || key;
 }
+
 /*
 // Меню настроек
 async function showSettingsMenu(ctx) {
