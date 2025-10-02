@@ -59,6 +59,44 @@ async function handleStartSurvey(ctx) {
   }
 }
 
+// Продолжить опрос
+async function handleContinueSurvey(ctx) {
+  const chatId = ctx.chat.id;
+
+  try {
+    await ctx.answerCbQuery('➡️ Продолжаем опрос...');
+    await ctx.deleteMessage(); // Удаляем сообщение с выбором
+
+    // Просто отправляем текущий вопрос
+    await sendQuestion(ctx);
+
+  } catch (error) {
+    console.error('❌ Ошибка продолжения опроса:', error);
+    await ctx.answerCbQuery('❌ Не удалось продолжить опрос');
+  }
+}
+
+// Начать опрос заново
+async function handleRestartSurvey(ctx) {
+  const chatId = ctx.chat.id;
+
+  try {
+    await ctx.answerCbQuery('🔄 Начинаем новый опрос...');
+    await ctx.deleteMessage();
+
+    // Завершаем текущий опрос и начинаем новый
+    const surveyService = require('../services/surveyService');
+    await surveyService.completeSurvey(chatId);
+
+    // Начинаем новый
+    await handleStartSurvey(ctx);
+
+  } catch (error) {
+    console.error('❌ Ошибка перезапуска опроса:', error);
+    await ctx.answerCbQuery('❌ Не удалось начать новый опрос');
+  }
+}
+
 async function sendQuestion(ctx) {
   const chatId = ctx.chat.id;
 
@@ -217,6 +255,27 @@ async function handleTextAnswer(ctx) {
 async function handleButtonAnswer(ctx) {
   const callbackData = ctx.callbackQuery.data;
   console.log(`🔵 Обработка callback: ${callbackData}`);
+
+  // НОВЫЕ ОБРАБОТЧИКИ ДЛЯ ОПРОСА
+  if (callbackData === 'continue_survey') {
+    await handleContinueSurvey(ctx);
+    return;
+  }
+
+  if (callbackData === 'view_recommendations') {
+    await handleViewRecommendations(ctx);
+    return;
+  }
+
+  if (callbackData === 'restart_survey') {
+    await handleRestartSurvey(ctx);
+    return;
+  }
+
+  if (callbackData === 'cancel_survey_confirmed') {
+    await handleCancelSurvey(ctx);
+    return;
+  }
 
   // Обрабатываем кнопку отмены опроса
   if (callbackData === 'cancel_survey') {

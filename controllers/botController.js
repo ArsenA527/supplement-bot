@@ -17,6 +17,42 @@ function getReminderController() {
 }
 
 async function handleStart(ctx) {
+  const chatId = ctx.chat.id;
+
+
+  // ПРОВЕРЯЕМ ЕСТЬ ЛИ НЕЗАВЕРШЕННЫЙ ОПРОС
+  try {
+    const surveyService = require('../services/surveyService');
+    const state = await surveyService.getUserState(chatId);
+
+    if (state && state.current > 0 && state.current < state.total) {
+      // Есть незавершенный опрос - предлагаем выбор
+      const questions = await surveyService.getQuestionsForUser(chatId);
+      const totalQuestions = questions.length;
+
+      await ctx.reply(
+        `📝 *У вас есть незавершенный опрос*\n\n` +
+        `Прогресс: ${state.current}/${totalQuestions} вопросов\n\n` +
+        `Хотите продолжить или начать заново?`,
+        {
+          parse_mode: 'Markdown',
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '➡️ Продолжить опрос', callback_data: 'continue_survey' }],
+              [{ text: '🔄 Начать новый опрос', callback_data: 'restart_survey' }],
+              [{ text: '❌ Отменить опрос', callback_data: 'cancel_survey_confirmed' }]
+            ]
+          }
+        }
+      );
+      return;
+    }
+  } catch (error) {
+    console.error('❌ Ошибка проверки состояния опроса:', error);
+    // Продолжаем как обычно - не ломаем весь /start из-за этой проверки
+  }
+
+
   const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
 
   // Получаем краткую статистику для мотивации
@@ -96,13 +132,6 @@ async function handlePlan(ctx) {
   }
 }
 
-// Добавляем в начало файла вспомогательную функцию
-function escapeMarkdown(text) {
-  if (typeof text !== 'string') return text;
-  return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
-}
-
-// Обновляем handleProfile
 async function handleProfile(ctx) {
   const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
   const chatId = ctx.chat.id;
@@ -113,23 +142,54 @@ async function handleProfile(ctx) {
       return;
     }
 
-    let profileText = `👤 *Твой профиль:*\n\n`;
+    let profileText = `<b>👤 Твой профиль</b>\n\n`;
 
-    for (const [key, value] of Object.entries(answers)) {
-      const safeValue = escapeMarkdown(String(value));
-      const formattedKey = formatKey(key);
-      profileText += `• ${formattedKey}: ${safeValue}\n`;
+    const categories = {
+      '📋 ОСНОВНАЯ ИНФОРМАЦИЯ': [
+        'age_range', 'height_range', 'weight_category'
+      ],
+      '💪 ОБРАЗ ЖИЗНИ': [
+        'diet_type', 'physical_activity', 'sleep_quality',
+        'energy_level', 'stress_level'
+      ],
+      '🚭 ПРИВЫЧКИ': [
+        'smoking_habits', 'alcohol_consumption'
+      ],
+      '🏥 ЗДОРОВЬЕ': [
+        'blood_pressure', 'chronic_conditions', 'memory_concentration',
+        'joint_health', 'digestion', 'skin_health', 'immune_health'
+      ],
+      '🎯 ЦЕЛИ': [
+        'main_goal'
+      ]
+    };
+
+    for (const [categoryName, fields] of Object.entries(categories)) {
+      const categoryAnswers = [];
+
+      fields.forEach(field => {
+        if (answers[field]) {
+          const formattedKey = formatKey(field);
+          const value = String(answers[field]);
+          categoryAnswers.push(`• ${formattedKey}: ${value}`);
+        }
+      });
+
+      if (categoryAnswers.length > 0) {
+        profileText += `<b>${categoryName}</b>\n${categoryAnswers.join('\n')}\n\n`;
+      }
     }
 
-    profileText += `\n💎 *Подписка:* ${isPremium ? 'Premium ✅' : 'Free'}`; // Используем isPremium
+    profileText += `<b>💎 Подписка</b>: ${isPremium ? 'Premium ✅' : 'Free'}`;
 
+    // Используем HTML вместо Markdown
     ctx.reply(profileText, {
-      parse_mode: 'Markdown',
+      parse_mode: 'HTML', // МЕНЯЕМ НА HTML
       ...getMainMenuKeyboard(isPremium)
     });
   }).catch(err => {
     console.error('❌ Ошибка загрузки профиля:', err);
-    ctx.reply('❌ Ошибка загрузки профиля', getMainMenuKeyboard(isPremium)); // ПЕРЕДАЕМ isPremium
+    ctx.reply('❌ Ошибка загрузки профиля', getMainMenuKeyboard(isPremium));
   });
 }
 
@@ -326,6 +386,37 @@ async function handleMyGoals(ctx) {
   }
 }
 
+async function handleViewRecommendations(ctx) {
+  const chatId = ctx.chat.id;
+
+  try {
+    await ctx.answerCbQuery('📋 Загружаю ваши рекомендации...');
+
+    // Получаем результаты опроса
+    const answers = await surveyService.getSurveyResults(chatId);
+
+    if (!answers || Object.keys(answers).length === 0) {
+      await ctx.reply('❌ Рекомендации не найдены. Пройдите опрос заново: /survey');
+      return;
+    }
+
+    // Генерируем рекомендации (как в completeSurvey)
+    const recommendations = recommendationService.generateRecommendations(answers);
+    const message = recommendationService.formatRecommendations(recommendations);
+
+    // Отправляем рекомендации
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      ...getMainMenuKeyboard(true) // Предполагаем что пользователь premium после опроса
+    });
+
+  } catch (error) {
+    console.error('❌ Ошибка загрузки рекомендаций:', error);
+    await ctx.answerCbQuery('❌ Ошибка загрузки рекомендаций');
+    await ctx.reply('❌ Не удалось загрузить рекомендации. Попробуйте позже.');
+  }
+}
+
 // Вспомогательная функция для прогресс-бара
 function generateProgressBar(percentage) {
   const filled = '█'.repeat(Math.round(percentage / 10));
@@ -335,27 +426,38 @@ function generateProgressBar(percentage) {
 
 function formatKey(key) {
   const keyMap = {
-    'age': '📅 Возраст',
-    'height': '📏 Рост',
-    'weight': '⚖️ Вес',
-    'smoking': '🚬 Курение',
-    'alcohol': '🍷 Алкоголь',
-    'diet': '🥗 Питание',
+    // БАЗОВАЯ ИНФОРМАЦИЯ
+    'age_range': '📅 Возраст',
+    'height_range': '📏 Рост',
+    'weight_category': '⚖️ Вес',
+
+    // ОБРАЗ ЖИЗНИ
+    'diet_type': '🥗 Тип питания',
+    'physical_activity': '🏃‍♂️ Активность',
+    'sleep_quality': '😴 Качество сна',
+    'energy_level': '⚡ Уровень энергии',
+    'stress_level': '😵‍💫 Уровень стресса',
+
+    // ПРИВЫЧКИ
+    'smoking_habits': '🚬 Курение',
+    'alcohol_consumption': '🍷 Алкоголь',
+
+    // ЗДОРОВЬЕ
     'blood_pressure': '🩸 Давление',
-    'chronic': '🏥 Хронические болезни',
-    'sleep': '😴 Сон',
-    'energy': '⚡ Энергия',
-    'stress': '😵‍💫 Стресс',
-    'symptoms': '⚠️ Симптомы',
-    'libido': '❤️ Либидо',
-    'region': '🌍 Регион',
-    'activity': '🏃 Активность',
-    'goal': '🎯 Цель',
-    'stimulants': '☕ Стимуляторы'
+    'chronic_conditions': '🏥 Хронические заболевания',
+    'memory_concentration': '🧠 Память и концентрация',
+    'joint_health': '🦵 Состояние суставов',
+    'digestion': '🍽️ Пищеварение',
+    'skin_health': '✨ Состояние кожи',
+    'immune_health': '🛡️ Иммунитет',
+
+    // ЦЕЛИ
+    'main_goal': '🎯 Главная цель',
   };
 
   return keyMap[key] || key;
 }
+
 /*
 // Меню настроек
 async function showSettingsMenu(ctx) {
@@ -625,5 +727,6 @@ module.exports = {
   handlePlan,
   handleProfile,
   handleTextCommands,
+  handleViewRecommendations,
   showMainMenu
 };

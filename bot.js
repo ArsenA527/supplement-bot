@@ -561,6 +561,11 @@ bot.action('main_menu', async (ctx) => {
   await ctx.answerCbQuery();
 });
 
+// bot.action('view_recommendations', (ctx) => {
+//   const { handleViewRecommendations } = require('./controllers/surveyController');
+//   return handleViewRecommendations(ctx);
+// });
+
 bot.action('restart_survey', (ctx) => {
   surveyController.handleStartSurvey(ctx);
   ctx.answerCbQuery();
