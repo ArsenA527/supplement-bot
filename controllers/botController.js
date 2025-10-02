@@ -17,6 +17,42 @@ function getReminderController() {
 }
 
 async function handleStart(ctx) {
+  const chatId = ctx.chat.id;
+
+
+  // ПРОВЕРЯЕМ ЕСТЬ ЛИ НЕЗАВЕРШЕННЫЙ ОПРОС
+  try {
+    const surveyService = require('../services/surveyService');
+    const state = await surveyService.getUserState(chatId);
+
+    if (state && state.current > 0 && state.current < state.total) {
+      // Есть незавершенный опрос - предлагаем выбор
+      const questions = await surveyService.getQuestionsForUser(chatId);
+      const totalQuestions = questions.length;
+
+      await ctx.reply(
+        `📝 *У вас есть незавершенный опрос*\n\n` +
+        `Прогресс: ${state.current}/${totalQuestions} вопросов\n\n` +
+        `Хотите продолжить или начать заново?`,
+        {
+          parse_mode: 'Markdown',
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '➡️ Продолжить опрос', callback_data: 'continue_survey' }],
+              [{ text: '🔄 Начать новый опрос', callback_data: 'restart_survey' }],
+              [{ text: '❌ Отменить опрос', callback_data: 'cancel_survey_confirmed' }]
+            ]
+          }
+        }
+      );
+      return;
+    }
+  } catch (error) {
+    console.error('❌ Ошибка проверки состояния опроса:', error);
+    // Продолжаем как обычно - не ломаем весь /start из-за этой проверки
+  }
+
+
   const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
 
   // Получаем краткую статистику для мотивации
