@@ -32,14 +32,18 @@ class SettingsController {
   }
 
   // Массовое обновление напоминаний
+
   async showBulkUpdateOptions(ctx) {
+    const settings = await settingsService.getUserSettings(ctx.chat.id);
+
     const message = `🔄 *Массовое обновление напоминаний*
 
-  Вы можете применить текущие настройки времени ко всем напоминаниям:
+  Текущие настройки времени:
+  🌅 Утро: ${settings.morning_time}
+  ☀️ День: ${settings.afternoon_time}
+  🌙 Вечер: ${settings.evening_time}
 
-  • 🌅 Утро: установить все утренние напоминания на одно время
-  • ☀️ День: установить все дневные напоминания на одно время
-  • 🌙 Вечер: установить все вечерние напоминания на одно время
+  Вы можете применить эти настройки ко всем напоминаниям в выбранном периоде.
 
   *Выберите действие:*`;
 
@@ -54,6 +58,156 @@ class SettingsController {
         ],
         resize_keyboard: true
       }
+    });
+  }
+
+  // Применение массового обновления
+  async applyBulkTimeUpdate(ctx, period) {
+    try {
+      const settings = await settingsService.getUserSettings(ctx.chat.id);
+      const timeType = `${period}_time`;
+      const newTime = settings[timeType];
+
+      if (!newTime) {
+        await ctx.reply('❌ Не найдено время для этого периода');
+        return;
+      }
+
+      // Получаем напоминания которые будут обновлены
+      const affectedReminders = await this.getAffectedRemindersForBulkUpdate(ctx.chat.id, period, newTime);
+
+      const periodLabel = this.getPeriodLabel(period).toLowerCase();
+
+      if (affectedReminders.length === 0) {
+        await ctx.reply(`ℹ️ В ${periodLabel} периоде нет напоминаний для обновления.`);
+        await this.showBulkUpdateOptions(ctx);
+        return;
+      }
+
+      let message = `🔍 *Массовое обновление ${periodLabel} напоминаний*\n\n`;
+      message += `Установить все ${periodLabel} напоминания на *${newTime}*\n\n`;
+      message += `*Будут обновлены:*\n`;
+
+      affectedReminders.slice(0, 5).forEach(reminder => {
+        message += `• ${reminder.time} → ${newTime} - ${reminder.supplement_name}\n`;
+      });
+
+      if (affectedReminders.length > 5) {
+        message += `• ... и еще ${affectedReminders.length - 5} напоминаний\n`;
+      }
+
+      message += `\n*Применить массовое обновление?*`;
+
+      await ctx.reply(message, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          keyboard: [
+            ['✅ Да, обновить все напоминания'],
+            ['❌ Нет, отменить'],
+            ['↩️ Назад к массовому обновлению']
+          ],
+          resize_keyboard: true
+        }
+      });
+
+      // Сохраняем для подтверждения
+      ctx.session.pendingBulkUpdate = { period, newTime, affectedReminders };
+
+    } catch (error) {
+      console.error('❌ Ошибка массового обновления:', error);
+      await ctx.reply('❌ Ошибка при подготовке массового обновления.');
+    }
+  }
+
+  // Получаем напоминания для массового обновления
+  async getAffectedRemindersForBulkUpdate(chatId, period, newTime) {
+    return new Promise((resolve) => {
+      const db = require('../config/database');
+      const timeRanges = {
+        morning: { start: '06:00', end: '11:00' },
+        afternoon: { start: '12:00', end: '17:00' },
+        evening: { start: '18:00', end: '22:00' }
+      };
+
+      const range = timeRanges[period];
+
+      db.all(
+        `SELECT * FROM reminders
+        WHERE chat_id = ?
+        AND time BETWEEN ? AND ?
+        AND time != ?`,
+        [chatId, range.start, range.end, newTime],
+        (err, reminders) => {
+          resolve(reminders || []);
+        }
+      );
+    });
+  }
+
+  // Подтверждение массового обновления
+  async confirmBulkUpdate(ctx) {
+    const pendingUpdate = ctx.session.pendingBulkUpdate;
+
+    if (!pendingUpdate) {
+      await ctx.reply('❌ Нет ожидающих массовых обновлений');
+      return;
+    }
+
+    const { period, newTime, affectedReminders } = pendingUpdate;
+
+    try {
+      // Обновляем напоминания напрямую в БД
+      const updatedCount = await this.updateRemindersForPeriodDirectly(
+        ctx.chat.id, period, newTime
+      );
+
+      // Очищаем ожидающее обновление
+      delete ctx.session.pendingBulkUpdate;
+
+      const periodLabel = this.getPeriodLabel(period).toLowerCase();
+
+      let message = `✅ Массовое обновление завершено!\n\n`;
+      message += `Все ${periodLabel} напоминания установлены на *${newTime}*\n\n`;
+      message += `🔄 Обновлено: ${updatedCount} напоминаний`;
+
+      await ctx.reply(message, { parse_mode: 'Markdown' });
+      await this.showBulkUpdateOptions(ctx);
+
+    } catch (error) {
+      console.error('❌ Ошибка массового обновления:', error);
+      await ctx.reply('❌ Ошибка при массовом обновлении напоминаний.');
+    }
+  }
+
+  // Прямое обновление напоминаний для периода
+  async updateRemindersForPeriodDirectly(chatId, period, newTime) {
+    return new Promise((resolve) => {
+      const db = require('../config/database');
+      const timeRanges = {
+        morning: { start: '06:00', end: '11:00' },
+        afternoon: { start: '12:00', end: '17:00' },
+        evening: { start: '18:00', end: '22:00' }
+      };
+
+      const range = timeRanges[period];
+
+      db.run(
+        `UPDATE reminders
+        SET time = ?
+        WHERE chat_id = ?
+        AND time BETWEEN ? AND ?
+        AND time != ?`,
+        [newTime, chatId, range.start, range.end, newTime],
+        function(err) {
+          if (err) {
+            console.error('❌ Ошибка массового обновления напоминаний:', err);
+            resolve(0);
+          } else {
+            console.log(`✅ Массово обновлено ${this.changes} напоминаний для ${period}`);
+            resolve(this.changes);
+          }
+        }
+      );
     });
   }
 

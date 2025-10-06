@@ -738,12 +738,16 @@ async function handleTextCommands(ctx) {
       await settingsController.applyBulkTimeUpdate(ctx, 'evening');
       break;
 
-    case '✅ Да, применить изменения':
-      await settingsController.applyTimeChanges(ctx);
+    case '✅ Да, обновить все напоминания':
+      await settingsController.confirmBulkUpdate(ctx);
       break;
 
-    case '❌ Нет, выбрать другое время':
-      await settingsController.showReminderSettings(ctx);
+    case '↩️ Назад к массовому обновлению':
+      await settingsController.showBulkUpdateOptions(ctx);
+      break;
+
+    case '❌ Нет, отменить':
+      await settingsController.showBulkUpdateOptions(ctx);
       break;
 
     default:
