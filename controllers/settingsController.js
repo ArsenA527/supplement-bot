@@ -297,11 +297,11 @@ class SettingsController {
       // Валидация времени
       this.validateTime(time);
 
-      // Получаем текущие настройки для трекинга
+      // Получаем текущие настройки
       const oldSettings = await settingsService.getUserSettings(ctx.chat.id);
 
-      // Обновляем настройки
-      await settingsService.updateNotificationSettings(ctx.chat.id, {
+      // Обновляем настройки (теперь возвращает объект)
+      const result = await settingsService.updateNotificationSettings(ctx.chat.id, {
         [timeType]: time
       });
 
@@ -309,17 +309,22 @@ class SettingsController {
       delete ctx.session.waitingForTimePeriod;
 
       const periodLabel = this.getPeriodLabel(period).toLowerCase();
-      await NotificationManager.success(ctx,
-        `✅ Время ${periodLabel} напоминаний установлено на ${time}`
-      );
+
+      let message = `✅ Время ${periodLabel} напоминаний установлено на ${time}`;
+
+      if (result.remindersUpdated > 0) {
+        message += `\n\n🔄 Обновлено ${result.remindersUpdated} напоминаний в этом временном периоде`;
+      } else {
+        message += `\n\n💡 Новое время применено. Существующие напоминания не затронуты.`;
+      }
+
+      await ctx.reply(message);
 
       // Показываем обновленные настройки
       await this.showReminderSettings(ctx);
 
     } catch (error) {
-      await NotificationManager.error(ctx,
-        `❌ ${error.message}\n\nПожалуйста, выберите время из предложенных вариантов.`
-      );
+      await ctx.reply(`❌ ${error.message}\n\nПожалуйста, выберите время из предложенных вариантов.`);
 
       // Повторно показываем выбор времени для этого периода
       await this.showTimePeriodSettings(ctx, period);

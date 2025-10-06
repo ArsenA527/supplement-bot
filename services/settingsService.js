@@ -83,37 +83,102 @@ class SettingsService {
     updateValues.push(chatId);
 
     return new Promise((resolve, reject) => {
-      // Сначала попробуем обновить с updated_at
-      const sql = `UPDATE notification_settings
-                  SET ${updateFields.join(', ')}, updated_at = datetime('now')
-                  WHERE chat_id = ?`;
+      // Пробуем без updated_at (как у вас работает)
+      const sqlWithoutUpdated = `UPDATE notification_settings
+                                SET ${updateFields.join(', ')}
+                                WHERE chat_id = ?`;
 
-      db.run(sql, updateValues, async (err) => {
-        if (err) {
-          console.log('⚠️ Ошибка с updated_at, пробуем без него:', err.message);
-
-          // Пробуем без updated_at
-          const sqlWithoutUpdated = `UPDATE notification_settings
-                                    SET ${updateFields.join(', ')}
-                                    WHERE chat_id = ?`;
-
-          db.run(sqlWithoutUpdated, updateValues, async (err2) => {
-            if (err2) {
-              console.error('❌ Ошибка обновления настроек:', err2);
-              reject(err2);
-            } else {
-              console.log('✅ Настройки обновлены (без updated_at)');
-              await this.trackSettingsChanges(chatId, updates, oldSettings);
-              resolve(this.changes);
-            }
-          });
-
+      db.run(sqlWithoutUpdated, updateValues, async (err2) => {
+        if (err2) {
+          console.error('❌ Ошибка обновления настроек:', err2);
+          reject(err2);
         } else {
-          console.log('✅ Настройки обновлены (с updated_at)');
+          console.log('✅ Настройки обновлены (без updated_at)');
+
+          // 🔥 ИСПРАВЛЕНИЕ: Получаем количество обновленных напоминаний
+          const remindersUpdatedCount = await this.syncRemindersWithNewTime(chatId, updates, oldSettings);
           await this.trackSettingsChanges(chatId, updates, oldSettings);
-          resolve(this.changes);
+
+          // 🔥 ИСПРАВЛЕНИЕ: Возвращаем объект с данными
+          resolve({
+            settingsUpdated: this.changes,
+            remindersUpdated: remindersUpdatedCount
+          });
         }
       });
+    });
+  }
+
+  // Синхронизация напоминаний с новым временем
+  async syncRemindersWithNewTime(chatId, updates, oldSettings) {
+    try {
+      const reminderService = require('./reminderService');
+      const service = new reminderService(); // Без бота, только для БД операций
+
+      let updatedReminders = 0;
+
+      // Для каждого измененного периода времени
+      for (const [timeType, newTime] of Object.entries(updates)) {
+        if (!timeType.includes('_time')) continue;
+
+        const period = timeType.replace('_time', '');
+        const oldTime = oldSettings[timeType];
+
+        if (oldTime !== newTime) {
+          console.log(`🔄 Синхронизируем напоминания для ${period}: ${oldTime} → ${newTime}`);
+
+          const updated = await this.updateRemindersForPeriod(chatId, period, oldTime, newTime);
+          updatedReminders += updated;
+        }
+      }
+
+      if (updatedReminders > 0) {
+        console.log(`✅ Синхронизировано ${updatedReminders} напоминаний`);
+      }
+
+      return updatedReminders;
+    } catch (error) {
+      console.error('❌ Ошибка синхронизации напоминаний:', error);
+      return 0;
+    }
+  }
+
+  // Обновляем напоминания для конкретного периода
+  async updateRemindersForPeriod(chatId, period, oldTime, newTime) {
+    return new Promise((resolve) => {
+      const db = require('../config/database');
+
+      // Определяем временной диапазон для периода
+      const timeRanges = {
+        morning: { start: '06:00', end: '11:00' },
+        afternoon: { start: '12:00', end: '17:00' },
+        evening: { start: '18:00', end: '22:00' }
+      };
+
+      const range = timeRanges[period];
+      if (!range) {
+        resolve(0);
+        return;
+      }
+
+      // Обновляем напоминания в этом диапазоне
+      db.run(
+        `UPDATE reminders
+        SET time = ?
+        WHERE chat_id = ?
+        AND time BETWEEN ? AND ?
+        AND time != ?`, // Не обновляем если уже новое время
+        [newTime, chatId, range.start, range.end, newTime],
+        function(err) {
+          if (err) {
+            console.error('❌ Ошибка обновления напоминаний:', err);
+            resolve(0);
+          } else {
+            console.log(`✅ Обновлено ${this.changes} напоминаний для периода ${period}`);
+            resolve(this.changes);
+          }
+        }
+      );
     });
   }
 

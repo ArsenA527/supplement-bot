@@ -160,32 +160,6 @@ db.serialize(() => {
   )`);
 });
 
-/*
-db.serialize(() => {
-  // Принудительно добавляем колонку если её нет
-  db.get("PRAGMA table_info(notification_settings)", (err, rows) => {
-    if (err) {
-      console.error('❌ Ошибка проверки структуры таблицы:', err);
-      return;
-    }
-
-    const hasUpdatedAt = rows.some(row => row.name === 'updated_at');
-
-    if (!hasUpdatedAt) {
-      console.log('🔄 Добавляем колонку updated_at...');
-      db.run(`ALTER TABLE notification_settings ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP`, (err) => {
-        if (err) {
-          console.error('❌ Ошибка добавления updated_at:', err);
-        } else {
-          console.log('✅ Колонка updated_at успешно добавлена');
-        }
-      });
-    } else {
-      console.log('✅ Колонка updated_at уже существует');
-    }
-  });
-});
-*/
 
 // Graceful shutdown
 process.on('SIGINT', () => {
