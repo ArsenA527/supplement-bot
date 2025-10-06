@@ -95,6 +95,24 @@ initializeReminders();
 
 // Простая система сессий в памяти
 const sessions = new Map();
+const processedMessages = new Set();
+const originalEmit = bot.emit;
+
+bot.emit = function (event, ctx, next) {
+  if (event === 'text') {
+    const messageId = `${ctx.chat.id}_${ctx.message.message_id}`;
+
+    if (processedMessages.has(messageId)) {
+      console.log('⚠️ Пропускаем дубликат:', ctx.message.text?.substring(0, 30));
+      return;
+    }
+
+    processedMessages.add(messageId);
+    setTimeout(() => processedMessages.delete(messageId), 3000);
+  }
+
+  return originalEmit.call(this, event, ctx, next);
+};
 
 bot.use(async (ctx, next) => {
   const chatId = ctx.chat?.id;
@@ -600,16 +618,6 @@ bot.on('text', async (ctx) => {
 
     console.log(`📨 Текст получен: "${text}" от ${chatId}`);
 
-    /*
-    // Проверяем, ожидается ли выбор времени
-    if (ctx.session && ctx.session.waitingForTime) {
-      // Проверяем, является ли текст временем (формат HH:MM)
-      const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-      if (timeRegex.test(text)) {
-        await settingsController.processTimeSelection(ctx, text);
-        return;
-      }
-    }*/
 
     // Команды главного меню
     const menuCommands = [
