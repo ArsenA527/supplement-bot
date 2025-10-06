@@ -113,20 +113,33 @@ class SettingsService {
         } else {
           console.log('✅ Настройки обновлены (без updated_at)');
 
-          try {
-            for (const [key, value] of Object.entries(updates)) {
-              const normalizedValue = key.includes('_time') ? TimeHelper.normalizeTime(value) : value;
-              const normalizedOldValue = key.includes('_time') ? TimeHelper.normalizeTime(oldSettings[key]) : oldSettings[key];
+          let remindersUpdatedCount = 0;
 
-              if (normalizedOldValue !== normalizedValue) {
-                await analyticsService.trackSettingsUsage(chatId, key, normalizedOldValue, normalizedValue);
+          try {
+          // Для каждого измененного времени обновляем напоминания
+            for (const [key, value] of Object.entries(updates)) {
+              if (key.includes('_time') && oldSettings[key] !== value) {
+                const period = key.replace('_time', '');
+                const oldTime = TimeHelper.normalizeTime(oldSettings[key]);
+                const newTime = TimeHelper.normalizeTime(value);
+
+                if (oldTime !== newTime) {
+                  const updated = await this.updateRemindersForPeriod(chatId, period, oldTime, newTime);
+                  remindersUpdatedCount += updated;
+
+                  // Трекаем изменения
+                  await analyticsService.trackSettingsUsage(chatId, key, oldTime, newTime);
+                }
               }
             }
           } catch (trackError) {
-            console.error('❌ Ошибка трекинга настроек:', trackError);
+            console.error('❌ Ошибка синхронизации напоминаний:', trackError);
           }
 
-          resolve(this.changes);
+          resolve({
+            settingsUpdated: this.changes,
+            remindersUpdated: remindersUpdatedCount
+          });
 
         }
       });
@@ -211,17 +224,17 @@ class SettingsService {
     try {
       if (typeof analyticsService.trackSettingsUsage === 'function') {
         for (const [key, value] of Object.entries(updates)) {
-          if (oldSettings[key] !== value) {
-            await analyticsService.trackSettingsUsage(chatId, key, oldSettings[key], value);
+          const normalizedValue = key.includes('_time') ? TimeHelper.normalizeTime(value) : value;
+          const normalizedOldValue = key.includes('_time') ? TimeHelper.normalizeTime(oldSettings[key]) : oldSettings[key];
+
+          if (normalizedOldValue !== normalizedValue) {
+            await analyticsService.trackSettingsUsage(chatId, key, normalizedOldValue, normalizedValue);
           }
         }
         console.log('✅ Трекинг настроек выполнен');
-      } else {
-        console.log('⚠️ analyticsService.trackSettingsUsage не доступен');
       }
     } catch (trackError) {
       console.error('❌ Ошибка трекинга настроек:', trackError);
-      // Не прерываем выполнение из-за ошибки трекинга
     }
   }
 
