@@ -660,7 +660,6 @@ async function handleTextCommands(ctx) {
         await showMainMenu(ctx);
       }
       break;
-// В handleTextCommands добавить новые cases:
 
     case '⏰ Настроить напоминания':
       console.log('⏰ Настройка напоминаний');
@@ -720,6 +719,30 @@ async function handleTextCommands(ctx) {
 
     case '❌ Нет, отменить':
     case '↩️ Назад к настройкам':
+      await settingsController.showReminderSettings(ctx);
+      break;
+
+    case '🔄 Массовое обновление':
+      await settingsController.showBulkUpdateOptions(ctx);
+      break;
+
+    case '🌅 Применить утреннее время ко всем':
+      await settingsController.applyBulkTimeUpdate(ctx, 'morning');
+      break;
+
+    case '☀️ Применить дневное время ко всем':
+      await settingsController.applyBulkTimeUpdate(ctx, 'afternoon');
+      break;
+
+    case '🌙 Применить вечернее время ко всем':
+      await settingsController.applyBulkTimeUpdate(ctx, 'evening');
+      break;
+
+    case '✅ Да, применить изменения':
+      await settingsController.applyTimeChanges(ctx);
+      break;
+
+    case '❌ Нет, выбрать другое время':
       await settingsController.showReminderSettings(ctx);
       break;
 
