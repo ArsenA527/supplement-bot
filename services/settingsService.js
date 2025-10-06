@@ -82,35 +82,52 @@ class SettingsService {
     updateValues.push(chatId);
 
     return new Promise((resolve, reject) => {
-      db.run(
-        `UPDATE notification_settings
-        SET ${updateFields.join(', ')}, updated_at = datetime('now')
-        WHERE chat_id = ?`,
-        updateValues,
-        async (err) => {
-          if (err) {
-            logger.error('Ошибка обновления настроек', { chatId, updates, error: err.message });
-            reject(err);
-          } else {
-            logger.info('Настройки обновлены', { chatId, updates });
+      // Сначала попробуем обновить с updated_at
+      const sql = `UPDATE notification_settings
+                  SET ${updateFields.join(', ')}, updated_at = datetime('now')
+                  WHERE chat_id = ?`;
 
-            // Трекаем изменения ПОСЛЕ успешного обновления
-            try {
-              for (const [key, value] of Object.entries(updates)) {
-                if (oldSettings[key] !== value) {
-                  await analyticsService.trackSettingsUsage(chatId, key, oldSettings[key], value);
-                }
-              }
-            } catch (trackError) {
-              logger.error('Ошибка трекинга настроек', { error: trackError.message });
-              // Не прерываем выполнение из-за ошибки трекинга
+      db.run(sql, updateValues, async (err) => {
+        if (err) {
+          console.log('⚠️ Ошибка с updated_at, пробуем без него:', err.message);
+
+          // Пробуем без updated_at
+          const sqlWithoutUpdated = `UPDATE notification_settings
+                                    SET ${updateFields.join(', ')}
+                                    WHERE chat_id = ?`;
+
+          db.run(sqlWithoutUpdated, updateValues, async (err2) => {
+            if (err2) {
+              console.error('❌ Ошибка обновления настроек:', err2);
+              reject(err2);
+            } else {
+              console.log('✅ Настройки обновлены (без updated_at)');
+              await this.trackSettingsChanges(chatId, updates, oldSettings);
+              resolve(this.changes);
             }
+          });
 
-            resolve(this.changes);
-          }
+        } else {
+          console.log('✅ Настройки обновлены (с updated_at)');
+          await this.trackSettingsChanges(chatId, updates, oldSettings);
+          resolve(this.changes);
         }
-      );
+      });
     });
+  }
+
+  // Выносим трекинг в отдельную функцию
+  async trackSettingsChanges(chatId, updates, oldSettings) {
+    try {
+      for (const [key, value] of Object.entries(updates)) {
+        if (oldSettings[key] !== value) {
+          await analyticsService.trackSettingsUsage(chatId, key, oldSettings[key], value);
+        }
+      }
+    } catch (trackError) {
+      console.error('❌ Ошибка трекинга настроек:', trackError);
+      // Не прерываем выполнение из-за ошибки трекинга
+    }
   }
 
   // Переключить уведомления

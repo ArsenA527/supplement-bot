@@ -102,7 +102,9 @@ db.serialize(() => {
   db.run(`ALTER TABLE notification_settings ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP`, (err) => {
     // Игнорируем ошибку "duplicate column", если колонка уже есть
     if (err && !err.message.includes('duplicate column name')) {
-      console.log('ℹ️ Колонка updated_at уже существует или не может быть добавлена');
+      console.error('❌ Ошибка добавления updated_at:', err);
+    } else {
+      console.log('✅ Колонка updated_at добавлена/проверена');
     }
   });
 

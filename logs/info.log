@@ -884,3 +884,18 @@
 {"timestamp":"2025-10-06T07:53:31.909Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-06T07-53-31-906Z.db"}
 {"timestamp":"2025-10-06T07:53:32.180Z","level":"INFO","message":"Ежедневные отчеты настроены"}
 {"timestamp":"2025-10-06T07:53:32.183Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-10-06T07:56:55.026Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-10-06T07:56:55.069Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-06T06-27-56-402Z.db"}
+{"timestamp":"2025-10-06T07:56:55.069Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-06T07-56-55-067Z.db"}
+{"timestamp":"2025-10-06T07:56:55.394Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-10-06T07:56:55.395Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-10-06T07:57:41.600Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-10-06T07:57:41.643Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-06T06-28-53-894Z.db"}
+{"timestamp":"2025-10-06T07:57:41.644Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-06T07-57-41-641Z.db"}
+{"timestamp":"2025-10-06T07:57:41.915Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-10-06T07:57:41.920Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-10-06T07:57:54.263Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-10-06T07:57:54.305Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-06T06-29-21-433Z.db"}
+{"timestamp":"2025-10-06T07:57:54.305Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-06T07-57-54-303Z.db"}
+{"timestamp":"2025-10-06T07:57:54.581Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-10-06T07:57:54.582Z","level":"INFO","message":"Еженедельная мотивация настроена"}
