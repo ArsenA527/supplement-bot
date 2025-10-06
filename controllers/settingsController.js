@@ -285,6 +285,7 @@ class SettingsController {
   // Обработка выбранного времени
   async processTimeSelection(ctx, time) {
     if (!ctx.session || !ctx.session.waitingForTimePeriod) {
+      await NotificationManager.warning(ctx, 'Сначала выберите, какое время хотите изменить.');
       await this.showReminderSettings(ctx);
       return;
     }
@@ -294,7 +295,10 @@ class SettingsController {
 
     try {
       // Валидация времени
-      settingsService.validateTime(time);
+      this.validateTime(time);
+
+      // Получаем текущие настройки для трекинга
+      const oldSettings = await settingsService.getUserSettings(ctx.chat.id);
 
       // Обновляем настройки
       await settingsService.updateNotificationSettings(ctx.chat.id, {
@@ -304,18 +308,42 @@ class SettingsController {
       // Очищаем состояние
       delete ctx.session.waitingForTimePeriod;
 
-      // Показываем успех и обновленные настройки
       const periodLabel = this.getPeriodLabel(period).toLowerCase();
-      await ctx.reply(`✅ Время ${periodLabel} напоминаний установлено на ${time}`);
+      await NotificationManager.success(ctx,
+        `✅ Время ${periodLabel} напоминаний установлено на ${time}`
+      );
 
       // Показываем обновленные настройки
       await this.showReminderSettings(ctx);
 
     } catch (error) {
-      await ctx.reply(`❌ ${error.message}\n\nПожалуйста, выберите время из предложенных вариантов.`);
+      await NotificationManager.error(ctx,
+        `❌ ${error.message}\n\nПожалуйста, выберите время из предложенных вариантов.`
+      );
+
+      // Повторно показываем выбор времени для этого периода
+      await this.showTimePeriodSettings(ctx, period);
     }
   }
 
+  // Добавляем валидацию времени в SettingsController
+  validateTime(timeString) {
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    if (!timeRegex.test(timeString)) {
+      throw new Error('Неверный формат времени. Используйте HH:MM (например, 08:30)');
+    }
+    return true;
+  }
+
+  // Сопоставление периодов с типами времени в БД
+  getTimeTypeFromPeriod(period) {
+    const mapping = {
+      morning: 'morning_time',
+      afternoon: 'afternoon_time',
+      evening: 'evening_time'
+    };
+    return mapping[period] || 'morning_time';
+  }
   // Сопоставление периодов с типами времени в БД
   getTimeTypeFromPeriod(period) {
     const mapping = {
