@@ -82,6 +82,7 @@ db.serialize(() => {
 
   console.log('✅ Таблица истории приема создана/проверена');
 
+  // Таблица notification_settings с updated_at
   db.run(`CREATE TABLE IF NOT EXISTS notification_settings (
     chat_id INTEGER PRIMARY KEY,
     morning_time TEXT DEFAULT '08:00',
@@ -95,16 +96,8 @@ db.serialize(() => {
   )`, (err) => {
     if (err) {
       console.error('❌ Ошибка создания таблицы notification_settings:', err);
-    }
-  });
-
-  // Миграция для существующих таблиц
-  db.run(`ALTER TABLE notification_settings ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP`, (err) => {
-    // Игнорируем ошибку "duplicate column", если колонка уже есть
-    if (err && !err.message.includes('duplicate column name')) {
-      console.error('❌ Ошибка добавления updated_at:', err);
     } else {
-      console.log('✅ Колонка updated_at добавлена/проверена');
+      console.log('✅ Таблица notification_settings создана/проверена');
     }
   });
 
@@ -166,6 +159,33 @@ db.serialize(() => {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 });
+
+/*
+db.serialize(() => {
+  // Принудительно добавляем колонку если её нет
+  db.get("PRAGMA table_info(notification_settings)", (err, rows) => {
+    if (err) {
+      console.error('❌ Ошибка проверки структуры таблицы:', err);
+      return;
+    }
+
+    const hasUpdatedAt = rows.some(row => row.name === 'updated_at');
+
+    if (!hasUpdatedAt) {
+      console.log('🔄 Добавляем колонку updated_at...');
+      db.run(`ALTER TABLE notification_settings ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP`, (err) => {
+        if (err) {
+          console.error('❌ Ошибка добавления updated_at:', err);
+        } else {
+          console.log('✅ Колонка updated_at успешно добавлена');
+        }
+      });
+    } else {
+      console.log('✅ Колонка updated_at уже существует');
+    }
+  });
+});
+*/
 
 // Graceful shutdown
 process.on('SIGINT', () => {

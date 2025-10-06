@@ -120,10 +120,15 @@ class SettingsService {
   // Выносим трекинг в отдельную функцию
   async trackSettingsChanges(chatId, updates, oldSettings) {
     try {
-      for (const [key, value] of Object.entries(updates)) {
-        if (oldSettings[key] !== value) {
-          await analyticsService.trackSettingsUsage(chatId, key, oldSettings[key], value);
+      if (typeof analyticsService.trackSettingsUsage === 'function') {
+        for (const [key, value] of Object.entries(updates)) {
+          if (oldSettings[key] !== value) {
+            await analyticsService.trackSettingsUsage(chatId, key, oldSettings[key], value);
+          }
         }
+        console.log('✅ Трекинг настроек выполнен');
+      } else {
+        console.log('⚠️ analyticsService.trackSettingsUsage не доступен');
       }
     } catch (trackError) {
       console.error('❌ Ошибка трекинга настроек:', trackError);
