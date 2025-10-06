@@ -105,6 +105,49 @@ class SmartReminderService {
       return Math.abs(reminderTime - time) < 15; // Конфликт если разница < 15 минут
     });
   }
-}
+
+  // Умные интервалы based на типе добавок
+  getSmartInterval(supplement1, supplement2) {
+    const incompatiblePairs = [
+      ['кальций', 'железо'], // Конфликтующие минералы
+      ['тирозин', 'мелатонин'], // Стимулятор и релаксант
+      ['витамин с', 'медь'] // Взаимодействующие вещества
+    ];
+
+    // Проверяем на конфликтующие пары
+    const hasConflict = incompatiblePairs.some(pair =>
+      (supplement1.name.toLowerCase().includes(pair[0]) &&
+      supplement2.name.toLowerCase().includes(pair[1])) ||
+      (supplement1.name.toLowerCase().includes(pair[1]) &&
+      supplement2.name.toLowerCase().includes(pair[0]))
+    );
+
+    // Увеличиваем интервал для конфликтующих пар
+    return hasConflict ? 60 : 30; // 60 минут для конфликтующих
+  }
+
+  // Автоматическое создание умного расписания
+  async createSmartSchedule(chatId, supplements) {
+    const settings = await settingsService.getUserSettings(chatId);
+    const smartSchedule = [];
+
+    // Распределяем по периодам
+    const periods = ['morning', 'afternoon', 'evening'];
+
+    for (const period of periods) {
+      const baseTime = settings[`${period}_time`];
+      const periodSupplements = this.filterSupplementsForPeriod(supplements, period);
+
+      if (periodSupplements.length > 0) {
+        const distributed = await this.distributeRemindersSmartly(
+          chatId, periodSupplements, baseTime, period
+        );
+        smartSchedule.push(...distributed);
+      }
+    }
+
+    return smartSchedule;
+  }
+  }
 
 module.exports = new SmartReminderService();
