@@ -653,10 +653,23 @@ async function handleTextCommands(ctx) {
         await showMainMenu(ctx);
       }
       break;
+// В handleTextCommands добавить новые cases:
 
     case '⏰ Настроить напоминания':
       console.log('⏰ Настройка напоминаний');
       await settingsController.showReminderSettings(ctx);
+      break;
+
+    case '🌅 Утренние напоминания':
+      await settingsController.showTimePeriodSettings(ctx, 'morning');
+      break;
+
+    case '☀️ Дневные напоминания':
+      await settingsController.showTimePeriodSettings(ctx, 'afternoon');
+      break;
+
+    case '🌙 Вечерние напоминания':
+      await settingsController.showTimePeriodSettings(ctx, 'evening');
       break;
 
     case '🔔 Управление уведомлениями':
@@ -664,28 +677,22 @@ async function handleTextCommands(ctx) {
       await settingsController.showNotificationSettings(ctx);
       break;
 
-    case '📊 Мои данные':
-      console.log('📊 Управление данными');
-      await settingsController.showDataManagement(ctx);
+  case '📊 Мои данные':
+    console.log('📊 Управление данными');
+    await settingsController.showDataManagement(ctx);
+    break;
+
+    case '🔔 Управление уведомлениями':
+      console.log('🔔 Управление уведомлениями');
+      await settingsController.showNotificationSettings(ctx);
       break;
+
 
     case '🗑️ Очистить историю':
       console.log('🗑️ Очистка истории');
       await settingsController.showClearDataConfirmation(ctx);
       break;
 
-    // Дополнительные кейсы для подменю настроек
-    case '🌅 Утреннее время':
-      await settingsController.handleTimeSetting(ctx, 'morning_time');
-      break;
-
-    case '☀️ Дневное время':
-      await settingsController.handleTimeSetting(ctx, 'afternoon_time');
-      break;
-
-    case '🌙 Вечернее время':
-      await settingsController.handleTimeSetting(ctx, 'evening_time');
-      break;
 
     case '✅ Включить уведомления':
     case '❌ Выключить уведомления':
