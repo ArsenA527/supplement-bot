@@ -62,6 +62,8 @@ class SettingsService {
 
   // Обновить настройки уведомлений
   async updateNotificationSettings(chatId, updates) {
+    const oldSettings = await this.getUserSettings(chatId);
+
     const allowedFields = ['morning_time', 'afternoon_time', 'evening_time', 'allow_notifications', 'timezone'];
     const updateFields = [];
     const updateValues = [];
@@ -78,6 +80,13 @@ class SettingsService {
     }
 
     updateValues.push(chatId);
+
+    // Трекаем изменения
+    for (const [key, value] of Object.entries(updates)) {
+      if (oldSettings[key] !== value) {
+        await analyticsService.trackSettingsUsage(chatId, key, oldSettings[key], value);
+      }
+    }
 
     return new Promise((resolve, reject) => {
       db.run(
@@ -96,6 +105,8 @@ class SettingsService {
         }
       );
     });
+
+
   }
 
   // Переключить уведомления
