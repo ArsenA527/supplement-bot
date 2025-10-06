@@ -8,17 +8,75 @@ class SettingsController {
   async showReminderSettings(ctx) {
     const settings = await settingsService.getUserSettings(ctx.chat.id);
 
-    const message = `⏰ *Настройка времени напоминаний*\n\n` +
-      `Текущие настройки:\n` +
-      `🌅 Утро: ${settings.morning_time}\n` +
-      `☀️ День: ${settings.afternoon_time}\n` +
-      `🌙 Вечер: ${settings.evening_time}\n\n` +
-      `*Выберите, что хотите изменить:*`;
+    const message = `⏰ *Настройка времени напоминаний*
+
+  Текущие настройки:
+  🌅 Утро: ${settings.morning_time}
+  ☀️ День: ${settings.afternoon_time}
+  🌙 Вечер: ${settings.evening_time}
+
+  *Выберите период для настройки:*`;
 
     await ctx.reply(message, {
       parse_mode: 'Markdown',
-      ...getTimeSettingsKeyboard()
+      reply_markup: {
+        keyboard: [
+          ['🌅 Утренние напоминания', '☀️ Дневные напоминания'],
+          ['🌙 Вечерние напоминания', '🔔 Управление уведомлениями'],
+          ['🏠 Главное меню']
+        ],
+        resize_keyboard: true
+      }
     });
+  }
+
+  // Функция для группировки времени
+  async showTimePeriodSettings(ctx, period) {
+    const timeSlots = this.getTimeSlotsByPeriod(period);
+    const periodLabel = this.getPeriodLabel(period);
+
+    const message = `⏰ *Настройка ${periodLabel} напоминаний*
+
+  Выберите время для ${periodLabel.toLowerCase()} напоминаний:`;
+
+    // Создаем клавиатуру с группировкой по 3 кнопки в ряду
+    const keyboard = [];
+    for (let i = 0; i < timeSlots.length; i += 3) {
+      keyboard.push(timeSlots.slice(i, i + 3));
+    }
+    keyboard.push(['↩️ Назад к настройкам', '🏠 Главное меню']);
+
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        keyboard: keyboard,
+        resize_keyboard: true
+      }
+    });
+
+    // Сохраняем состояние выбора времени
+    ctx.session = ctx.session || {};
+    ctx.session.waitingForTimePeriod = period;
+  }
+
+  // Группировка временных слотов по периодам
+  getTimeSlotsByPeriod(period) {
+    const slots = {
+      morning: ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00'],
+      afternoon: ['12:00', '13:00', '14:00', '15:00', '16:00', '17:00'],
+      evening: ['18:00', '19:00', '20:00', '21:00', '22:00']
+    };
+
+    return slots[period] || slots.morning;
+  }
+
+  getPeriodLabel(period) {
+    const labels = {
+      morning: '🌅 Утренних',
+      afternoon: '☀️ Дневных',
+      evening: '🌙 Вечерних'
+    };
+    return labels[period] || 'Напоминаний';
   }
 
   // 🔔 Управление уведомлениями
