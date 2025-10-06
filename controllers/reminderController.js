@@ -25,29 +25,21 @@ class ReminderController {
       // Сначала удаляем старые напоминания
       await this.clearUserReminders(chatId);
 
-      // Умное распределение времени
-      const timeSlots = {
-        'утром': '08:00', 'утро': '08:00',
-        'днем': '13:00', 'дневное': '13:00',
-        'вечером': '20:00', 'вечер': '20:00',
-        'перед сном': '22:00', 'сон': '22:00',
-        'с едой': '12:00', 'еда': '12:00',
-        'после еды': '13:00'
-      };
+      // Получаем настройки времени пользователя
+      const settingsService = require('../services/settingsService');
+      const settings = await settingsService.getUserSettings(chatId);
 
       let createdCount = 0;
-      const usedTimes = new Set();
 
       for (const supplement of recommendations) {
-        const timeKey = supplement.time.toLowerCase();
-        let time = timeSlots[timeKey] || '10:00';
-
-        // Если время уже занято, находим свободное
-        if (usedTimes.has(time)) {
-          time = this.findAvailableTime(usedTimes, time);
+        // Используем период из рекомендации или умное распределение
+        let time;
+        if (supplement.period && settings[`${supplement.period}_time`]) {
+          time = settings[`${supplement.period}_time`];
+        } else {
+          // Умное распределение based на типе добавки
+          time = this.getSmartTimeForSupplement(supplement, settings);
         }
-
-        usedTimes.add(time);
 
         try {
           await this.reminderService.createReminder(chatId, {
@@ -65,11 +57,15 @@ class ReminderController {
 
       // Отправляем расписание пользователю
       if (createdCount > 0) {
-        const sortedTimes = Array.from(usedTimes).sort();
-        let scheduleMessage = `📅 *Ваше расписание:*\n`;
+        let scheduleMessage = `📅 *Ваше расписание:*\n\n`;
 
-        sortedTimes.forEach(t => {
-          scheduleMessage += `⏰ ${t}\n`;
+        recommendations.forEach(supp => {
+          const foodInfo = this.getFoodRecommendation(supp.name);
+          scheduleMessage += `⏰ ${supp.time} - ${supp.name}\n`;
+          if (foodInfo) {
+            scheduleMessage += `   ${foodInfo}\n`;
+          }
+          scheduleMessage += `\n`;
         });
 
         ctx.reply(`✅ Создано ${createdCount} напоминаний!\n\n${scheduleMessage}\nВы будете получать уведомления в указанное время.`,
@@ -82,6 +78,21 @@ class ReminderController {
     } catch (error) {
       console.error('❌ Ошибка создания напоминаний:', error);
       throw error;
+    }
+  }
+
+  // Умное распределение времени based на типе добавки
+  getSmartTimeForSupplement(supplement, settings) {
+    const name = supplement.name.toLowerCase();
+
+    if (name.includes('тирозин') || name.includes('родиола')) {
+      return settings.morning_time || '08:00';
+    } else if (name.includes('магний') || name.includes('ашваганда')) {
+      return settings.evening_time || '20:00';
+    } else if (name.includes('омега') || name.includes('цинк')) {
+      return settings.afternoon_time || '13:00';
+    } else {
+      return settings.morning_time || '08:00';
     }
   }
 
@@ -134,33 +145,64 @@ class ReminderController {
     });
   }
 
-  // Показать напоминания пользователя
+
   async showUserReminders(ctx) {
     const chatId = ctx.chat.id;
     const reminders = await this.reminderService.getUserReminders(chatId);
 
-    // ДОБАВЛЯЕМ ПРОВЕРКУ ПОДПИСКИ
+    // Проверяем подписку
     const subscriptionService = require('../services/subscriptionService');
     const isPremium = await subscriptionService.isSubscriptionActive(chatId);
 
     if (reminders.length === 0) {
       ctx.reply('📋 У вас нет активных напоминаний.\n\nНастройте напоминания после прохождения опроса.',
-        getMainMenuKeyboard(isPremium) // ПЕРЕДАЕМ isPremium
+        getMainMenuKeyboard(isPremium)
       );
       return;
     }
 
     let message = '📋 *Ваши напоминания:*\n\n';
+
     reminders.forEach(reminder => {
-      message += `⏰ ${reminder.time} - ${reminder.supplement_name} (${reminder.dosage})\n`;
+      const foodInfo = this.getFoodRecommendation(reminder.supplement_name);
+      message += `⏰ ${reminder.time} - ${reminder.supplement_name}\n`;
+      message += `   📏 ${reminder.dosage}\n`;
+
+      // Добавляем информацию о приеме с едой
+      if (foodInfo) {
+        message += `   ${foodInfo}\n`;
+      }
+
+      message += `\n`;
     });
 
-    message += `\nВсего: ${reminders.length} напоминаний`;
+    message += `Всего: ${reminders.length} напоминаний`;
 
     ctx.reply(message, {
       parse_mode: 'Markdown',
-      ...getMainMenuKeyboard(isPremium) // ПЕРЕДАЕМ isPremium
+      ...getMainMenuKeyboard(isPremium)
     });
+  }
+
+  // Рекомендации по приему с едой
+  getFoodRecommendation(supplementName) {
+    const foodRules = {
+      'Витамин D3': '🍳 С жирной пищей для усвоения',
+      'Омега-3': '🍽️ Обязательно с едой',
+      'L-Тирозин': '⏰ Натощак за 30 мин до еды',
+      'Цинк': '🍛 С едой чтобы избежать тошноту',
+      'Родиола розовая': '☕ За 20-30 минут до завтрака',
+      'Магний': '🌙 На пустой желудок перед сном',
+      'Ашваганда': '💊 Можно с едой или без'
+    };
+
+    for (const [key, recommendation] of Object.entries(foodRules)) {
+      if (supplementName.includes(key)) {
+        return recommendation;
+      }
+    }
+
+    return null;
   }
 
   // Показать историю приема
