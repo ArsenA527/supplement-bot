@@ -81,32 +81,36 @@ class SettingsService {
 
     updateValues.push(chatId);
 
-    // Трекаем изменения
-    for (const [key, value] of Object.entries(updates)) {
-      if (oldSettings[key] !== value) {
-        await analyticsService.trackSettingsUsage(chatId, key, oldSettings[key], value);
-      }
-    }
-
     return new Promise((resolve, reject) => {
       db.run(
         `UPDATE notification_settings
-         SET ${updateFields.join(', ')}, updated_at = datetime('now')
-         WHERE chat_id = ?`,
+        SET ${updateFields.join(', ')}, updated_at = datetime('now')
+        WHERE chat_id = ?`,
         updateValues,
-        function(err) {
+        async (err) => {
           if (err) {
             logger.error('Ошибка обновления настроек', { chatId, updates, error: err.message });
             reject(err);
           } else {
             logger.info('Настройки обновлены', { chatId, updates });
+
+            // Трекаем изменения ПОСЛЕ успешного обновления
+            try {
+              for (const [key, value] of Object.entries(updates)) {
+                if (oldSettings[key] !== value) {
+                  await analyticsService.trackSettingsUsage(chatId, key, oldSettings[key], value);
+                }
+              }
+            } catch (trackError) {
+              logger.error('Ошибка трекинга настроек', { error: trackError.message });
+              // Не прерываем выполнение из-за ошибки трекинга
+            }
+
             resolve(this.changes);
           }
         }
       );
     });
-
-
   }
 
   // Переключить уведомления
