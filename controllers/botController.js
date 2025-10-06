@@ -517,7 +517,7 @@ async function showSettingsMenu(ctx) {
     parse_mode: 'Markdown',
     reply_markup: {
       keyboard: [
-        ['⏰ Настроить напоминания', '🔔 Управление уведомлениями'],
+        ['⏰ Настроить напоминания'],
         ['📊 Мои данные', '🗑️ Очистить историю'],
         ['🏠 Главное меню']
       ],
@@ -709,21 +709,10 @@ async function handleTextCommands(ctx) {
       await settingsController.showTimePeriodSettings(ctx, 'evening');
       break;
 
-    case '🔔 Управление уведомлениями':
-      console.log('🔔 Управление уведомлениями');
-      await settingsController.showNotificationSettings(ctx);
+    case '📊 Мои данные':
+      console.log('📊 Управление данными');
+      await settingsController.showDataManagement(ctx);
       break;
-
-  case '📊 Мои данные':
-    console.log('📊 Управление данными');
-    await settingsController.showDataManagement(ctx);
-    break;
-
-    case '🔔 Управление уведомлениями':
-      console.log('🔔 Управление уведомлениями');
-      await settingsController.showNotificationSettings(ctx);
-      break;
-
 
     case '🗑️ Очистить историю':
       console.log('🗑️ Очистка истории');

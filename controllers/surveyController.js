@@ -262,11 +262,6 @@ async function handleButtonAnswer(ctx) {
     return;
   }
 
-  if (callbackData === 'view_recommendations') {
-    await handleViewRecommendations(ctx);
-    return;
-  }
-
   if (callbackData === 'restart_survey') {
     await handleRestartSurvey(ctx);
     return;
