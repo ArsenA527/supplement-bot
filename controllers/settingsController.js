@@ -1,6 +1,7 @@
 const settingsService = require('../services/settingsService');
 const { getMainMenuKeyboard, getSettingsKeyboard, getTimeSettingsKeyboard } = require('../keyboards');
 const NotificationManager = require('../utils/notifications');
+const sessionManager = require('../utils/sessionManager');
 
 class SettingsController {
 
@@ -110,7 +111,10 @@ class SettingsController {
       });
 
       // Сохраняем для подтверждения
-      ctx.session.pendingBulkUpdate = { period, newTime, affectedReminders };
+      sessionManager.set(ctx.chat.id, {
+        pendingBulkUpdate: { period, newTime, affectedReminders },
+        timestamp: Date.now()
+      });
 
     } catch (error) {
       console.error('❌ Ошибка массового обновления:', error);
@@ -145,7 +149,8 @@ class SettingsController {
 
   // Подтверждение массового обновления
   async confirmBulkUpdate(ctx) {
-    const pendingUpdate = ctx.session.pendingBulkUpdate;
+    const session = sessionManager.get(ctx.chat.id);
+    const pendingUpdate = session?.pendingBulkUpdate;
 
     if (!pendingUpdate) {
       await ctx.reply('❌ Нет ожидающих массовых обновлений');
@@ -161,7 +166,7 @@ class SettingsController {
       );
 
       // Очищаем ожидающее обновление
-      delete ctx.session.pendingBulkUpdate;
+      sessionManager.delete(ctx.chat.id);
 
       const periodLabel = this.getPeriodLabel(period).toLowerCase();
 
@@ -215,9 +220,7 @@ class SettingsController {
     const timeSlots = this.getTimeSlotsByPeriod(period);
     const periodLabel = this.getPeriodLabel(period);
 
-    const message = `⏰ *Настройка ${periodLabel} напоминаний*
-
-  Выберите время для ${periodLabel.toLowerCase()} напоминаний:`;
+    const message = `⏰ *Настройка ${periodLabel} напоминаний*\n\nВыберите время для ${periodLabel.toLowerCase()} напоминаний:`;
 
     // Создаем клавиатуру с группировкой по 3 кнопки в ряду
     const keyboard = [];
@@ -234,9 +237,13 @@ class SettingsController {
       }
     });
 
-    // Сохраняем состояние выбора времени
-    ctx.session = ctx.session || {};
-    ctx.session.waitingForTimePeriod = period;
+    // 🔥 СОХРАНЯЕМ В МЕНЕДЖЕР СЕССИЙ
+    sessionManager.set(ctx.chat.id, {
+      waitingForTimePeriod: period,
+      timestamp: Date.now()
+    });
+
+    console.log(`⏰ Пользователь ${ctx.chat.id} выбирает время для периода: ${period}`);
   }
 
   // Группировка временных слотов по периодам
@@ -464,13 +471,16 @@ class SettingsController {
 
   // Обработка выбранного времени
   async processTimeSelection(ctx, time) {
-    if (!ctx.session || !ctx.session.waitingForTimePeriod) {
-      await NotificationManager.warning(ctx, 'Сначала выберите, какое время хотите изменить.');
+
+    const session = sessionManager.get(ctx.chat.id);
+    const period = session?.waitingForTimePeriod;
+
+    if (!period) {
+      await ctx.reply('❌ Сначала выберите период для настройки времени.');
       await this.showReminderSettings(ctx);
       return;
     }
 
-    const period = ctx.session.waitingForTimePeriod;
     const timeType = this.getTimeTypeFromPeriod(period);
 
     try {
@@ -486,7 +496,7 @@ class SettingsController {
       });
 
       // Очищаем состояние
-      delete ctx.session.waitingForTimePeriod;
+      sessionManager.delete(ctx.chat.id);
 
       const periodLabel = this.getPeriodLabel(period).toLowerCase();
 
@@ -550,10 +560,7 @@ class SettingsController {
 
   // Отмена операции
   async cancelOperation(ctx) {
-    if (ctx.session) {
-      delete ctx.session.waitingForTime;
-    }
-
+    sessionManager.delete(ctx.chat.id);
     await this.showReminderSettings(ctx);
   }
 

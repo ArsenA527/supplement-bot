@@ -5,6 +5,7 @@ const subscriptionService = require('../services/subscriptionService');
 const { ReminderController } = require('./reminderController');
 const goalService = require('../services/goalService');
 const settingsController = require('./settingsController');
+const sessionManager = require('../utils/sessionManager');
 
 // Создаем экземпляр для переиспользования
 let reminderControllerInstance = null;
@@ -565,11 +566,13 @@ async function handleTextCommands(ctx) {
 
   console.log(`🎮 Обработка текстовой команды: "${text}"`);
 
-  // 🔥 НОВАЯ ЛОГИКА: Проверяем, не выбирает ли пользователь время
-  if (ctx.session && ctx.session.waitingForTimePeriod) {
-    console.log(`⏰ Пользователь выбирает время для ${ctx.session.waitingForTimePeriod}: ${text}`);
-    await settingsController.processTimeSelection(ctx, text);
-    return; // Важно: выходим после обработки времени
+  const session = sessionManager.get(ctx.chat.id);
+
+  // Если пользователь выбирает время
+  if (session && session.waitingForTimePeriod) {
+    console.log(`⏰ Пользователь выбирает время для ${session.waitingForTimePeriod}: ${text}`);
+    await require('./settingsController').processTimeSelection(ctx, text);
+    return;
   }
 
   switch(text) {
@@ -614,7 +617,6 @@ async function handleTextCommands(ctx) {
       console.log('💳 Информация о подписках');
       await require('./subscriptionController').showSubscriptionPlans(ctx);
       break;
-
 
     case '⚙️ Настройки':
         console.log('⚙️ Показ настроек');
@@ -718,7 +720,6 @@ async function handleTextCommands(ctx) {
       console.log('🗑️ Очистка истории');
       await settingsController.showClearDataConfirmation(ctx);
       break;
-
 
     case '✅ Включить уведомления':
     case '❌ Выключить уведомления':

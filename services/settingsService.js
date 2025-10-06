@@ -2,6 +2,7 @@
 const db = require('../config/database');
 const logger = require('../utils/logger');
 const analyticsService = require('./analyticsService');
+const TimeHelper = require('../utils/timeHelper');
 
 class SettingsService {
 
@@ -16,7 +17,18 @@ class SettingsService {
             // Создаем настройки по умолчанию
             this.createDefaultSettings(chatId).then(resolve);
           } else {
-            resolve(row);
+
+            const normalizedRow = { ...row };
+            if (normalizedRow.morning_time) {
+              normalizedRow.morning_time = TimeHelper.normalizeTime(normalizedRow.morning_time);
+            }
+            if (normalizedRow.afternoon_time) {
+              normalizedRow.afternoon_time = TimeHelper.normalizeTime(normalizedRow.afternoon_time);
+            }
+            if (normalizedRow.evening_time) {
+              normalizedRow.evening_time = TimeHelper.normalizeTime(normalizedRow.evening_time);
+            }
+            resolve(normalizedRow);
           }
         }
       );
@@ -72,7 +84,13 @@ class SettingsService {
     Object.keys(updates).forEach(key => {
       if (allowedFields.includes(key)) {
         updateFields.push(`${key} = ?`);
-        updateValues.push(updates[key]);
+
+        // Если это поле времени - нормализуем
+        if (key.includes('_time')) {
+          updateValues.push(TimeHelper.normalizeTime(updates[key]));
+        } else {
+          updateValues.push(updates[key]);
+        }
       }
     });
 
@@ -95,15 +113,34 @@ class SettingsService {
         } else {
           console.log('✅ Настройки обновлены (без updated_at)');
 
-          // 🔥 ИСПРАВЛЕНИЕ: Получаем количество обновленных напоминаний
-          const remindersUpdatedCount = await this.syncRemindersWithNewTime(chatId, updates, oldSettings);
-          await this.trackSettingsChanges(chatId, updates, oldSettings);
+          let remindersUpdatedCount = 0;
 
-          // 🔥 ИСПРАВЛЕНИЕ: Возвращаем объект с данными
+          try {
+          // Для каждого измененного времени обновляем напоминания
+            for (const [key, value] of Object.entries(updates)) {
+              if (key.includes('_time') && oldSettings[key] !== value) {
+                const period = key.replace('_time', '');
+                const oldTime = TimeHelper.normalizeTime(oldSettings[key]);
+                const newTime = TimeHelper.normalizeTime(value);
+
+                if (oldTime !== newTime) {
+                  const updated = await this.updateRemindersForPeriod(chatId, period, oldTime, newTime);
+                  remindersUpdatedCount += updated;
+
+                  // Трекаем изменения
+                  await analyticsService.trackSettingsUsage(chatId, key, oldTime, newTime);
+                }
+              }
+            }
+          } catch (trackError) {
+            console.error('❌ Ошибка синхронизации напоминаний:', trackError);
+          }
+
           resolve({
             settingsUpdated: this.changes,
             remindersUpdated: remindersUpdatedCount
           });
+
         }
       });
     });
@@ -187,17 +224,17 @@ class SettingsService {
     try {
       if (typeof analyticsService.trackSettingsUsage === 'function') {
         for (const [key, value] of Object.entries(updates)) {
-          if (oldSettings[key] !== value) {
-            await analyticsService.trackSettingsUsage(chatId, key, oldSettings[key], value);
+          const normalizedValue = key.includes('_time') ? TimeHelper.normalizeTime(value) : value;
+          const normalizedOldValue = key.includes('_time') ? TimeHelper.normalizeTime(oldSettings[key]) : oldSettings[key];
+
+          if (normalizedOldValue !== normalizedValue) {
+            await analyticsService.trackSettingsUsage(chatId, key, normalizedOldValue, normalizedValue);
           }
         }
         console.log('✅ Трекинг настроек выполнен');
-      } else {
-        console.log('⚠️ analyticsService.trackSettingsUsage не доступен');
       }
     } catch (trackError) {
       console.error('❌ Ошибка трекинга настроек:', trackError);
-      // Не прерываем выполнение из-за ошибки трекинга
     }
   }
 
@@ -215,8 +252,7 @@ class SettingsService {
 
   // Валидация времени
   validateTime(timeString) {
-    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-    if (!timeRegex.test(timeString)) {
+    if (!TimeHelper.isValidTime(timeString)) {
       throw new Error('Неверный формат времени. Используйте HH:MM (например, 08:30)');
     }
     return true;
