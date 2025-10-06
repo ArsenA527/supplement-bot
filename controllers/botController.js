@@ -534,6 +534,13 @@ async function handleTextCommands(ctx) {
 
   console.log(`🎮 Обработка текстовой команды: "${text}"`);
 
+  // 🔥 НОВАЯ ЛОГИКА: Проверяем, не выбирает ли пользователь время
+  if (ctx.session && ctx.session.waitingForTimePeriod) {
+    console.log(`⏰ Пользователь выбирает время для ${ctx.session.waitingForTimePeriod}: ${text}`);
+    await settingsController.processTimeSelection(ctx, text);
+    return; // Важно: выходим после обработки времени
+  }
+
   switch(text) {
     case '📋 Пройти опрос':
     case '📋 Новый опрос':
