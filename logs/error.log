@@ -153,3 +153,4 @@
 {"timestamp":"2025-10-04T05:59:58.462Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
 {"timestamp":"2025-10-05T05:59:58.457Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
 {"timestamp":"2025-10-06T06:00:00.023Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
+{"timestamp":"2025-10-06T07:53:50.688Z","level":"ERROR","message":"Ошибка обновления настроек","chatId":725240491,"updates":{"morning_time":"09:00"},"error":"SQLITE_ERROR: no such column: updated_at"}

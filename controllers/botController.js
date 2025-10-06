@@ -458,14 +458,19 @@ function formatKey(key) {
   return keyMap[key] || key;
 }
 
-/*
+
 // Меню настроек
 async function showSettingsMenu(ctx) {
-  const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id); // ДОБАВЛЯЕМ
+  const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
+
+  if (!isPremium) {
+    await ctx.reply('❌ Настройки доступны только Premium пользователям. /subscribe');
+    return;
+  }
 
   const message = `⚙️ *Настройки бота*
 
-Здесь вы можете настроить работу бота под свои preferences:
+Здесь вы можете настроить работу бота под свои предпочтения:
 
 *🔔 Уведомления:*
 • Настройка времени напоминаний
@@ -473,11 +478,7 @@ async function showSettingsMenu(ctx) {
 
 *📊 Данные:*
 • Просмотр ваших данных
-• Очистка истории (если нужно)
-
-*🎨 Интерфейс:*
-• Смена языка (скоро)
-• Настройка формата времени
+• Очистка истории
 
 *Что хотите настроить?*`;
 
@@ -493,7 +494,6 @@ async function showSettingsMenu(ctx) {
     }
   });
 }
-*/
 
 // Меню статистики
 async function showStatisticsMenu(ctx) {
@@ -533,6 +533,13 @@ async function handleTextCommands(ctx) {
   const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
 
   console.log(`🎮 Обработка текстовой команды: "${text}"`);
+
+  // 🔥 НОВАЯ ЛОГИКА: Проверяем, не выбирает ли пользователь время
+  if (ctx.session && ctx.session.waitingForTimePeriod) {
+    console.log(`⏰ Пользователь выбирает время для ${ctx.session.waitingForTimePeriod}: ${text}`);
+    await settingsController.processTimeSelection(ctx, text);
+    return; // Важно: выходим после обработки времени
+  }
 
   switch(text) {
     case '📋 Пройти опрос':
@@ -577,12 +584,12 @@ async function handleTextCommands(ctx) {
       await require('./subscriptionController').showSubscriptionPlans(ctx);
       break;
 
-      /*
+
     case '⚙️ Настройки':
         console.log('⚙️ Показ настроек');
         await showSettingsMenu(ctx);
         break;
-*/
+
     case 'ℹ️ Помощь':
       console.log('ℹ️ Показ помощи');
       handleHelp(ctx);
@@ -659,33 +666,39 @@ async function handleTextCommands(ctx) {
       await settingsController.showReminderSettings(ctx);
       break;
 
+    case '🌅 Утренние напоминания':
+      await settingsController.showTimePeriodSettings(ctx, 'morning');
+      break;
+
+    case '☀️ Дневные напоминания':
+      await settingsController.showTimePeriodSettings(ctx, 'afternoon');
+      break;
+
+    case '🌙 Вечерние напоминания':
+      await settingsController.showTimePeriodSettings(ctx, 'evening');
+      break;
+
     case '🔔 Управление уведомлениями':
       console.log('🔔 Управление уведомлениями');
       await settingsController.showNotificationSettings(ctx);
       break;
 
-    case '📊 Мои данные':
-      console.log('📊 Управление данными');
-      await settingsController.showDataManagement(ctx);
+  case '📊 Мои данные':
+    console.log('📊 Управление данными');
+    await settingsController.showDataManagement(ctx);
+    break;
+
+    case '🔔 Управление уведомлениями':
+      console.log('🔔 Управление уведомлениями');
+      await settingsController.showNotificationSettings(ctx);
       break;
+
 
     case '🗑️ Очистить историю':
       console.log('🗑️ Очистка истории');
       await settingsController.showClearDataConfirmation(ctx);
       break;
 
-    // Дополнительные кейсы для подменю настроек
-    case '🌅 Утреннее время':
-      await settingsController.handleTimeSetting(ctx, 'morning_time');
-      break;
-
-    case '☀️ Дневное время':
-      await settingsController.handleTimeSetting(ctx, 'afternoon_time');
-      break;
-
-    case '🌙 Вечернее время':
-      await settingsController.handleTimeSetting(ctx, 'evening_time');
-      break;
 
     case '✅ Включить уведомления':
     case '❌ Выключить уведомления':
@@ -707,6 +720,34 @@ async function handleTextCommands(ctx) {
     case '❌ Нет, отменить':
     case '↩️ Назад к настройкам':
       await settingsController.showReminderSettings(ctx);
+      break;
+
+    case '🔄 Массовое обновление':
+      await settingsController.showBulkUpdateOptions(ctx);
+      break;
+
+    case '🌅 Применить утреннее время ко всем':
+      await settingsController.applyBulkTimeUpdate(ctx, 'morning');
+      break;
+
+    case '☀️ Применить дневное время ко всем':
+      await settingsController.applyBulkTimeUpdate(ctx, 'afternoon');
+      break;
+
+    case '🌙 Применить вечернее время ко всем':
+      await settingsController.applyBulkTimeUpdate(ctx, 'evening');
+      break;
+
+    case '✅ Да, обновить все напоминания':
+      await settingsController.confirmBulkUpdate(ctx);
+      break;
+
+    case '↩️ Назад к массовому обновлению':
+      await settingsController.showBulkUpdateOptions(ctx);
+      break;
+
+    case '❌ Нет, отменить':
+      await settingsController.showBulkUpdateOptions(ctx);
       break;
 
     default:

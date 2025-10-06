@@ -334,6 +334,15 @@ class AnalyticsService {
       return null;
     }
   }
+
+  async trackSettingsUsage(chatId, settingType, oldValue, newValue) {
+    await this.trackEvent(chatId, 'settings_updated', {
+      setting_type: settingType,
+      old_value: oldValue,
+      new_value: newValue,
+      timestamp: new Date().toISOString()
+    });
+  }
 }
 
 module.exports = new AnalyticsService();
