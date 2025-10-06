@@ -284,12 +284,13 @@ class SettingsController {
 
   // Обработка выбранного времени
   async processTimeSelection(ctx, time) {
-    if (!ctx.session || !ctx.session.waitingForTime) {
-      await NotificationManager.warning(ctx, 'Сначала выберите, какое время хотите изменить.');
+    if (!ctx.session || !ctx.session.waitingForTimePeriod) {
+      await this.showReminderSettings(ctx);
       return;
     }
 
-    const timeType = ctx.session.waitingForTime;
+    const period = ctx.session.waitingForTimePeriod;
+    const timeType = this.getTimeTypeFromPeriod(period);
 
     try {
       // Валидация времени
@@ -301,20 +302,28 @@ class SettingsController {
       });
 
       // Очищаем состояние
-      delete ctx.session.waitingForTime;
+      delete ctx.session.waitingForTimePeriod;
 
-      await NotificationManager.success(ctx,
-        `✅ Время ${this.getTimeLabel(timeType)} напоминания изменено на ${time}`
-      );
+      // Показываем успех и обновленные настройки
+      const periodLabel = this.getPeriodLabel(period).toLowerCase();
+      await ctx.reply(`✅ Время ${periodLabel} напоминаний установлено на ${time}`);
 
       // Показываем обновленные настройки
       await this.showReminderSettings(ctx);
 
     } catch (error) {
-      await NotificationManager.error(ctx,
-        `❌ ${error.message}\n\nПожалуйста, выберите время из предложенных вариантов.`
-      );
+      await ctx.reply(`❌ ${error.message}\n\nПожалуйста, выберите время из предложенных вариантов.`);
     }
+  }
+
+  // Сопоставление периодов с типами времени в БД
+  getTimeTypeFromPeriod(period) {
+    const mapping = {
+      morning: 'morning_time',
+      afternoon: 'afternoon_time',
+      evening: 'evening_time'
+    };
+    return mapping[period] || 'morning_time';
   }
 
   getTimeLabel(timeType) {
