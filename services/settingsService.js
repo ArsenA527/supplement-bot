@@ -2,6 +2,7 @@
 const db = require('../config/database');
 const logger = require('../utils/logger');
 const analyticsService = require('./analyticsService');
+const TimeHelper = require('../utils/timeHelper');
 
 class SettingsService {
 
@@ -16,7 +17,18 @@ class SettingsService {
             // Создаем настройки по умолчанию
             this.createDefaultSettings(chatId).then(resolve);
           } else {
-            resolve(row);
+
+            const normalizedRow = { ...row };
+            if (normalizedRow.morning_time) {
+              normalizedRow.morning_time = TimeHelper.normalizeTime(normalizedRow.morning_time);
+            }
+            if (normalizedRow.afternoon_time) {
+              normalizedRow.afternoon_time = TimeHelper.normalizeTime(normalizedRow.afternoon_time);
+            }
+            if (normalizedRow.evening_time) {
+              normalizedRow.evening_time = TimeHelper.normalizeTime(normalizedRow.evening_time);
+            }
+            resolve(normalizedRow);
           }
         }
       );
@@ -72,7 +84,13 @@ class SettingsService {
     Object.keys(updates).forEach(key => {
       if (allowedFields.includes(key)) {
         updateFields.push(`${key} = ?`);
-        updateValues.push(updates[key]);
+
+        // Если это поле времени - нормализуем
+        if (key.includes('_time')) {
+          updateValues.push(TimeHelper.normalizeTime(updates[key]));
+        } else {
+          updateValues.push(updates[key]);
+        }
       }
     });
 
@@ -95,15 +113,21 @@ class SettingsService {
         } else {
           console.log('✅ Настройки обновлены (без updated_at)');
 
-          // 🔥 ИСПРАВЛЕНИЕ: Получаем количество обновленных напоминаний
-          const remindersUpdatedCount = await this.syncRemindersWithNewTime(chatId, updates, oldSettings);
-          await this.trackSettingsChanges(chatId, updates, oldSettings);
+          try {
+            for (const [key, value] of Object.entries(updates)) {
+              const normalizedValue = key.includes('_time') ? TimeHelper.normalizeTime(value) : value;
+              const normalizedOldValue = key.includes('_time') ? TimeHelper.normalizeTime(oldSettings[key]) : oldSettings[key];
 
-          // 🔥 ИСПРАВЛЕНИЕ: Возвращаем объект с данными
-          resolve({
-            settingsUpdated: this.changes,
-            remindersUpdated: remindersUpdatedCount
-          });
+              if (normalizedOldValue !== normalizedValue) {
+                await analyticsService.trackSettingsUsage(chatId, key, normalizedOldValue, normalizedValue);
+              }
+            }
+          } catch (trackError) {
+            console.error('❌ Ошибка трекинга настроек:', trackError);
+          }
+
+          resolve(this.changes);
+
         }
       });
     });
@@ -215,8 +239,7 @@ class SettingsService {
 
   // Валидация времени
   validateTime(timeString) {
-    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-    if (!timeRegex.test(timeString)) {
+    if (!TimeHelper.isValidTime(timeString)) {
       throw new Error('Неверный формат времени. Используйте HH:MM (например, 08:30)');
     }
     return true;

@@ -1,7 +1,5 @@
 const db = require('../config/database');
-
-// Глобальная ссылка на бота
-let globalBot = null;
+const TimeHelper = require('../utils/timeHelper');
 
 class ReminderService {
   constructor(bot) {
@@ -112,6 +110,8 @@ class ReminderService {
 
   // Получить напоминания для текущего времени и дня
   async getDueReminders(currentTime, currentDay) {
+    const normalizedCurrentTime = TimeHelper.normalizeTime(currentTime);
+
     return new Promise((resolve) => {
       // Конвертируем день недели в формат базы (1-7, где 1=понедельник)
       const dbDayIndex = currentDay === 0 ? 7 : currentDay;
@@ -130,7 +130,7 @@ class ReminderService {
            AND DATE(ih.taken_at) = DATE('now')
            AND ih.status = 'taken'
          )`, // Не показываем если уже приняли сегодня
-        [currentTime, dbDayIndex],
+        [normalizedCurrentTime, dbDayIndex],
         (err, reminders) => {
           if (err) {
             console.error('❌ Ошибка получения due напоминаний:', err);
@@ -284,16 +284,18 @@ class ReminderService {
 
   // Создать напоминание
   async createReminder(chatId, reminderData) {
+    const normalizedTime = TimeHelper.normalizeTime(reminderData.time);
+
     return new Promise((resolve, reject) => {
       db.run(
         `INSERT INTO reminders (chat_id, supplement_name, dosage, time, days)
          VALUES (?, ?, ?, ?, ?)`,
-        [chatId, reminderData.supplement_name, reminderData.dosage, reminderData.time, reminderData.days || '1111111'],
+        [chatId, reminderData.supplement_name, reminderData.dosage, normalizedTime, reminderData.days || '1111111'],
         function(err) {
           if (err) {
             reject(err);
           } else {
-            console.log(`✅ Создано напоминание: ${reminderData.supplement_name} в ${reminderData.time}`);
+            console.log(`✅ Создано напоминание: ${reminderData.supplement_name} в ${normalizedTime}`);
             resolve(this.lastID);
           }
         }
