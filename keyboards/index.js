@@ -147,7 +147,7 @@ function getSettingsKeyboard() {
   return {
     reply_markup: {
       keyboard: [
-        ['⏰ Настроить напоминания', '🔔 Управление уведомлениями'],
+        ['⏰ Настроить напоминания'],
         ['📊 Мои данные', '🗑️ Очистить историю'],
         ['🏠 Главное меню']
       ],
@@ -159,7 +159,7 @@ function getSettingsKeyboard() {
 // Клавиатура после завершения опроса
 function getSurveyCompletionKeyboard(isPremium = false) {
   const buttons = [
-    [{ text: '💊 Посмотреть рекомендации', callback_data: 'view_recommendations' }],
+    // [{ text: '💊 Посмотреть рекомендации', callback_data: 'view_recommendations' }],
     [{ text: '🔄 Пройти заново', callback_data: 'restart_survey' }]
   ];
 

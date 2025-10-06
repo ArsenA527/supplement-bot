@@ -144,20 +144,34 @@ async function handleProfile(ctx) {
 
     let profileText = `<b>👤 Твой профиль</b>\n\n`;
 
-    const categories = {
+        const categories = {
       '📋 ОСНОВНАЯ ИНФОРМАЦИЯ': [
-        'age_range', 'height_range', 'weight_category'
+        'age_range', 'weight_category'
       ],
-      '💪 ОБРАЗ ЖИЗНИ': [
-        'diet_type', 'physical_activity', 'sleep_quality',
-        'energy_level', 'stress_level'
+      '💼 ОБРАЗ ЖИЗНИ И НАГРУЗКИ': [
+        'workload_type', 'physical_activity', 'diet_type'
+      ],
+      '🔬 СТРЕСС И ЭНЕРГИЯ': [
+        'stress_symptoms', 'energy_focus', 'stress_level'
+      ],
+      '😴 СОН И ВОССТАНОВЛЕНИЕ': [
+        'sleep_quality_detailed', 'sleep_quality'
+      ],
+      '💪 ГОРМОНАЛЬНОЕ ЗДОРОВЬЕ': [
+        'libido_mood'
       ],
       '🚭 ПРИВЫЧКИ': [
-        'smoking_habits', 'alcohol_consumption'
+        'alcohol_consumption', 'smoking_habits'
       ],
-      '🏥 ЗДОРОВЬЕ': [
-        'blood_pressure', 'chronic_conditions', 'memory_concentration',
-        'joint_health', 'digestion', 'skin_health', 'immune_health'
+      '🧠 КОГНИТИВНОЕ ЗДОРОВЬЕ': [
+        'memory_concentration'
+      ],
+      '🏥 ФИЗИЧЕСКОЕ ЗДОРОВЬЕ': [
+        'immune_health', 'joint_health', 'digestion', 'skin_health',
+        'blood_pressure', 'chronic_conditions'
+      ],
+      '💊 ЛЕКАРСТВА И АЛЛЕРГИИ': [
+        'medication_use', 'allergies'
       ],
       '🎯 ЦЕЛИ': [
         'main_goal'
@@ -424,6 +438,7 @@ function generateProgressBar(percentage) {
   return `[${filled}${empty}] ${percentage}%`;
 }
 
+
 function formatKey(key) {
   const keyMap = {
     // БАЗОВАЯ ИНФОРМАЦИЯ
@@ -431,28 +446,44 @@ function formatKey(key) {
     'height_range': '📏 Рост',
     'weight_category': '⚖️ Вес',
 
-    // ОБРАЗ ЖИЗНИ
+    // ОБРАЗ ЖИЗНИ И НАГРУЗКИ
+    'workload_type': '💼 Тип нагрузки',
+    'physical_activity': '🏃‍♂️ Физическая активность',
     'diet_type': '🥗 Тип питания',
-    'physical_activity': '🏃‍♂️ Активность',
-    'sleep_quality': '😴 Качество сна',
-    'energy_level': '⚡ Уровень энергии',
+
+    // СТРЕСС И ЭНЕРГИЯ
+    'stress_symptoms': '🔬 Симптомы стресса',
+    'energy_focus': '⚡️ Энергия и фокус',
     'stress_level': '😵‍💫 Уровень стресса',
 
-    // ПРИВЫЧКИ
-    'smoking_habits': '🚬 Курение',
-    'alcohol_consumption': '🍷 Алкоголь',
+    // СОН И ВОССТАНОВЛЕНИЕ
+    'sleep_quality_detailed': '😴 Качество сна',
+    'sleep_quality': '🌙 Сон (общее)',
 
-    // ЗДОРОВЬЕ
+    // ГОРМОНАЛЬНОЕ ЗДОРОВЬЕ
+    'libido_mood': '💪 Либидо и настроение',
+
+    // ПРИВЫЧКИ
+    'alcohol_consumption': '🍷 Алкоголь',
+    'smoking_habits': '🚬 Курение',
+
+    // КОГНИТИВНОЕ ЗДОРОВЬЕ
+    'memory_concentration': '🧠 Память и концентрация',
+
+    // ФИЗИЧЕСКОЕ ЗДОРОВЬЕ
+    'immune_health': '🛡️ Иммунитет',
+    'joint_health': '🦵 Суставы',
+    'digestion': '🍽️ Пищеварение',
+    'skin_health': '✨ Кожа',
     'blood_pressure': '🩸 Давление',
     'chronic_conditions': '🏥 Хронические заболевания',
-    'memory_concentration': '🧠 Память и концентрация',
-    'joint_health': '🦵 Состояние суставов',
-    'digestion': '🍽️ Пищеварение',
-    'skin_health': '✨ Состояние кожи',
-    'immune_health': '🛡️ Иммунитет',
+
+    // ЛЕКАРСТВА И АЛЛЕРГИИ
+    'medication_use': '💊 Лекарства',
+    'allergies': '⚠️ Аллергии',
 
     // ЦЕЛИ
-    'main_goal': '🎯 Главная цель',
+    'main_goal': '🎯 Главная цель'
   };
 
   return keyMap[key] || key;
@@ -486,7 +517,7 @@ async function showSettingsMenu(ctx) {
     parse_mode: 'Markdown',
     reply_markup: {
       keyboard: [
-        ['⏰ Настроить напоминания', '🔔 Управление уведомлениями'],
+        ['⏰ Настроить напоминания'],
         ['📊 Мои данные', '🗑️ Очистить историю'],
         ['🏠 Главное меню']
       ],
@@ -678,21 +709,10 @@ async function handleTextCommands(ctx) {
       await settingsController.showTimePeriodSettings(ctx, 'evening');
       break;
 
-    case '🔔 Управление уведомлениями':
-      console.log('🔔 Управление уведомлениями');
-      await settingsController.showNotificationSettings(ctx);
+    case '📊 Мои данные':
+      console.log('📊 Управление данными');
+      await settingsController.showDataManagement(ctx);
       break;
-
-  case '📊 Мои данные':
-    console.log('📊 Управление данными');
-    await settingsController.showDataManagement(ctx);
-    break;
-
-    case '🔔 Управление уведомлениями':
-      console.log('🔔 Управление уведомлениями');
-      await settingsController.showNotificationSettings(ctx);
-      break;
-
 
     case '🗑️ Очистить историю':
       console.log('🗑️ Очистка истории');
