@@ -1217,3 +1217,5 @@
 2025-10-01T09:00:00: (Use `node --trace-warnings ...` to show where the warning was created)
 2025-10-02T09:00:00: (node:11664) Warning: Accessing non-existent property 'telegram' of module exports inside circular dependency
 2025-10-02T09:00:00: (Use `node --trace-warnings ...` to show where the warning was created)
+2025-10-03T09:00:00: (node:9192) Warning: Accessing non-existent property 'telegram' of module exports inside circular dependency
+2025-10-03T09:00:00: (Use `node --trace-warnings ...` to show where the warning was created)

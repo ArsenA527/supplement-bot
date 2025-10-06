@@ -149,3 +149,6 @@
 {"timestamp":"2025-09-30T08:20:47.836Z","level":"ERROR","message":"Ошибка записи события","error":"SQLITE_ERROR: no such table: analytics"}
 {"timestamp":"2025-10-01T06:00:00.018Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
 {"timestamp":"2025-10-02T06:00:00.019Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
+{"timestamp":"2025-10-03T06:00:00.018Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
+{"timestamp":"2025-10-04T05:59:58.462Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
+{"timestamp":"2025-10-05T05:59:58.457Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
