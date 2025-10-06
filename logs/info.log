@@ -899,3 +899,8 @@
 {"timestamp":"2025-10-06T07:57:54.305Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-06T07-57-54-303Z.db"}
 {"timestamp":"2025-10-06T07:57:54.581Z","level":"INFO","message":"Ежедневные отчеты настроены"}
 {"timestamp":"2025-10-06T07:57:54.582Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-10-06T08:05:33.833Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-10-06T08:05:33.874Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-06T06-31-25-007Z.db"}
+{"timestamp":"2025-10-06T08:05:33.874Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-06T08-05-33-872Z.db"}
+{"timestamp":"2025-10-06T08:05:34.156Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-10-06T08:05:34.157Z","level":"INFO","message":"Еженедельная мотивация настроена"}
