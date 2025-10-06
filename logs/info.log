@@ -819,3 +819,18 @@
 {"timestamp":"2025-10-06T04:52:00.247Z","level":"INFO","message":"Ежедневные отчеты настроены"}
 {"timestamp":"2025-10-06T04:52:00.248Z","level":"INFO","message":"Еженедельная мотивация настроена"}
 {"timestamp":"2025-10-06T06:00:00.024Z","level":"INFO","message":"Ежедневный отчет сгенерирован и отправлен"}
+{"timestamp":"2025-10-06T06:11:34.019Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-10-06T06:11:34.062Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-03T12-38-57-841Z.db"}
+{"timestamp":"2025-10-06T06:11:34.063Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-06T06-11-34-060Z.db"}
+{"timestamp":"2025-10-06T06:11:34.388Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-10-06T06:11:34.390Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-10-06T06:12:26.411Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-10-06T06:12:26.465Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-04T06-38-57-871Z.db"}
+{"timestamp":"2025-10-06T06:12:26.466Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-06T06-12-26-462Z.db"}
+{"timestamp":"2025-10-06T06:12:26.749Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-10-06T06:12:26.750Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-10-06T06:13:03.009Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-10-06T06:13:03.054Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-05T00-38-57-899Z.db"}
+{"timestamp":"2025-10-06T06:13:03.055Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-06T06-13-03-052Z.db"}
+{"timestamp":"2025-10-06T06:13:03.362Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-10-06T06:13:03.367Z","level":"INFO","message":"Еженедельная мотивация настроена"}

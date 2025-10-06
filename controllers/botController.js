@@ -458,14 +458,19 @@ function formatKey(key) {
   return keyMap[key] || key;
 }
 
-/*
+
 // Меню настроек
 async function showSettingsMenu(ctx) {
-  const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id); // ДОБАВЛЯЕМ
+  const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
+
+  if (!isPremium) {
+    await ctx.reply('❌ Настройки доступны только Premium пользователям. /subscribe');
+    return;
+  }
 
   const message = `⚙️ *Настройки бота*
 
-Здесь вы можете настроить работу бота под свои preferences:
+Здесь вы можете настроить работу бота под свои предпочтения:
 
 *🔔 Уведомления:*
 • Настройка времени напоминаний
@@ -473,11 +478,7 @@ async function showSettingsMenu(ctx) {
 
 *📊 Данные:*
 • Просмотр ваших данных
-• Очистка истории (если нужно)
-
-*🎨 Интерфейс:*
-• Смена языка (скоро)
-• Настройка формата времени
+• Очистка истории
 
 *Что хотите настроить?*`;
 
@@ -493,7 +494,6 @@ async function showSettingsMenu(ctx) {
     }
   });
 }
-*/
 
 // Меню статистики
 async function showStatisticsMenu(ctx) {
@@ -577,12 +577,12 @@ async function handleTextCommands(ctx) {
       await require('./subscriptionController').showSubscriptionPlans(ctx);
       break;
 
-      /*
+
     case '⚙️ Настройки':
         console.log('⚙️ Показ настроек');
         await showSettingsMenu(ctx);
         break;
-*/
+
     case 'ℹ️ Помощь':
       console.log('ℹ️ Показ помощи');
       handleHelp(ctx);
