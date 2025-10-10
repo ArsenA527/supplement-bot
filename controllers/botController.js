@@ -326,6 +326,7 @@ async function showSettingsMenu(ctx) {
     reply_markup: {
       keyboard: [
         ['⏰ Настроить напоминания'],
+        ['🎯 Мои цели'],
         ['📊 Мои данные'],
         ['🏠 Главное меню']
       ],
@@ -565,6 +566,37 @@ async function handleTextCommands(ctx) {
     case '⏰ Настроить напоминания':
       console.log('⏰ Настройка напоминаний');
       await settingsController.showReminderSettings(ctx);
+      break;
+
+    case '🎯 Мои цели':
+      console.log('🎯 Показ управления целями');
+      await settingsController.showGoalsManagement(ctx);
+      break;
+
+    case '✏️ Изменить основную цель':
+      await settingsController.showEditMainGoal(ctx);
+      break;
+
+    case '📝 Добавить дополнительную цель':
+      await settingsController.showAddSecondaryGoal(ctx);
+      break;
+
+    case '🗑️ Удалить цели':
+      await settingsController.showDeleteGoalsConfirmation(ctx);
+      break;
+
+    case '✅ Да, удалить все цели':
+      await settingsController.confirmDeleteGoals(ctx);
+      break;
+
+    case '❌ Нет, оставить цели':
+    case '↩️ Назад к целям':
+      await settingsController.showGoalsManagement(ctx);
+      break;
+
+    case '❌ Отменить изменение':
+    case '❌ Отменить добавление':
+      await settingsController.showGoalsManagement(ctx);
       break;
 
     case '🌅 Утренние напоминания':
