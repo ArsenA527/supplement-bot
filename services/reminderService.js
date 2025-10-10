@@ -244,30 +244,6 @@ class ReminderService {
     });
   }
 
-    // Создать тестовое напоминание
-  async createTestReminder(chatId, supplementName, dosage, time, days = '1111111') {
-    return new Promise((resolve, reject) => {
-      db.run(
-        `INSERT INTO reminders (chat_id, supplement_name, dosage, time, days)
-         VALUES (?, ?, ?, ?, ?)`,
-        [chatId, supplementName, dosage, time, days],
-        function(err) {
-          if (err) {
-            reject(err);
-          } else {
-            console.log(`✅ Тестовое напоминание создано: ${supplementName} в ${time}`);
-
-            // Возвращаем данные созданного напоминания
-            db.get('SELECT * FROM reminders WHERE id = ?', [this.lastID], (err, reminder) => {
-              if (err) reject(err);
-              else resolve(reminder);
-            });
-          }
-        }
-      );
-    });
-  }
-
   // Деактивировать все напоминания пользователя
   async deactivateUserReminders(chatId) {
     return new Promise((resolve) => {
@@ -316,24 +292,6 @@ class ReminderService {
           } else {
             resolve(reminders);
           }
-        }
-      );
-    });
-  }
-
-  // Удалить тестовые напоминания
-  async clearTestReminders(chatId) {
-    return new Promise((resolve) => {
-      db.run(
-        'DELETE FROM reminders WHERE chat_id = ? AND supplement_name LIKE "Тест:%"',
-        [chatId],
-        (err) => {
-          if (err) {
-            console.error('❌ Ошибка удаления тестовых напоминаний:', err);
-          } else {
-            console.log(`✅ Тестовые напоминания пользователя ${chatId} очищены`);
-          }
-          resolve();
         }
       );
     });

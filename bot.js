@@ -267,8 +267,6 @@ bot.command('activatepremium', (ctx) => testCommands.activatePremium(ctx));
 bot.command('clearmydata', (ctx) => testCommands.clearMyData(ctx));
 bot.command('testquestions', (ctx) => testCommands.testQuestions(ctx));
 bot.command('checkmenu', (ctx) => testCommands.checkMenuStatus(ctx));
-
-bot.command('cleartestreminders', (ctx) => testCommands.clearTestReminders(ctx));
 bot.command('reminderstatus', (ctx) => testCommands.reminderStatus(ctx));
 
 // Команды истории и статистики

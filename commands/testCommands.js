@@ -244,21 +244,6 @@ module.exports = {
     }
   },
 
-  // Очистить тестовые напоминания
-  clearTestReminders: async (ctx) => {
-    try {
-      const ReminderService = require('../services/reminderService');
-      const service = new ReminderService(ctx.telegram);
-
-      await service.clearTestReminders(ctx.chat.id);
-      ctx.reply('✅ Тестовые напоминания очищены');
-
-    } catch (error) {
-      console.error('❌ Ошибка очистки тестовых напоминаний:', error);
-      ctx.reply('❌ Ошибка очистки напоминаний');
-    }
-  },
-
   // Показать статус напоминаний
   reminderStatus: async (ctx) => {
     try {
