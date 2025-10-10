@@ -267,32 +267,102 @@ class SettingsController {
 
   // 📝 Добавить дополнительную цель
   async showAddSecondaryGoal(ctx) {
-    const message = `📝 *Добавление дополнительной цели*\n\n` +
-      `Какие дополнительные цели вас интересуют?\n\n` +
-      `Примеры:\n` +
-      `• Улучшить состояние кожи\n` +
-      `• Укрепить суставы\n` +
-      `• Нормализовать пищеварение\n` +
-      `• Повысить либидо\n` +
-      `• Улучшить память\n\n` +
-      `*Введите дополнительную цель:*`;
+    try {
+      const chatId = ctx.chat.id;
+      const currentGoals = await goalService.getUserGoals(chatId);
 
-    await ctx.reply(message, {
-      parse_mode: 'Markdown',
-      reply_markup: {
-        keyboard: [
-          ['❌ Отменить добавление'],
-          ['↩️ Назад к целям']
-        ],
-        resize_keyboard: true
+      // Доступные дополнительные цели (исключая основную)
+      const availableGoals = this.getSecondaryGoalOptions().filter(goal =>
+        goal !== currentGoals.mainGoal &&
+        !currentGoals.secondaryGoals?.includes(goal)
+      );
+
+      if (availableGoals.length === 0) {
+        await ctx.reply(
+          'ℹ️ *Все доступные цели уже добавлены!*\n\n' +
+          'Вы можете удалить некоторые цели, чтобы добавить новые.',
+          { parse_mode: 'Markdown' }
+        );
+        return;
       }
-    });
 
-    const sessionManager = require('../utils/sessionManager');
-    sessionManager.set(ctx.chat.id, {
-      addingSecondaryGoal: true,
-      timestamp: Date.now()
-    });
+      let message = `📝 *Добавление дополнительной цели*\n\n` +
+        `Выберите цель из списка (можно добавить до 5 целей):\n\n`;
+
+      availableGoals.forEach((goal, index) => {
+        message += `${index + 1}. ${goal}\n`;
+      });
+
+      message += `\n*Выберите номер цели:*`;
+
+      // Динамическая клавиатура
+      const keyboard = [];
+      const rowSize = 3;
+
+      for (let i = 0; i < availableGoals.length; i += rowSize) {
+        const row = availableGoals.slice(i, i + rowSize).map((_, index) => (i + index + 1).toString());
+        keyboard.push(row);
+      }
+
+      keyboard.push(['❌ Отменить добавление'], ['↩️ Назад к целям']);
+
+      await ctx.reply(message, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          keyboard: keyboard,
+          resize_keyboard: true
+        }
+      });
+
+      const sessionManager = require('../utils/sessionManager');
+      sessionManager.set(ctx.chat.id, {
+        addingSecondaryGoal: true,
+        availableGoals: availableGoals,
+        timestamp: Date.now()
+      });
+
+    } catch (error) {
+      console.error('❌ Ошибка показа добавления цели:', error);
+      await ctx.reply('❌ Ошибка загрузки целей. Попробуйте позже.');
+    }
+  }
+
+  // 🎯 Получение списка дополнительных целей
+  getSecondaryGoalOptions() {
+    try {
+      const questions = require('../data/questions');
+      const goalQuestion = questions.premium.find(q => q.key === 'main_goal');
+
+      if (goalQuestion && goalQuestion.options) {
+        return goalQuestion.options;
+      }
+
+      // Fallback
+      return [
+        "Энергия и бодрость",
+        "Улучшение сна и восстановления",
+        "Снижение стресса и тревожности",
+        "Работа мозга и концентрация",
+        "Поддержка тестостерона и либидо",
+        "Укрепление иммунитета",
+        "Общее оздоровление и профилактика",
+        "Улучшение состояния кожи",
+        "Укрепление суставов",
+        "Нормализация пищеварения",
+        "Повышение либидо",
+        "Улучшение памяти"
+      ];
+    } catch (error) {
+      console.error('❌ Ошибка загрузки дополнительных целей:', error);
+      return [
+        "Энергия и бодрость",
+        "Улучшение сна и восстановления",
+        "Снижение стресса и тревожности",
+        "Работа мозга и концентрация",
+        "Поддержка тестостерона и либидо",
+        "Укрепление иммунитета"
+      ];
+    }
   }
 
   // 🗑️ Удалить цели

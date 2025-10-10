@@ -326,7 +326,7 @@ async function showSettingsMenu(ctx) {
     reply_markup: {
       keyboard: [
         ['⏰ Настроить напоминания'],
-        ['🎯 Мои цели'],
+        // ['🎯 Мои цели'],
         ['📊 Мои данные'],
         ['🏠 Главное меню']
       ],
