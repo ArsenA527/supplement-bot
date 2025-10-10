@@ -479,6 +479,18 @@ async function handleTextCommands(ctx) {
     return;
   }
 
+  if (session) {
+    if (session.editingMainGoal) {
+      await settingsController.saveMainGoal(ctx, text);
+      return;
+    }
+
+    if (session.addingSecondaryGoal) {
+      await settingsController.addSecondaryGoal(ctx, text);
+      return;
+    }
+  }
+
   switch(text) {
     case '📋 Пройти опрос':
     case '📋 Новый опрос':

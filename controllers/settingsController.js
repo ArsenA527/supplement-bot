@@ -2,6 +2,7 @@ const settingsService = require('../services/settingsService');
 const { getMainMenuKeyboard, getSettingsKeyboard, getTimeSettingsKeyboard } = require('../keyboards');
 const NotificationManager = require('../utils/notifications');
 const sessionManager = require('../utils/sessionManager');
+const goalService = require('../services/goalService');
 
 class SettingsController {
 
