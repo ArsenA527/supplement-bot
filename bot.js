@@ -265,19 +265,7 @@ bot.command('reminderstats', (ctx) => testCommands.reminderStats(ctx));
 bot.command('debugsub', (ctx) => testCommands.debugSubscription(ctx));
 bot.command('activatepremium', (ctx) => testCommands.activatePremium(ctx));
 bot.command('clearmydata', (ctx) => testCommands.clearMyData(ctx));
-bot.command('testquestions', (ctx) => testCommands.testQuestions(ctx));
-bot.command('testbuttons', (ctx) => testCommands.testButtons(ctx));
-bot.command('testremindersnow', (ctx) => testCommands.testRemindersNow(ctx));
-bot.command('createremindersfromplan', (ctx) => testCommands.createRemindersFromPlan(ctx));
 bot.command('checkmenu', (ctx) => testCommands.checkMenuStatus(ctx));
-
-bot.command('createtestreminder', (ctx) => {
-  const time = ctx.message.text.split(' ')[1]; // /createtestreminder 14:30
-  testCommands.createTestReminder(ctx, time);
-});
-
-bot.command('forcereminders', (ctx) => testCommands.forceSendReminders(ctx));
-bot.command('cleartestreminders', (ctx) => testCommands.clearTestReminders(ctx));
 bot.command('reminderstatus', (ctx) => testCommands.reminderStatus(ctx));
 
 // Команды истории и статистики
@@ -344,27 +332,6 @@ bot.command('backupnow', (ctx) => testCommands.createBackupNow(ctx));
 bot.command('analytics', (ctx) => testCommands.analyticsDashboard(ctx));
 bot.command('surveystats', (ctx) => testCommands.surveyAnalytics(ctx));
 bot.command('dailyreport', (ctx) => testCommands.forceDailyReport(ctx));
-
-/*
-bot.command('settings', (ctx) => {
-  analyticsService.trackEvent(ctx.chat.id, 'settings_opened');
-  showSettingsMenu(ctx);
-});
-
-bot.command('notifications', (ctx) => {
-  analyticsService.trackEvent(ctx.chat.id, 'notifications_settings_opened');
-  settingsController.showNotificationSettings(ctx);
-});
-
-bot.command('export', (ctx) => {
-  analyticsService.trackEvent(ctx.chat.id, 'data_export_requested');
-  settingsController.exportUserData(ctx);
-});
-
-bot.command('clear', (ctx) => {
-  analyticsService.trackEvent(ctx.chat.id, 'clear_data_confirmation');
-  settingsController.showClearDataConfirmation(ctx);
-});*/
 
 // ==================== ОБРАБОТКА КНОПОК НАПОМИНАНИЙ ====================
 
