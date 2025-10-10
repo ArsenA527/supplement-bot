@@ -127,22 +127,69 @@ class ReminderController {
     return baseTime;
   }
 
-  // Показать настройки напоминаний
-  async showReminderSettings(ctx) {
-    // Временно используем простую клавиатуру вместо getReminderSettingsKeyboard
-    const message = `⚙️ *Настройки напоминаний*\n\n` +
-      `Здесь вы можете настроить время напоминаний о приеме добавок.\n\n` +
-      `По умолчанию:\n` +
-      `• Утро: 08:00\n` +
-      `• День: 13:00\n` +
-      `• Вечер: 20:00\n\n` +
-      `Используйте команды для настройки:`;
+// ⚙️ Показать настройки напоминания
+  async showReminderSettings(ctx, reminderId) {
+    try {
+      const reminder = await this.getReminderById(reminderId);
 
-    // Используем главное меню вместо специализированной клавиатуры
-    ctx.reply(message, {
-      parse_mode: 'Markdown',
-      ...getMainMenuKeyboard() // Используем существующую клавиатуру
-    });
+      if (!reminder) {
+        await ctx.answerCbQuery('❌ Напоминание не найдено');
+        return;
+      }
+
+      const { getReminderSettingsKeyboard } = require('../keyboards');
+
+      // Редактируем сообщение, показывая настройки
+      await ctx.editMessageText(
+        `⚙️ *Настройки напоминания*\n\n` +
+        `💊 ${reminder.supplement_name}\n` +
+        `📏 ${reminder.dosage}\n` +
+        `⏰ ${reminder.time}\n\n` +
+        `*Выберите действие:*`,
+        {
+          parse_mode: 'Markdown',
+          ...getReminderSettingsKeyboard(reminderId)
+        }
+      );
+
+      await ctx.answerCbQuery();
+
+    } catch (error) {
+      console.error('❌ Ошибка показа настроек напоминания:', error);
+      await ctx.answerCbQuery('❌ Ошибка загрузки настроек');
+    }
+  }
+
+  // ↩️ Вернуться назад к основным действиям
+  async showReminderActions(ctx, reminderId) {
+    try {
+      const reminder = await this.getReminderById(reminderId);
+
+      if (!reminder) {
+        await ctx.answerCbQuery('❌ Напоминание не найдено');
+        return;
+      }
+
+      const { getReminderActionsKeyboard } = require('../keyboards');
+
+      // Возвращаемся к исходному сообщению
+      await ctx.editMessageText(
+        `⏰ *Время приема!*\n\n` +
+        `💊 ${reminder.supplement_name}\n` +
+        `📏 ${reminder.dosage}\n\n` +
+        `Подтвердите прием:`,
+        {
+          parse_mode: 'Markdown',
+          ...getReminderActionsKeyboard(reminderId)
+        }
+      );
+
+      await ctx.answerCbQuery();
+
+    } catch (error) {
+      console.error('❌ Ошибка возврата к действиям:', error);
+      await ctx.answerCbQuery('❌ Ошибка загрузки');
+    }
   }
 
 
@@ -242,12 +289,44 @@ class ReminderController {
     });
   }
 
-  // Обработка действий с напоминаниями - УПРОЩЕННАЯ ВЕРСИЯ
+  // Обработка действий с напоминаниями
   async handleReminderAction(ctx, action, reminderId) {
     try {
+      console.log(`🔵 Обработка действия: ${action} для напоминания ${reminderId}`);
+
+      // Обработка настроек
+      if (action === 'reminder_settings') {
+        await this.showReminderSettings(ctx, reminderId);
+        return;
+      }
+
+      // Обработка возврата назад
+      if (action === 'reminder_back') {
+        await this.showReminderActions(ctx, reminderId);
+        return;
+      }
+
+      // Обработка временного отключения (заглушка)
+      if (action === 'reminder_disable') {
+        await ctx.answerCbQuery('⏸️ Функция временного отключения скоро будет доступна');
+        return;
+      }
+
+      // Обработка изменения времени (заглушка)
+      if (action === 'reminder_change_time') {
+        await ctx.answerCbQuery('⏰ Функция изменения времени скоро будет доступна');
+        return;
+      }
+
+      // Обработка удаления (заглушка)
+      if (action === 'reminder_delete') {
+        await ctx.answerCbQuery('🗑️ Функция удаления скоро будет доступна');
+        return;
+      }
+
+      // Старая логика для принятия/пропуска
       const db = require('../config/database');
 
-      // Получаем напоминание
       db.get('SELECT * FROM reminders WHERE id = ?', [reminderId], async (err, reminder) => {
         if (err || !reminder) {
           ctx.answerCbQuery('❌ Напоминание не найдено');
