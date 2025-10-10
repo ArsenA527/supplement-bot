@@ -519,7 +519,7 @@ async function showSettingsMenu(ctx) {
     reply_markup: {
       keyboard: [
         ['⏰ Настроить напоминания'],
-        ['📊 Мои данные', '🗑️ Очистить историю'],
+        ['📊 Мои данные'],
         ['🏠 Главное меню']
       ],
       resize_keyboard: true
@@ -716,9 +716,9 @@ async function handleTextCommands(ctx) {
       await settingsController.showDataManagement(ctx);
       break;
 
-    case '🗑️ Очистить историю':
-      console.log('🗑️ Очистка истории');
-      await settingsController.showClearDataConfirmation(ctx);
+    case '↩️ Назад к настройкам':
+      console.log('↩️ Возврат к настройкам');
+      await showSettingsMenu(ctx);
       break;
 
     case '✅ Включить уведомления':
@@ -734,41 +734,9 @@ async function handleTextCommands(ctx) {
       await settingsController.resetSettings(ctx);
       break;
 
-    case '✅ Да, очистить все данные':
-      await settingsController.clearUserData(ctx);
-      break;
-
     case '❌ Нет, отменить':
     case '↩️ Назад к настройкам':
       await settingsController.showReminderSettings(ctx);
-      break;
-
-    case '🔄 Массовое обновление':
-      await settingsController.showBulkUpdateOptions(ctx);
-      break;
-
-    case '🌅 Применить утреннее время ко всем':
-      await settingsController.applyBulkTimeUpdate(ctx, 'morning');
-      break;
-
-    case '☀️ Применить дневное время ко всем':
-      await settingsController.applyBulkTimeUpdate(ctx, 'afternoon');
-      break;
-
-    case '🌙 Применить вечернее время ко всем':
-      await settingsController.applyBulkTimeUpdate(ctx, 'evening');
-      break;
-
-    case '✅ Да, обновить все напоминания':
-      await settingsController.confirmBulkUpdate(ctx);
-      break;
-
-    case '↩️ Назад к массовому обновлению':
-      await settingsController.showBulkUpdateOptions(ctx);
-      break;
-
-    case '❌ Нет, отменить':
-      await settingsController.showBulkUpdateOptions(ctx);
       break;
 
     default:

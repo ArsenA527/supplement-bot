@@ -1310,3 +1310,58 @@
 {"timestamp":"2025-10-10T06:19:35.118Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-10T06-09-39-341Z.db"}
 {"timestamp":"2025-10-10T06:19:35.118Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-10T06-19-35-116Z.db"}
 {"timestamp":"2025-10-10T06:20:38.172Z","level":"INFO","message":"Ежедневный отчет сгенерирован и отправлен"}
+{"timestamp":"2025-10-10T06:28:37.537Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-10-10T06:28:37.580Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-10T06-12-48-183Z.db"}
+{"timestamp":"2025-10-10T06:28:37.580Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-10T06-28-37-577Z.db"}
+{"timestamp":"2025-10-10T06:28:37.889Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-10-10T06:28:37.894Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-10-10T07:02:36.112Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-10-10T07:02:36.155Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-10T06-12-44-083Z.db"}
+{"timestamp":"2025-10-10T07:02:36.156Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-10T07-02-36-153Z.db"}
+{"timestamp":"2025-10-10T07:02:36.450Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-10-10T07:02:36.456Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-10-10T07:03:13.585Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-10-10T07:03:13.628Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-10T06-13-33-162Z.db"}
+{"timestamp":"2025-10-10T07:03:13.628Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-10T07-03-13-625Z.db"}
+{"timestamp":"2025-10-10T07:03:13.901Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-10-10T07:03:13.902Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-10-10T07:05:21.514Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-10-10T07:05:21.557Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-10T06-16-54-923Z.db"}
+{"timestamp":"2025-10-10T07:05:21.557Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-10T07-05-21-555Z.db"}
+{"timestamp":"2025-10-10T07:05:21.838Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-10-10T07:05:21.839Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-10-10T07:05:33.227Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-10-10T07:05:33.269Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-10T06-13-52-260Z.db"}
+{"timestamp":"2025-10-10T07:05:33.270Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-10T07-05-33-267Z.db"}
+{"timestamp":"2025-10-10T07:05:33.552Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-10-10T07:05:33.553Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-10-10T07:07:30.997Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-10-10T07:07:31.040Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-10T06-17-45-290Z.db"}
+{"timestamp":"2025-10-10T07:07:31.040Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-10T07-07-31-038Z.db"}
+{"timestamp":"2025-10-10T07:07:31.372Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-10-10T07:07:31.377Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-10-10T07:08:18.228Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-10-10T07:08:18.271Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-10T06-17-13-585Z.db"}
+{"timestamp":"2025-10-10T07:08:18.272Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-10T07-08-18-269Z.db"}
+{"timestamp":"2025-10-10T07:08:18.539Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-10-10T07:08:18.540Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-10-10T07:09:22.315Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-10-10T07:09:22.357Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-10T06-18-19-176Z.db"}
+{"timestamp":"2025-10-10T07:09:22.358Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-10T07-09-22-355Z.db"}
+{"timestamp":"2025-10-10T07:09:22.642Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-10-10T07:09:22.643Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-10-10T07:14:08.825Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-10-10T07:14:08.868Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-10T06-19-35-116Z.db"}
+{"timestamp":"2025-10-10T07:14:08.869Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-10T07-14-08-866Z.db"}
+{"timestamp":"2025-10-10T07:14:09.173Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-10-10T07:14:09.178Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-10-10T07:16:13.703Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-10-10T07:16:13.747Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-10T06-18-38-828Z.db"}
+{"timestamp":"2025-10-10T07:16:13.748Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-10T07-16-13-745Z.db"}
+{"timestamp":"2025-10-10T07:16:14.049Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-10-10T07:16:14.050Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-10-10T07:16:36.949Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-10-10T07:16:36.991Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-10T06-28-37-577Z.db"}
+{"timestamp":"2025-10-10T07:16:36.992Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-10T07-16-36-989Z.db"}
+{"timestamp":"2025-10-10T07:16:37.256Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-10-10T07:16:37.257Z","level":"INFO","message":"Еженедельная мотивация настроена"}
