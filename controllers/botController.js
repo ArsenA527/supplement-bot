@@ -651,6 +651,20 @@ async function handleTextCommands(ctx) {
       await settingsController.showReminderSettings(ctx);
       break;
 
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+      const session = sessionManager.get(ctx.chat.id);
+      if (session && session.editingMainGoal) {
+        await settingsController.saveMainGoal(ctx, text);
+        return;
+      }
+      break;
+
     default:
       console.log('❓ Неизвестная команда');
       ctx.reply('Используй кнопки меню для навигации 👆', getMainMenuKeyboard(isPremium));

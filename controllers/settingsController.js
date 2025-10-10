@@ -192,21 +192,31 @@ class SettingsController {
 
   // ✏️ Изменить основную цель
   async showEditMainGoal(ctx) {
-    const message = `✏️ *Изменение основной цели*\n\n` +
-      `Какую главную цель вы хотите достичь с помощью приема добавок?\n\n` +
-      `Примеры целей:\n` +
-      `• Повысить энергию и бодрость\n` +
-      `• Улучшить качество сна\n` +
-      `• Снизить уровень стресса\n` +
-      `• Укрепить иммунитет\n` +
-      `• Улучшить работу мозга\n` +
-      `• Общее оздоровление\n\n` +
-      `*Введите вашу новую основную цель:*`;
+    const goalOptions = [
+      "Энергия и бодрость",
+      "Улучшение сна и восстановления",
+      "Снижение стресса и тревожности",
+      "Работа мозга и концентрация",
+      "Поддержка тестостерона и либидо",
+      "Укрепление иммунитета",
+      "Общее оздоровление и профилактика"
+    ];
+
+    let message = `✏️ *Изменение основной цели*\n\n` +
+      `Выберите новую основную цель из списка:\n\n`;
+
+    goalOptions.forEach((goal, index) => {
+      message += `${index + 1}. ${goal}\n`;
+    });
+
+    message += `\n*Выберите номер цели:*`;
 
     await ctx.reply(message, {
       parse_mode: 'Markdown',
       reply_markup: {
         keyboard: [
+          ['1', '2', '3', '4'],
+          ['5', '6', '7'],
           ['❌ Отменить изменение'],
           ['↩️ Назад к целям']
         ],
@@ -214,10 +224,10 @@ class SettingsController {
       }
     });
 
-    // Сохраняем состояние редактирования цели
     const sessionManager = require('../utils/sessionManager');
     sessionManager.set(ctx.chat.id, {
       editingMainGoal: true,
+      goalOptions: goalOptions,
       timestamp: Date.now()
     });
   }
@@ -306,17 +316,30 @@ class SettingsController {
   }
 
   // 💾 Сохранение основной цели
-  async saveMainGoal(ctx, newGoal) {
+  async saveMainGoal(ctx, goalIndex) {
     try {
-      const goals = await goalService.getUserGoals(ctx.chat.id);
+      const session = sessionManager.get(ctx.chat.id);
+      if (!session || !session.goalOptions) {
+        await ctx.reply('❌ Сессия устарела. Начните заново.');
+        return;
+      }
 
-      // Обновляем основную цель
+      const goalNumber = parseInt(goalIndex);
+      if (isNaN(goalNumber) || goalNumber < 1 || goalNumber > session.goalOptions.length) {
+        await ctx.reply('❌ Пожалуйста, выберите номер из предложенного списка.');
+        return;
+      }
+
+      const newGoal = session.goalOptions[goalNumber - 1];
+      const chatId = ctx.chat.id;
+
+      // Сохраняем новую цель в БД
       const db = require('../config/database');
       await new Promise((resolve, reject) => {
         db.run(
           `INSERT OR REPLACE INTO user_goals (chat_id, main_goal, secondary_goals, updated_at)
           VALUES (?, ?, ?, datetime('now'))`,
-          [ctx.chat.id, newGoal, JSON.stringify(goals.secondaryGoals || [])],
+          [chatId, newGoal, '[]'], // Очищаем второстепенные цели при смене основной
           (err) => {
             if (err) reject(err);
             else resolve();
@@ -324,18 +347,18 @@ class SettingsController {
         );
       });
 
+      await this.updateRecommendationsBasedOnNewGoal(chatId, newGoal);
+
       await ctx.reply(
         `✅ Основная цель обновлена!\n\n` +
         `🎯 *Новая цель:* ${newGoal}\n\n` +
-        `Теперь ваши рекомендации и статистика будут ориентированы на достижение этой цели!`,
+        `📋 *Ваши рекомендации были пересчитаны* с учетом новой цели.\n` +
+        `💊 Проверьте раздел "Мои рекомендации" для просмотра обновленного плана!`,
         { parse_mode: 'Markdown' }
       );
 
-      // Очищаем сессию
-      const sessionManager = require('../utils/sessionManager');
-      sessionManager.delete(ctx.chat.id);
+      sessionManager.delete(chatId);
 
-      // Возвращаемся к управлению целями
       await this.showGoalsManagement(ctx);
 
     } catch (error) {
@@ -344,6 +367,110 @@ class SettingsController {
         '❌ Не удалось сохранить цель. Попробуйте позже.',
         { parse_mode: 'Markdown' }
       );
+    }
+  }
+
+  async updateRecommendationsBasedOnNewGoal(chatId, newGoal) {
+    try {
+      const surveyService = require('../services/surveyService');
+      const recommendationService = require('../services/recommendationService');
+      const reminderService = require('../services/reminderService');
+
+      const currentAnswers = await surveyService.getSurveyResults(chatId);
+
+      if (!currentAnswers || Object.keys(currentAnswers).length === 0) {
+        console.log('❌ Нет данных опроса для обновления рекомендаций');
+        return;
+      }
+
+      currentAnswers.main_goal = newGoal;
+
+      const db = require('../config/database');
+      await new Promise((resolve, reject) => {
+        db.run(
+          `UPDATE users SET answers = ? WHERE chat_id = ?`,
+          [JSON.stringify(currentAnswers), chatId],
+          (err) => {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+
+      const newRecommendations = recommendationService.generateRecommendations(currentAnswers);
+
+      const service = new reminderService();
+      await service.clearUserReminders(chatId);
+
+      const subscriptionService = require('../services/subscriptionService');
+      const isPremium = await subscriptionService.isSubscriptionActive(chatId);
+
+      if (isPremium && newRecommendations.length > 0) {
+        await this.createRemindersFromRecommendationsDirectly(chatId, newRecommendations);
+      }
+
+      console.log(`✅ Рекомендации обновлены для пользователя ${chatId} с целью: ${newGoal}`);
+
+    } catch (error) {
+      console.error('❌ Ошибка обновления рекомендаций:', error);
+      throw error;
+    }
+  }
+
+  // 🔧 Создание напоминаний напрямую (без ctx)
+  async createRemindersFromRecommendationsDirectly(chatId, recommendations) {
+    try {
+      const reminderService = require('../services/reminderService');
+      const settingsService = require('../services/settingsService');
+      const service = new reminderService();
+
+      const settings = await settingsService.getUserSettings(chatId);
+
+      let createdCount = 0;
+
+      for (const supplement of recommendations) {
+        let time;
+        if (supplement.period && settings[`${supplement.period}_time`]) {
+          time = settings[`${supplement.period}_time`];
+        } else {
+          time = this.getSmartTimeForSupplement(supplement, settings);
+        }
+
+        try {
+          await service.createReminder(chatId, {
+            supplement_name: supplement.name,
+            dosage: supplement.dosage,
+            time: time,
+            days: '1111111'
+          });
+          createdCount++;
+
+        } catch (error) {
+          console.error('❌ Ошибка создания напоминания:', error);
+        }
+      }
+
+      console.log(`✅ Создано ${createdCount} напоминаний для пользователя ${chatId}`);
+      return createdCount;
+
+    } catch (error) {
+      console.error('❌ Ошибка создания напоминаний:', error);
+      return 0;
+    }
+  }
+
+  // ⏰ Умное распределение времени (переносим из reminderController)
+  getSmartTimeForSupplement(supplement, settings) {
+    const name = supplement.name.toLowerCase();
+
+    if (name.includes('тирозин') || name.includes('родиола')) {
+      return settings.morning_time || '08:00';
+    } else if (name.includes('магний') || name.includes('ашваганда')) {
+      return settings.evening_time || '20:00';
+    } else if (name.includes('омега') || name.includes('цинк')) {
+      return settings.afternoon_time || '13:00';
+    } else {
+      return settings.morning_time || '08:00';
     }
   }
 
