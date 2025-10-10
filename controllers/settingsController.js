@@ -137,6 +137,7 @@ class SettingsController {
       parse_mode: 'Markdown',
       reply_markup: {
         keyboard: [
+          ['📈 График прогресса'],
           ['📁 Экспорт данных'],
           ['🔄 Сбросить настройки'],
           ['↩️ Назад к настройкам']
@@ -491,6 +492,62 @@ class SettingsController {
 
     } catch (error) {
       await ctx.reply(`❌ Ошибка применения изменений: ${error.message}`);
+    }
+  }
+
+  async showProgressChart(ctx) {
+    try {
+      await ctx.reply('📊 Генерирую ваши графики прогресса...');
+
+      const reminderService = require('../services/reminderService');
+      const service = new reminderService();
+      const chartService = require('../services/chartService');
+
+      // Получаем историю за 30 дней
+      const history = await service.getIntakeHistory(ctx.chat.id, 30);
+
+      if (history.length === 0) {
+        await ctx.reply(
+          '📊 У вас пока нет данных для построения графиков.\n\n' +
+          'Начните принимать добавки, чтобы отслеживать свой прогресс! 💪',
+          { parse_mode: 'Markdown' }
+        );
+        return;
+      }
+
+      // Генерируем график соблюдения режима
+      const complianceChart = await chartService.generateComplianceChart(history, 30);
+      await ctx.replyWithPhoto(
+        { source: complianceChart },
+        { caption: '📈 *Динамика соблюдения режима*\n\nПроцент успешных приемов по дням' }
+      );
+
+      // Генерируем график статистики приемов
+      const intakeChart = await chartService.generateIntakeChart(history, 30);
+      await ctx.replyWithPhoto(
+        { source: intakeChart },
+        { caption: '📊 *Статистика приемов по дням*\n\n✅ Принято | ⏭️ Пропущено | ❌ Не принято' }
+      );
+
+      // Добавляем текстовую статистику
+      const stats = await service.getIntakeStats(ctx.chat.id, 30);
+      const weeklyStats = await service.getIntakeStats(ctx.chat.id, 7);
+
+      const statsMessage = `📈 *Общая статистика за 30 дней:*\n\n` +
+        `• Соблюдение: ${stats.compliance}%\n` +
+        `• Принято: ${stats.taken} ✅\n` +
+        `• Пропущено: ${stats.skipped} ⏭️\n` +
+        `• Всего: ${stats.total} приемов\n\n` +
+        `📊 *За неделю:* ${weeklyStats.compliance}% соблюдения`;
+
+      await ctx.reply(statsMessage, { parse_mode: 'Markdown' });
+
+    } catch (error) {
+      console.error('❌ Ошибка генерации графиков:', error);
+      await ctx.reply(
+        '❌ Не удалось сгенерировать графики. Попробуйте позже.',
+        getMainMenuKeyboard(true)
+      );
     }
   }
 }
