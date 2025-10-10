@@ -85,6 +85,42 @@ function getReminderActionsKeyboard(reminderId) {
   };
 }
 
+// Клавиатура настроек для конкретного напоминания
+function getReminderSettingsKeyboard(reminderId) {
+  return {
+    reply_markup: {
+      inline_keyboard: [
+        [
+          {
+            text: '⏸️ Временно отключить',
+            callback_data: `reminder_disable_${reminderId}`,
+            emoji: '⏸️'
+          },
+          {
+            text: '⏰ Изменить время',
+            callback_data: `reminder_change_time_${reminderId}`,
+            emoji: '⏰'
+          }
+        ],
+        [
+          {
+            text: '🗑️ Удалить напоминание',
+            callback_data: `reminder_delete_${reminderId}`,
+            emoji: '🗑️'
+          }
+        ],
+        [
+          {
+            text: '↩️ Назад',
+            callback_data: `reminder_back_${reminderId}`,
+            emoji: '↩️'
+          }
+        ]
+      ]
+    }
+  };
+}
+
 // Клавиатура настроек напоминаний
 function getReminderSettingsKeyboard() {
   return {
