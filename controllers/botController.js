@@ -694,6 +694,11 @@ async function handleTextCommands(ctx) {
       }
       break;
 
+    case '📈 График прогресса':
+      console.log('📈 Показ графика прогресса');
+      await settingsController.showProgressChart(ctx);  // ИСПРАВЛЕНО
+      break;
+
     case '⏰ Настроить напоминания':
       console.log('⏰ Настройка напоминаний');
       await settingsController.showReminderSettings(ctx);
