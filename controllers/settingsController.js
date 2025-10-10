@@ -190,17 +190,45 @@ class SettingsController {
     }
   }
 
+  // 🎯 Получение списка целей из questions.js
+  getGoalOptions() {
+    try {
+      const questions = require('../data/questions');
+      // Ищем вопрос с main_goal в premium опроснике
+      const goalQuestion = questions.premium.find(q => q.key === 'main_goal');
+
+      if (goalQuestion && goalQuestion.options) {
+        return goalQuestion.options;
+      }
+
+      // Fallback - стандартные цели
+      return [
+        "Энергия и бодрость",
+        "Улучшение сна и восстановления",
+        "Снижение стресса и тревожности",
+        "Работа мозга и концентрация",
+        "Поддержка тестостерона и либидо",
+        "Укрепление иммунитета",
+        "Общее оздоровление и профилактика"
+      ];
+    } catch (error) {
+      console.error('❌ Ошибка загрузки целей из questions.js:', error);
+      // Fallback
+      return [
+        "Энергия и бодрость",
+        "Улучшение сна и восстановления",
+        "Снижение стресса и тревожности",
+        "Работа мозга и концентрация",
+        "Поддержка тестостерона и либидо",
+        "Укрепление иммунитета",
+        "Общее оздоровление и профилактика"
+      ];
+    }
+  }
+
   // ✏️ Изменить основную цель
   async showEditMainGoal(ctx) {
-    const goalOptions = [
-      "Энергия и бодрость",
-      "Улучшение сна и восстановления",
-      "Снижение стресса и тревожности",
-      "Работа мозга и концентрация",
-      "Поддержка тестостерона и либидо",
-      "Укрепление иммунитета",
-      "Общее оздоровление и профилактика"
-    ];
+    const goalOptions = this.getGoalOptions();
 
     let message = `✏️ *Изменение основной цели*\n\n` +
       `Выберите новую основную цель из списка:\n\n`;
@@ -211,15 +239,20 @@ class SettingsController {
 
     message += `\n*Выберите номер цели:*`;
 
+    const keyboard = [];
+    const rowSize = 4;
+
+    for (let i = 0; i < goalOptions.length; i += rowSize) {
+      const row = goalOptions.slice(i, i + rowSize).map((_, index) => (i + index + 1).toString());
+      keyboard.push(row);
+    }
+
+    keyboard.push(['❌ Отменить изменение'], ['↩️ Назад к целям']);
+
     await ctx.reply(message, {
       parse_mode: 'Markdown',
       reply_markup: {
-        keyboard: [
-          ['1', '2', '3', '4'],
-          ['5', '6', '7'],
-          ['❌ Отменить изменение'],
-          ['↩️ Назад к целям']
-        ],
+        keyboard: keyboard,
         resize_keyboard: true
       }
     });
@@ -347,18 +380,25 @@ class SettingsController {
         );
       });
 
-      await this.updateRecommendationsBasedOnNewGoal(chatId, newGoal);
+      const recommendationsUpdated = await this.updateRecommendationsBasedOnNewGoal(chatId, newGoal);
 
-      await ctx.reply(
-        `✅ Основная цель обновлена!\n\n` +
-        `🎯 *Новая цель:* ${newGoal}\n\n` +
-        `📋 *Ваши рекомендации были пересчитаны* с учетом новой цели.\n` +
-        `💊 Проверьте раздел "Мои рекомендации" для просмотра обновленного плана!`,
-        { parse_mode: 'Markdown' }
-      );
+      let message = `✅ Основная цель обновлена!\n\n` +
+        `🎯 *Новая цель:* ${newGoal}\n\n`;
 
+      if (recommendationsUpdated) {
+        message += `📋 *Ваши рекомендации были пересчитаны* с учетом новой цели.\n` +
+                  `💊 Проверьте раздел "Мои рекомендации" для просмотра обновленного плана!`;
+      } else {
+        message += `ℹ️ *Рекомендации не были обновлены* (нет данных опроса).\n` +
+                  `Пройдите опрос заново для получения актуальных рекомендаций.`;
+      }
+
+      await ctx.reply(message, { parse_mode: 'Markdown' });
+
+      // Очищаем сессию
       sessionManager.delete(chatId);
 
+      // Возвращаемся к управлению целями
       await this.showGoalsManagement(ctx);
 
     } catch (error) {
@@ -376,14 +416,23 @@ class SettingsController {
       const recommendationService = require('../services/recommendationService');
       const reminderService = require('../services/reminderService');
 
+      console.log(`🔄 Начинаю обновление рекомендаций для ${chatId} с целью: ${newGoal}`);
+
+      // Получаем текущие ответы из опроса
       const currentAnswers = await surveyService.getSurveyResults(chatId);
 
       if (!currentAnswers || Object.keys(currentAnswers).length === 0) {
         console.log('❌ Нет данных опроса для обновления рекомендаций');
-        return;
+        return false;
       }
 
+      console.log('📋 Текущие ответы:', Object.keys(currentAnswers).length, 'полей');
+
+      // Обновляем цель в ответах
+      const oldGoal = currentAnswers.main_goal;
       currentAnswers.main_goal = newGoal;
+
+      console.log(`🎯 Цель изменена: "${oldGoal}" → "${newGoal}"`);
 
       const db = require('../config/database');
       await new Promise((resolve, reject) => {
@@ -397,19 +446,27 @@ class SettingsController {
         );
       });
 
+      console.log('💾 Ответы сохранены в БД');
+
       const newRecommendations = recommendationService.generateRecommendations(currentAnswers);
+      console.log(`💊 Сгенерировано ${newRecommendations.length} новых рекомендаций`);
 
       const service = new reminderService();
       await service.clearUserReminders(chatId);
+      console.log('🗑️ Старые напоминания очищены');
 
       const subscriptionService = require('../services/subscriptionService');
       const isPremium = await subscriptionService.isSubscriptionActive(chatId);
 
       if (isPremium && newRecommendations.length > 0) {
-        await this.createRemindersFromRecommendationsDirectly(chatId, newRecommendations);
+        const createdCount = await this.createRemindersFromRecommendationsDirectly(chatId, newRecommendations);
+        console.log(`⏰ Создано ${createdCount} новых напоминаний`);
+      } else {
+        console.log('ℹ️ Пользователь не premium или нет рекомендаций для напоминаний');
       }
 
-      console.log(`✅ Рекомендации обновлены для пользователя ${chatId} с целью: ${newGoal}`);
+      console.log(`✅ Рекомендации успешно обновлены для пользователя ${chatId}`);
+      return true;
 
     } catch (error) {
       console.error('❌ Ошибка обновления рекомендаций:', error);
