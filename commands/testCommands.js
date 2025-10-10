@@ -4,111 +4,6 @@ const surveyService = require('../services/surveyService');
 const { getMainMenuKeyboard } = require('../keyboards');
 
 module.exports = {
-  // Тест напоминаний прямо сейчас
-  testRemindersNow: async (ctx) => {
-    try {
-      const service = new ReminderService(ctx.telegram);
-      await service.checkDueReminders();
-      ctx.reply('🔍 Проверка напоминаний выполнена!');
-    } catch (error) {
-      console.error('❌ Ошибка теста напоминаний:', error);
-      ctx.reply('❌ Ошибка проверки напоминаний');
-    }
-  },
-
-  // Принудительно создать напоминания из рекомендаций
-  createRemindersFromPlan: async (ctx) => {
-    try {
-      const chatId = ctx.chat.id;
-      const surveyService = require('../services/surveyService');
-      const recommendationService = require('../services/recommendationService');
-      const { ReminderController } = require('../controllers/reminderController');
-
-      const answers = await surveyService.getSurveyResults(chatId);
-      if (!answers) {
-        ctx.reply('❌ Сначала пройдите опрос: /survey');
-        return;
-      }
-
-      const recommendations = recommendationService.generateRecommendations(answers);
-      const reminderController = new ReminderController(ctx.telegram);
-
-      await reminderController.createRemindersFromRecommendations(ctx, recommendations);
-      ctx.reply('✅ Напоминания созданы из вашего плана!');
-
-    } catch (error) {
-      console.error('❌ Ошибка создания напоминаний из плана:', error);
-      ctx.reply('❌ Ошибка создания напоминаний');
-    }
-  },
-
-  // Тест кнопок
-  testButtons: async (ctx) => {
-    try {
-      const keyboard = {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              { text: '✅ Принял', callback_data: 'intake_taken_999' },
-              { text: '⏰ Напомнить позже', callback_data: 'intake_later_999' },
-              { text: '❌ Пропустить', callback_data: 'intake_skipped_999' }
-            ]
-          ]
-        }
-      };
-
-      await ctx.reply(
-        `⏰ *ТЕСТ КНОПОК!*\n\n💊 Тестовая добавка\n📏 500 мг\n\nПроверьте кнопки:`,
-        { parse_mode: 'Markdown', ...keyboard }
-      );
-
-      ctx.reply('✅ Тестовые кнопки созданы! Проверьте их работу.');
-
-    } catch (error) {
-      console.error('❌ Ошибка testbuttons:', error);
-      ctx.reply('❌ Ошибка создания тестовых кнопок');
-    }
-  },
-
-  // Тест напоминания прямо сейчас
-  testReminderNow: async (ctx) => {
-    try {
-      const service = new ReminderService(ctx.telegram);
-
-      // Создаем тестовое напоминание
-      const reminderId = await service.createReminder(ctx.chat.id, {
-        supplement_name: 'Тестовая добавка',
-        dosage: '500 мг',
-        time: '00:01', // Через 1 минуту
-        days: '1111111'
-      });
-
-      // Имитируем отправку сразу для теста
-      const keyboard = {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              { text: '✅ Принял', callback_data: `intake_taken_${reminderId}` },
-              { text: '⏰ Напомнить позже', callback_data: `intake_later_${reminderId}` },
-              { text: '❌ Пропустить', callback_data: `intake_skipped_${reminderId}` }
-            ]
-          ]
-        }
-      };
-
-      await ctx.reply(
-        `⏰ *ТЕСТ Напоминание!*\n\n💊 Тестовая добавка\n📏 500 мг\n\nПодтвердите прием:`,
-        { parse_mode: 'Markdown', ...keyboard }
-      );
-
-      ctx.reply('✅ Тестовое напоминание отправлено сразу! Проверьте кнопки.');
-
-    } catch (error) {
-      console.error('❌ Ошибка testremindernow:', error);
-      ctx.reply('❌ Ошибка: ' + error.message);
-    }
-  },
-
   // Показать все напоминания пользователя
   showMyReminders: async (ctx) => {
     try {
@@ -136,7 +31,7 @@ module.exports = {
   checkHistory: async (ctx) => {
     try {
       const service = new ReminderService(ctx.telegram);
-      const history = await service.getIntakeHistory(ctx.chat.id, 1);
+      const history = await service.getIntakeHistory(ctx.chat.id, 7);
 
       if (history.length === 0) {
         ctx.reply('📊 История приема пуста за последние 7 дней.');
@@ -346,79 +241,6 @@ module.exports = {
     } catch (error) {
       console.error('❌ Ошибка просмотра статистики:', error);
       ctx.reply('❌ Ошибка загрузки статистики');
-    }
-  },
-
-  // Тест создания напоминания в указанное время
-  createTestReminder: async (ctx, time = null) => {
-    try {
-      const chatId = ctx.chat.id;
-      const ReminderService = require('../services/reminderService');
-      const service = new ReminderService(ctx.telegram);
-
-      // Если время не указано, используем текущее + 2 минуты
-      if (!time) {
-        const now = new Date();
-        now.setMinutes(now.getMinutes() + 2);
-        time = now.toTimeString().slice(0, 5); // "HH:MM"
-      }
-
-      // Валидация формата времени
-      const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-      if (!timeRegex.test(time)) {
-        ctx.reply('❌ Неверный формат времени. Используйте HH:MM (например, 14:30)');
-        return;
-      }
-
-      // Создаем тестовое напоминание
-      const reminder = await service.createTestReminder(
-        chatId,
-        'Тест: Витамин Д',
-        '2000 МЕ',
-        time,
-        '1111111'
-      );
-
-      ctx.reply(
-        `✅ *Тестовое напоминание создано!*\n\n` +
-        `💊 Тест: Витамин Д\n` +
-        `📏 2000 МЕ\n` +
-        `⏰ Время: ${time}\n\n` +
-        `Напоминание придет в указанное время. Проверьте в /myreminders`,
-        { parse_mode: 'Markdown' }
-      );
-
-      // Показываем когда ждать напоминание
-      const now = new Date();
-      const [targetHours, targetMinutes] = time.split(':').map(Number);
-      const targetTime = new Date();
-      targetTime.setHours(targetHours, targetMinutes, 0, 0);
-
-      if (targetTime < now) {
-        targetTime.setDate(targetTime.getDate() + 1); // На завтра
-      }
-
-      const waitTime = Math.round((targetTime - now) / 1000 / 60); // в минутах
-      ctx.reply(`⏳ Ждите напоминание через ~${waitTime} минут`);
-
-    } catch (error) {
-      console.error('❌ Ошибка создания тестового напоминания:', error);
-      ctx.reply('❌ Ошибка создания напоминания: ' + error.message);
-    }
-  },
-
-  // Принудительная отправка всех due напоминаний
-  forceSendReminders: async (ctx) => {
-    try {
-      const ReminderService = require('../services/reminderService');
-      const service = new ReminderService(ctx.telegram);
-
-      await service.checkDueReminders();
-      ctx.reply('🔍 Принудительная проверка напоминаний выполнена');
-
-    } catch (error) {
-      console.error('❌ Ошибка принудительной отправки:', error);
-      ctx.reply('❌ Ошибка отправки напоминаний');
     }
   },
 

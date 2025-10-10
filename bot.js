@@ -266,17 +266,8 @@ bot.command('debugsub', (ctx) => testCommands.debugSubscription(ctx));
 bot.command('activatepremium', (ctx) => testCommands.activatePremium(ctx));
 bot.command('clearmydata', (ctx) => testCommands.clearMyData(ctx));
 bot.command('testquestions', (ctx) => testCommands.testQuestions(ctx));
-bot.command('testbuttons', (ctx) => testCommands.testButtons(ctx));
-bot.command('testremindersnow', (ctx) => testCommands.testRemindersNow(ctx));
-bot.command('createremindersfromplan', (ctx) => testCommands.createRemindersFromPlan(ctx));
 bot.command('checkmenu', (ctx) => testCommands.checkMenuStatus(ctx));
 
-bot.command('createtestreminder', (ctx) => {
-  const time = ctx.message.text.split(' ')[1]; // /createtestreminder 14:30
-  testCommands.createTestReminder(ctx, time);
-});
-
-bot.command('forcereminders', (ctx) => testCommands.forceSendReminders(ctx));
 bot.command('cleartestreminders', (ctx) => testCommands.clearTestReminders(ctx));
 bot.command('reminderstatus', (ctx) => testCommands.reminderStatus(ctx));
 
