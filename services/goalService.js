@@ -30,6 +30,7 @@ class GoalService {
     const mainGoal = answers.goal || 'Общее оздоровление';
 
     const secondaryGoals = [];
+
     if (answers.energy && answers.energy.includes('усталость')) {
       secondaryGoals.push('Повышение энергии');
     }
@@ -41,6 +42,12 @@ class GoalService {
     }
     if (answers.symptoms && answers.symptoms.includes('Проблемы с кожей')) {
       secondaryGoals.push('Улучшение состояния кожи');
+    }
+    if (answers.stress_level && answers.stress_level.includes('высокий')) {
+      secondaryGoals.push('Снижение стресса');
+    }
+    if (answers.sleep_quality_detailed && !answers.sleep_quality_detailed.includes('Отлично')) {
+      secondaryGoals.push('Улучшение сна');
     }
 
     return { mainGoal, secondaryGoals };

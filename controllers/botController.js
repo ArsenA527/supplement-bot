@@ -326,6 +326,7 @@ async function showSettingsMenu(ctx) {
     reply_markup: {
       keyboard: [
         ['⏰ Настроить напоминания'],
+        // ['🎯 Мои цели'],
         ['📊 Мои данные'],
         ['🏠 Главное меню']
       ],
@@ -478,6 +479,18 @@ async function handleTextCommands(ctx) {
     return;
   }
 
+  if (session) {
+    if (session.editingMainGoal) {
+      await settingsController.saveMainGoal(ctx, text);
+      return;
+    }
+
+    if (session.addingSecondaryGoal) {
+      await settingsController.addSecondaryGoal(ctx, text);
+      return;
+    }
+  }
+
   switch(text) {
     case '📋 Пройти опрос':
     case '📋 Новый опрос':
@@ -567,6 +580,37 @@ async function handleTextCommands(ctx) {
       await settingsController.showReminderSettings(ctx);
       break;
 
+    case '🎯 Мои цели':
+      console.log('🎯 Показ управления целями');
+      await settingsController.showGoalsManagement(ctx);
+      break;
+
+    case '✏️ Изменить основную цель':
+      await settingsController.showEditMainGoal(ctx);
+      break;
+
+    case '📝 Добавить дополнительную цель':
+      await settingsController.showAddSecondaryGoal(ctx);
+      break;
+
+    case '🗑️ Удалить цели':
+      await settingsController.showDeleteGoalsConfirmation(ctx);
+      break;
+
+    case '✅ Да, удалить все цели':
+      await settingsController.confirmDeleteGoals(ctx);
+      break;
+
+    case '❌ Нет, оставить цели':
+    case '↩️ Назад к целям':
+      await settingsController.showGoalsManagement(ctx);
+      break;
+
+    case '❌ Отменить изменение':
+    case '❌ Отменить добавление':
+      await settingsController.showGoalsManagement(ctx);
+      break;
+
     case '🌅 Утренние напоминания':
       await settingsController.showTimePeriodSettings(ctx, 'morning');
       break;
@@ -605,6 +649,20 @@ async function handleTextCommands(ctx) {
     case '❌ Нет, отменить':
     case '↩️ Назад к настройкам':
       await settingsController.showReminderSettings(ctx);
+      break;
+
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+      const session = sessionManager.get(ctx.chat.id);
+      if (session && session.editingMainGoal) {
+        await settingsController.saveMainGoal(ctx, text);
+        return;
+      }
       break;
 
     default:

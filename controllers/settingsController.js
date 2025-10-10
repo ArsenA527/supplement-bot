@@ -2,6 +2,7 @@ const settingsService = require('../services/settingsService');
 const { getMainMenuKeyboard, getSettingsKeyboard, getTimeSettingsKeyboard } = require('../keyboards');
 const NotificationManager = require('../utils/notifications');
 const sessionManager = require('../utils/sessionManager');
+const goalService = require('../services/goalService');
 
 class SettingsController {
 
@@ -23,7 +24,7 @@ class SettingsController {
       reply_markup: {
         keyboard: [
           ['🌅 Утренние напоминания', '☀️ Дневные напоминания', '🌙 Вечерние напоминания'],
-          ['📊 Мои данные', '🏠 Главное меню']
+          ['📊 Мои данные', '🏠 Главное меню'],
         ],
         resize_keyboard: true
       }
@@ -145,6 +146,523 @@ class SettingsController {
         resize_keyboard: true
       }
     });
+  }
+
+  // 🎯 Мои цели - просмотр и редактирование
+  async showGoalsManagement(ctx) {
+    try {
+      const chatId = ctx.chat.id;
+      const goals = await goalService.getUserGoals(chatId);
+
+      let message = `🎯 *Мои цели*\n\n`;
+
+      message += `⭐ *Основная цель:*\n${goals.mainGoal}\n\n`;
+
+      if (goals.secondaryGoals && goals.secondaryGoals.length > 0) {
+        message += `📋 *Дополнительные цели:*\n`;
+        goals.secondaryGoals.forEach((goal, index) => {
+          message += `${index + 1}. ${goal}\n`;
+        });
+        message += `\n`;
+      }
+
+      message += `💡 *Что вы хотите сделать?*`;
+
+      await ctx.reply(message, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          keyboard: [
+            ['✏️ Изменить основную цель'],
+            ['📝 Добавить дополнительную цель'],
+            ['🗑️ Удалить цели'],
+            ['↩️ Назад к настройкам']
+          ],
+          resize_keyboard: true
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Ошибка загрузки целей:', error);
+      await ctx.reply(
+        '❌ Не удалось загрузить цели. Попробуйте позже.',
+        { parse_mode: 'Markdown' }
+      );
+    }
+  }
+
+  // 🎯 Получение списка целей из questions.js
+  getGoalOptions() {
+    try {
+      const questions = require('../data/questions');
+      // Ищем вопрос с main_goal в premium опроснике
+      const goalQuestion = questions.premium.find(q => q.key === 'main_goal');
+
+      if (goalQuestion && goalQuestion.options) {
+        return goalQuestion.options;
+      }
+
+      // Fallback - стандартные цели
+      return [
+        "Энергия и бодрость",
+        "Улучшение сна и восстановления",
+        "Снижение стресса и тревожности",
+        "Работа мозга и концентрация",
+        "Поддержка тестостерона и либидо",
+        "Укрепление иммунитета",
+        "Общее оздоровление и профилактика"
+      ];
+    } catch (error) {
+      console.error('❌ Ошибка загрузки целей из questions.js:', error);
+      // Fallback
+      return [
+        "Энергия и бодрость",
+        "Улучшение сна и восстановления",
+        "Снижение стресса и тревожности",
+        "Работа мозга и концентрация",
+        "Поддержка тестостерона и либидо",
+        "Укрепление иммунитета",
+        "Общее оздоровление и профилактика"
+      ];
+    }
+  }
+
+  // ✏️ Изменить основную цель
+  async showEditMainGoal(ctx) {
+    const goalOptions = this.getGoalOptions();
+
+    let message = `✏️ *Изменение основной цели*\n\n` +
+      `Выберите новую основную цель из списка:\n\n`;
+
+    goalOptions.forEach((goal, index) => {
+      message += `${index + 1}. ${goal}\n`;
+    });
+
+    message += `\n*Выберите номер цели:*`;
+
+    const keyboard = [];
+    const rowSize = 4;
+
+    for (let i = 0; i < goalOptions.length; i += rowSize) {
+      const row = goalOptions.slice(i, i + rowSize).map((_, index) => (i + index + 1).toString());
+      keyboard.push(row);
+    }
+
+    keyboard.push(['❌ Отменить изменение'], ['↩️ Назад к целям']);
+
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        keyboard: keyboard,
+        resize_keyboard: true
+      }
+    });
+
+    const sessionManager = require('../utils/sessionManager');
+    sessionManager.set(ctx.chat.id, {
+      editingMainGoal: true,
+      goalOptions: goalOptions,
+      timestamp: Date.now()
+    });
+  }
+
+  // 📝 Добавить дополнительную цель
+  async showAddSecondaryGoal(ctx) {
+    try {
+      const chatId = ctx.chat.id;
+      const currentGoals = await goalService.getUserGoals(chatId);
+
+      // Доступные дополнительные цели (исключая основную)
+      const availableGoals = this.getSecondaryGoalOptions().filter(goal =>
+        goal !== currentGoals.mainGoal &&
+        !currentGoals.secondaryGoals?.includes(goal)
+      );
+
+      if (availableGoals.length === 0) {
+        await ctx.reply(
+          'ℹ️ *Все доступные цели уже добавлены!*\n\n' +
+          'Вы можете удалить некоторые цели, чтобы добавить новые.',
+          { parse_mode: 'Markdown' }
+        );
+        return;
+      }
+
+      let message = `📝 *Добавление дополнительной цели*\n\n` +
+        `Выберите цель из списка (можно добавить до 5 целей):\n\n`;
+
+      availableGoals.forEach((goal, index) => {
+        message += `${index + 1}. ${goal}\n`;
+      });
+
+      message += `\n*Выберите номер цели:*`;
+
+      // Динамическая клавиатура
+      const keyboard = [];
+      const rowSize = 3;
+
+      for (let i = 0; i < availableGoals.length; i += rowSize) {
+        const row = availableGoals.slice(i, i + rowSize).map((_, index) => (i + index + 1).toString());
+        keyboard.push(row);
+      }
+
+      keyboard.push(['❌ Отменить добавление'], ['↩️ Назад к целям']);
+
+      await ctx.reply(message, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          keyboard: keyboard,
+          resize_keyboard: true
+        }
+      });
+
+      const sessionManager = require('../utils/sessionManager');
+      sessionManager.set(ctx.chat.id, {
+        addingSecondaryGoal: true,
+        availableGoals: availableGoals,
+        timestamp: Date.now()
+      });
+
+    } catch (error) {
+      console.error('❌ Ошибка показа добавления цели:', error);
+      await ctx.reply('❌ Ошибка загрузки целей. Попробуйте позже.');
+    }
+  }
+
+  // 🎯 Получение списка дополнительных целей
+  getSecondaryGoalOptions() {
+    try {
+      const questions = require('../data/questions');
+      const goalQuestion = questions.premium.find(q => q.key === 'main_goal');
+
+      if (goalQuestion && goalQuestion.options) {
+        return goalQuestion.options;
+      }
+
+      // Fallback
+      return [
+        "Энергия и бодрость",
+        "Улучшение сна и восстановления",
+        "Снижение стресса и тревожности",
+        "Работа мозга и концентрация",
+        "Поддержка тестостерона и либидо",
+        "Укрепление иммунитета",
+        "Общее оздоровление и профилактика",
+        "Улучшение состояния кожи",
+        "Укрепление суставов",
+        "Нормализация пищеварения",
+        "Повышение либидо",
+        "Улучшение памяти"
+      ];
+    } catch (error) {
+      console.error('❌ Ошибка загрузки дополнительных целей:', error);
+      return [
+        "Энергия и бодрость",
+        "Улучшение сна и восстановления",
+        "Снижение стресса и тревожности",
+        "Работа мозга и концентрация",
+        "Поддержка тестостерона и либидо",
+        "Укрепление иммунитета"
+      ];
+    }
+  }
+
+  // 🗑️ Удалить цели
+  async showDeleteGoalsConfirmation(ctx) {
+    const message = `🗑️ *Удаление целей*\n\n` +
+      `⚠️ *Внимание!* Это действие:\n` +
+      `• Удалить все ваши текущие цели\n` +
+      `• Сбросит прогресс по целям\n` +
+      `• Не затронет историю приема и настройки\n\n` +
+      `Цели будут восстановлены при следующем прохождении опроса.\n\n` +
+      `*Вы уверены, что хотите удалить все цели?*`;
+
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        keyboard: [
+          ['✅ Да, удалить все цели'],
+          ['❌ Нет, оставить цели'],
+          ['↩️ Назад к целям']
+        ],
+        resize_keyboard: true
+      }
+    });
+  }
+
+  // ✅ Подтверждение удаления целей
+  async confirmDeleteGoals(ctx) {
+    try {
+      const db = require('../config/database');
+
+      await new Promise((resolve, reject) => {
+        db.run('DELETE FROM user_goals WHERE chat_id = ?', [ctx.chat.id], (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+
+      await ctx.reply(
+        '✅ Все цели успешно удалены!\n\n' +
+        'Вы можете установить новые цели при следующем прохождении опроса или в настройках.',
+        { parse_mode: 'Markdown' }
+      );
+
+      // Возвращаемся к управлению целями
+      await this.showGoalsManagement(ctx);
+
+    } catch (error) {
+      console.error('❌ Ошибка удаления целей:', error);
+      await ctx.reply(
+        '❌ Не удалось удалить цели. Попробуйте позже.',
+        { parse_mode: 'Markdown' }
+      );
+    }
+  }
+
+  // 💾 Сохранение основной цели
+  async saveMainGoal(ctx, goalIndex) {
+    try {
+      const session = sessionManager.get(ctx.chat.id);
+      if (!session || !session.goalOptions) {
+        await ctx.reply('❌ Сессия устарела. Начните заново.');
+        return;
+      }
+
+      const goalNumber = parseInt(goalIndex);
+      if (isNaN(goalNumber) || goalNumber < 1 || goalNumber > session.goalOptions.length) {
+        await ctx.reply('❌ Пожалуйста, выберите номер из предложенного списка.');
+        return;
+      }
+
+      const newGoal = session.goalOptions[goalNumber - 1];
+      const chatId = ctx.chat.id;
+
+      // Сохраняем новую цель в БД
+      const db = require('../config/database');
+      await new Promise((resolve, reject) => {
+        db.run(
+          `INSERT OR REPLACE INTO user_goals (chat_id, main_goal, secondary_goals, updated_at)
+          VALUES (?, ?, ?, datetime('now'))`,
+          [chatId, newGoal, '[]'], // Очищаем второстепенные цели при смене основной
+          (err) => {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+
+      const recommendationsUpdated = await this.updateRecommendationsBasedOnNewGoal(chatId, newGoal);
+
+      let message = `✅ Основная цель обновлена!\n\n` +
+        `🎯 *Новая цель:* ${newGoal}\n\n`;
+
+      if (recommendationsUpdated) {
+        message += `📋 *Ваши рекомендации были пересчитаны* с учетом новой цели.\n` +
+                  `💊 Проверьте раздел "Мои рекомендации" для просмотра обновленного плана!`;
+      } else {
+        message += `ℹ️ *Рекомендации не были обновлены* (нет данных опроса).\n` +
+                  `Пройдите опрос заново для получения актуальных рекомендаций.`;
+      }
+
+      await ctx.reply(message, { parse_mode: 'Markdown' });
+
+      // Очищаем сессию
+      sessionManager.delete(chatId);
+
+      // Возвращаемся к управлению целями
+      await this.showGoalsManagement(ctx);
+
+    } catch (error) {
+      console.error('❌ Ошибка сохранения цели:', error);
+      await ctx.reply(
+        '❌ Не удалось сохранить цель. Попробуйте позже.',
+        { parse_mode: 'Markdown' }
+      );
+    }
+  }
+
+  async updateRecommendationsBasedOnNewGoal(chatId, newGoal) {
+    try {
+      const surveyService = require('../services/surveyService');
+      const recommendationService = require('../services/recommendationService');
+      const reminderService = require('../services/reminderService');
+
+      console.log(`🔄 Начинаю обновление рекомендаций для ${chatId} с целью: ${newGoal}`);
+
+      // Получаем текущие ответы из опроса
+      const currentAnswers = await surveyService.getSurveyResults(chatId);
+
+      if (!currentAnswers || Object.keys(currentAnswers).length === 0) {
+        console.log('❌ Нет данных опроса для обновления рекомендаций');
+        return false;
+      }
+
+      console.log('📋 Текущие ответы:', Object.keys(currentAnswers).length, 'полей');
+
+      // Обновляем цель в ответах
+      const oldGoal = currentAnswers.main_goal;
+      currentAnswers.main_goal = newGoal;
+
+      console.log(`🎯 Цель изменена: "${oldGoal}" → "${newGoal}"`);
+
+      const db = require('../config/database');
+      await new Promise((resolve, reject) => {
+        db.run(
+          `UPDATE users SET answers = ? WHERE chat_id = ?`,
+          [JSON.stringify(currentAnswers), chatId],
+          (err) => {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+
+      console.log('💾 Ответы сохранены в БД');
+
+      const newRecommendations = recommendationService.generateRecommendations(currentAnswers);
+      console.log(`💊 Сгенерировано ${newRecommendations.length} новых рекомендаций`);
+
+      const service = new reminderService();
+      await service.clearUserReminders(chatId);
+      console.log('🗑️ Старые напоминания очищены');
+
+      const subscriptionService = require('../services/subscriptionService');
+      const isPremium = await subscriptionService.isSubscriptionActive(chatId);
+
+      if (isPremium && newRecommendations.length > 0) {
+        const createdCount = await this.createRemindersFromRecommendationsDirectly(chatId, newRecommendations);
+        console.log(`⏰ Создано ${createdCount} новых напоминаний`);
+      } else {
+        console.log('ℹ️ Пользователь не premium или нет рекомендаций для напоминаний');
+      }
+
+      console.log(`✅ Рекомендации успешно обновлены для пользователя ${chatId}`);
+      return true;
+
+    } catch (error) {
+      console.error('❌ Ошибка обновления рекомендаций:', error);
+      throw error;
+    }
+  }
+
+  // 🔧 Создание напоминаний напрямую (без ctx)
+  async createRemindersFromRecommendationsDirectly(chatId, recommendations) {
+    try {
+      const reminderService = require('../services/reminderService');
+      const settingsService = require('../services/settingsService');
+      const service = new reminderService();
+
+      const settings = await settingsService.getUserSettings(chatId);
+
+      let createdCount = 0;
+
+      for (const supplement of recommendations) {
+        let time;
+        if (supplement.period && settings[`${supplement.period}_time`]) {
+          time = settings[`${supplement.period}_time`];
+        } else {
+          time = this.getSmartTimeForSupplement(supplement, settings);
+        }
+
+        try {
+          await service.createReminder(chatId, {
+            supplement_name: supplement.name,
+            dosage: supplement.dosage,
+            time: time,
+            days: '1111111'
+          });
+          createdCount++;
+
+        } catch (error) {
+          console.error('❌ Ошибка создания напоминания:', error);
+        }
+      }
+
+      console.log(`✅ Создано ${createdCount} напоминаний для пользователя ${chatId}`);
+      return createdCount;
+
+    } catch (error) {
+      console.error('❌ Ошибка создания напоминаний:', error);
+      return 0;
+    }
+  }
+
+  // ⏰ Умное распределение времени (переносим из reminderController)
+  getSmartTimeForSupplement(supplement, settings) {
+    const name = supplement.name.toLowerCase();
+
+    if (name.includes('тирозин') || name.includes('родиола')) {
+      return settings.morning_time || '08:00';
+    } else if (name.includes('магний') || name.includes('ашваганда')) {
+      return settings.evening_time || '20:00';
+    } else if (name.includes('омега') || name.includes('цинк')) {
+      return settings.afternoon_time || '13:00';
+    } else {
+      return settings.morning_time || '08:00';
+    }
+  }
+
+  // 💾 Добавление дополнительной цели
+  async addSecondaryGoal(ctx, newGoal) {
+    try {
+      const goals = await goalService.getUserGoals(ctx.chat.id);
+      const secondaryGoals = goals.secondaryGoals || [];
+
+      // Проверяем, нет ли уже такой цели
+      if (secondaryGoals.includes(newGoal)) {
+        await ctx.reply(
+          'ℹ️ Эта цель уже есть в вашем списке!',
+          { parse_mode: 'Markdown' }
+        );
+        return;
+      }
+
+      // Добавляем новую цель (ограничиваем до 5 целей)
+      if (secondaryGoals.length >= 5) {
+        await ctx.reply(
+          '⚠️ У вас уже максимальное количество дополнительных целей (5).\n\n' +
+          'Удалите некоторые цели, чтобы добавить новые.',
+          { parse_mode: 'Markdown' }
+        );
+        return;
+      }
+
+      secondaryGoals.push(newGoal);
+
+      // Сохраняем в БД
+      const db = require('../config/database');
+      await new Promise((resolve, reject) => {
+        db.run(
+          `INSERT OR REPLACE INTO user_goals (chat_id, main_goal, secondary_goals, updated_at)
+          VALUES (?, ?, ?, datetime('now'))`,
+          [ctx.chat.id, goals.mainGoal, JSON.stringify(secondaryGoals)],
+          (err) => {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+
+      await ctx.reply(
+        `✅ Дополнительная цель добавлена!\n\n` +
+        `🎯 *Новая цель:* ${newGoal}\n\n` +
+        `Теперь у вас ${secondaryGoals.length} дополнительных целей.`,
+        { parse_mode: 'Markdown' }
+      );
+
+      // Очищаем сессию
+      const sessionManager = require('../utils/sessionManager');
+      sessionManager.delete(ctx.chat.id);
+
+      // Возвращаемся к управлению целями
+      await this.showGoalsManagement(ctx);
+
+    } catch (error) {
+      console.error('❌ Ошибка добавления цели:', error);
+      await ctx.reply(
+        '❌ Не удалось добавить цель. Попробуйте позже.',
+        { parse_mode: 'Markdown' }
+      );
+    }
   }
 
   // 📁 Экспорт данных
