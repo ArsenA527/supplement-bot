@@ -644,6 +644,52 @@ async function handleTextCommands(ctx) {
       await settingsController.handleEditAllReminders(ctx, text);
       break;
 
+
+    // Обработчики для управления напоминаниями
+    case '⏰ Изменить время':
+      if (session && session.currentReminder) {
+        await settingsController.showTimeSelectionForReminder(
+          ctx,
+          session.currentReminder,
+          session.managingPeriod
+        );
+      }
+      break;
+
+    case '🗑️ Удалить напоминание':
+      const sessionDel = sessionManager.get(ctx.chat.id);
+      if (sessionDel && sessionDel.currentReminder) {
+        await settingsController.showDeleteReminderConfirmation(
+          ctx,
+          sessionDel.currentReminder,
+          sessionDel.managingPeriod
+        );
+      }
+      break;
+
+    case '✅ Да, удалить напоминание':
+      await settingsController.confirmDeleteReminder(ctx);
+      break;
+
+    case '❌ Нет, оставить напоминание':
+    case '❌ Отменить изменение':
+      const sessionCancel = sessionManager.get(ctx.chat.id);
+      if (sessionCancel && sessionCancel.managingPeriod) {
+        await settingsController.showPeriodReminders(ctx, sessionCancel.managingPeriod);
+      }
+      break;
+
+    // Обработка выбора времени для напоминания
+    case '06:00': case '07:00': case '08:00': case '09:00': case '10:00': case '11:00':
+    case '12:00': case '13:00': case '14:00': case '15:00': case '16:00': case '17:00':
+    case '18:00': case '19:00': case '20:00': case '21:00': case '22:00':
+      const timeSession = sessionManager.get(ctx.chat.id);
+      if (timeSession && timeSession.changingReminderTime) {
+        await settingsController.saveReminderTime(ctx, text);
+        return;
+      }
+      break;
+
     case '📊 Мои данные':
       console.log('📊 Управление данными');
       await settingsController.showDataManagement(ctx);
