@@ -618,15 +618,30 @@ async function handleTextCommands(ctx) {
       break;
 
     case '🌅 Утренние напоминания':
-      await settingsController.showTimePeriodSettings(ctx, 'morning');
+      console.log('🌅 Показ утренних напоминаний');
+      await settingsController.showPeriodReminders(ctx, 'morning');
       break;
 
     case '☀️ Дневные напоминания':
-      await settingsController.showTimePeriodSettings(ctx, 'afternoon');
+      console.log('☀️ Показ дневных напоминаний');
+      await settingsController.showPeriodReminders(ctx, 'afternoon');
       break;
 
     case '🌙 Вечерние напоминания':
-      await settingsController.showTimePeriodSettings(ctx, 'evening');
+      console.log('🌙 Показ вечерних напоминаний');
+      await settingsController.showPeriodReminders(ctx, 'evening');
+      break;
+
+    case text.startsWith('✏️ Изменить утреннее напоминание') ? text : '':
+    case text.startsWith('✏️ Изменить дневное напоминание') ? text : '':
+    case text.startsWith('✏️ Изменить вечернее напоминание') ? text : '':
+      await settingsController.handleEditIndividualReminder(ctx, text);
+      break;
+
+    case text.startsWith('🔄 Изменить все утренние напоминания') ? text : '':
+    case text.startsWith('🔄 Изменить все дневные напоминания') ? text : '':
+    case text.startsWith('🔄 Изменить все вечерние напоминания') ? text : '':
+      await settingsController.handleEditAllReminders(ctx, text);
       break;
 
     case '📊 Мои данные':
