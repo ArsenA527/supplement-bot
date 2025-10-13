@@ -156,23 +156,34 @@ class SettingsController {
         return;
       }
 
-      // Извлекаем номер напоминания из текста
-      const reminderNumber = this.extractReminderNumber(text);
-      if (!reminderNumber || reminderNumber > session.periodReminders.length) {
-        await ctx.reply('❌ Неверный номер напоминания.');
+      const reminder = this.findReminderByButtonText(session.periodReminders, text);
+      if (!reminder) {
+        await ctx.reply('❌ Не удалось найти напоминание.');
         return;
       }
 
-      const reminder = session.periodReminders[reminderNumber - 1];
       const period = session.managingPeriod;
       const periodLabel = this.getPeriodLabel(period).toLowerCase();
 
-      await this.showReminderOptions(ctx, reminder, period, reminderNumber);
+      await this.showReminderOptions(ctx, reminder, period);
 
     } catch (error) {
       console.error('❌ Ошибка редактирования напоминания:', error);
       await ctx.reply('❌ Ошибка загрузки настроек напоминания.');
     }
+  }
+
+  // 🔍 Поиск напоминания по тексту кнопки
+  findReminderByButtonText(reminders, buttonText) {
+    const match = buttonText.match(/✏️ (.+?) \(\d{2}:\d{2}\)/);
+    if (!match) return null;
+
+    const searchName = match[1];
+
+    return reminders.find(reminder =>
+      reminder.supplement_name.includes(searchName) ||
+      searchName.includes(reminder.supplement_name)
+    );
   }
 
   // 🔄 Обработка массового изменения напоминаний
