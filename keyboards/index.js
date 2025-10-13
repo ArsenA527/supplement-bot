@@ -51,7 +51,7 @@ function getQuestionKeyboard(question, progress = { current: 0, total: 0 }) {
   };
 }
 
-// Клавиатура действий для напоминаний
+// Клавиатура действий для напоминаний (УПРОЩЕННАЯ ВЕРСИЯ)
 function getReminderActionsKeyboard(reminderId) {
   return {
     reply_markup: {
@@ -66,54 +66,11 @@ function getReminderActionsKeyboard(reminderId) {
             text: '⏰ Через 10 мин',
             callback_data: `intake_later_${reminderId}`,
             emoji: '⏰'
-          }
-        ],
-        [
+          },
           {
             text: '❌ Пропустить',
             callback_data: `intake_skipped_${reminderId}`,
             emoji: '❌'
-          },
-          {
-            text: '⚙️ Настройки',
-            callback_data: `reminder_settings_${reminderId}`,
-            emoji: '⚙️'
-          }
-        ]
-      ]
-    }
-  };
-}
-
-// Клавиатура настроек для конкретного напоминания
-function getReminderSettingsKeyboard(reminderId) {
-  return {
-    reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text: '⏸️ Временно отключить',
-            callback_data: `reminder_disable_${reminderId}`,
-            emoji: '⏸️'
-          },
-          {
-            text: '⏰ Изменить время',
-            callback_data: `reminder_change_time_${reminderId}`,
-            emoji: '⏰'
-          }
-        ],
-        [
-          {
-            text: '🗑️ Удалить напоминание',
-            callback_data: `reminder_delete_${reminderId}`,
-            emoji: '🗑️'
-          }
-        ],
-        [
-          {
-            text: '↩️ Назад',
-            callback_data: `reminder_back_${reminderId}`,
-            emoji: '↩️'
           }
         ]
       ]
