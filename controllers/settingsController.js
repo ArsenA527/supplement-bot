@@ -263,6 +263,83 @@ class SettingsController {
     return labels[period] || 'Напоминаний';
   }
 
+  // ⏰ Показать выбор времени для напоминания
+  async showTimeSelectionForReminder(ctx, reminder, period) {
+    const timeSlots = this.getTimeSlotsByPeriod(period);
+    const periodLabel = this.getPeriodLabel(period).toLowerCase();
+
+    const message = `⏰ *Изменение времени для ${reminder.supplement_name}*\n\n` +
+      `Текущее время: ${reminder.time}\n\n` +
+      `Выберите новое время:`;
+
+    // Создаем клавиатуру с временными слотами
+    const keyboard = [];
+    for (let i = 0; i < timeSlots.length; i += 3) {
+      keyboard.push(timeSlots.slice(i, i + 3));
+    }
+
+    keyboard.push(['❌ Отменить изменение']);
+    keyboard.push([`↩️ Назад к ${periodLabel} напоминаниям`]);
+
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        keyboard: keyboard,
+        resize_keyboard: true
+      }
+    });
+
+    // Сохраняем состояние изменения времени
+    const sessionManager = require('../utils/sessionManager');
+    sessionManager.set(ctx.chat.id, {
+      ...sessionManager.get(ctx.chat.id),
+      changingReminderTime: true,
+      currentReminder: reminder
+    });
+  }
+
+  // 💾 Сохранение нового времени напоминания
+  async saveReminderTime(ctx, newTime) {
+    try {
+      const session = sessionManager.get(ctx.chat.id);
+      if (!session || !session.currentReminder) {
+        await ctx.reply('❌ Сессия устарела. Начните заново.');
+        return;
+      }
+
+      const reminder = session.currentReminder;
+
+      // Обновляем время в БД
+      const db = require('../config/database');
+      await new Promise((resolve, reject) => {
+        db.run(
+          'UPDATE reminders SET time = ? WHERE id = ?',
+          [newTime, reminder.id],
+          function(err) {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+
+      await ctx.reply(
+        `✅ Время напоминания обновлено!\n\n` +
+        `💊 ${reminder.supplement_name}\n` +
+        `⏰ ${reminder.time} → ${newTime}\n` +
+        `📏 ${reminder.dosage}`,
+        { parse_mode: 'Markdown' }
+      );
+
+      // Очищаем состояние и возвращаемся к списку напоминаний
+      sessionManager.delete(ctx.chat.id);
+      await this.showPeriodReminders(ctx, session.managingPeriod);
+
+    } catch (error) {
+      console.error('❌ Ошибка обновления времени:', error);
+      await ctx.reply('❌ Не удалось обновить время. Попробуйте позже.');
+    }
+  }
+
   // 🔔 Управление уведомлениями
   async showNotificationSettings(ctx) {
     const settings = await settingsService.getUserSettings(ctx.chat.id);
