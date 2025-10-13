@@ -61,6 +61,90 @@ class SettingsController {
     console.log(`⏰ Пользователь ${ctx.chat.id} выбирает время для периода: ${period}`);
   }
 
+  // 🌅 Показать напоминания по периодам
+  async showPeriodReminders(ctx, period) {
+    try {
+      const chatId = ctx.chat.id;
+      const reminderService = require('../services/reminderService');
+      const service = new reminderService();
+
+      // Получаем все напоминания пользователя
+      const allReminders = await service.getUserReminders(chatId);
+
+      // Фильтруем напоминания по периоду
+      const periodReminders = this.filterRemindersByPeriod(allReminders, period);
+
+      const periodLabel = this.getPeriodLabel(period);
+      const periodLabelLower = periodLabel.toLowerCase();
+
+      if (periodReminders.length === 0) {
+        await ctx.reply(
+          `📭 *У вас нет ${periodLabelLower} напоминаний*\n\n` +
+          `Сначала создайте напоминания через опрос, затем вы сможете ими управлять здесь.`,
+          { parse_mode: 'Markdown' }
+        );
+        await this.showReminderSettings(ctx);
+        return;
+      }
+
+      let message = `🌅 *Ваши ${periodLabelLower} напоминания*\n\n`;
+
+      // Показываем список напоминаний
+      periodReminders.forEach((reminder, index) => {
+        message += `${index + 1}. ${reminder.supplement_name}\n`;
+        message += `   ⏰ ${reminder.time} | 📏 ${reminder.dosage}\n\n`;
+      });
+
+      // Создаем клавиатуру
+      const keyboard = [];
+
+      // Кнопки для каждого напоминания
+      periodReminders.forEach((reminder, index) => {
+        keyboard.push([`✏️ Изменить ${periodLabelLower} напоминание ${index + 1}`]);
+      });
+
+      // Кнопка для массового изменения
+      keyboard.push([`🔄 Изменить все ${periodLabelLower} напоминания`]);
+      keyboard.push(['↩️ Назад к настройкам']);
+
+      await ctx.reply(message, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          keyboard: keyboard,
+          resize_keyboard: true
+        }
+      });
+
+      // Сохраняем контекст для дальнейшей обработки
+      const sessionManager = require('../utils/sessionManager');
+      sessionManager.set(ctx.chat.id, {
+        managingPeriod: period,
+        periodReminders: periodReminders,
+        timestamp: Date.now()
+      });
+
+    } catch (error) {
+      console.error(`❌ Ошибка загрузки ${period} напоминаний:`, error);
+      await ctx.reply('❌ Ошибка загрузки напоминаний. Попробуйте позже.');
+    }
+  }
+
+  // 🕒 Фильтрация напоминаний по периоду
+  filterRemindersByPeriod(reminders, period) {
+    const timeRanges = {
+      morning: { start: '06:00', end: '11:00' },
+      afternoon: { start: '12:00', end: '17:00' },
+      evening: { start: '18:00', end: '22:00' }
+    };
+
+    const range = timeRanges[period];
+
+    return reminders.filter(reminder => {
+      const time = reminder.time;
+      return time >= range.start && time <= range.end;
+    }).sort((a, b) => a.time.localeCompare(b.time)); // Сортируем по времени
+  }
+
   // Группировка временных слотов по периодам
   getTimeSlotsByPeriod(period) {
     const slots = {
