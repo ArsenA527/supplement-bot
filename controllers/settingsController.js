@@ -68,10 +68,7 @@ class SettingsController {
       const reminderService = require('../services/reminderService');
       const service = new reminderService();
 
-      // Получаем все напоминания пользователя
       const allReminders = await service.getUserReminders(chatId);
-
-      // Фильтруем напоминания по периоду
       const periodReminders = this.filterRemindersByPeriod(allReminders, period);
 
       const periodLabel = this.getPeriodLabel(period);
@@ -100,7 +97,12 @@ class SettingsController {
 
       // Кнопки для каждого напоминания
       periodReminders.forEach((reminder, index) => {
-        keyboard.push([`✏️ Изменить ${periodLabelLower} напоминание ${index + 1}`]);
+        // Сокращаем длинные названия для кнопки
+        const shortName = reminder.supplement_name.length > 20
+          ? reminder.supplement_name.substring(0, 17) + '...'
+          : reminder.supplement_name;
+
+        keyboard.push([`✏️ ${shortName} (${reminder.time})`]);
       });
 
       // Кнопка для массового изменения
@@ -243,9 +245,9 @@ class SettingsController {
 
   getPeriodLabel(period) {
     const labels = {
-      morning: '🌅 Утренних',
-      afternoon: '☀️ Дневных',
-      evening: '🌙 Вечерних'
+      morning: '🌅 Утренние',
+      afternoon: '☀️ Дневные',
+      evening: '🌙 Вечерние'
     };
     return labels[period] || 'Напоминаний';
   }
