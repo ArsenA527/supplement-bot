@@ -27,7 +27,6 @@ class Logger {
     };
     const logLine = JSON.stringify(logEntry);
 
-    // Консоль (красиво)
     const colors = {
       info: '\x1b[36m',    // cyan
       error: '\x1b[31m',   // red
@@ -37,7 +36,6 @@ class Logger {
 
     console.log(`${colors[level] || ''}[${timestamp}] ${level.toUpperCase()}: ${message}\x1b[0m`);
 
-    // Файл (JSON)
     const logFile = path.join(this.logDir, `${level}.log`);
     fs.appendFileSync(logFile, logLine + '\n');
   }

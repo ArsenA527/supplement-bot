@@ -27,7 +27,6 @@ class MotivationService {
     };
   }
 
-  // Получить мотивационное сообщение based на статистике
   async getMotivationalMessage(chatId) {
     try {
       const reminderService = require('./reminderService');
@@ -41,7 +40,6 @@ class MotivationService {
 
       let message = '';
 
-      // Based на проценте соблюдения
       if (weeklyStats.compliance >= 90) {
         message = this.getRandomMessage('high_compliance');
       } else if (weeklyStats.compliance >= 70) {
@@ -50,7 +48,6 @@ class MotivationService {
         message = this.getRandomMessage('low_compliance');
       }
 
-      // Добавляем сообщение о серии
       if (progress.weekly.streak > 0) {
         const streakMessage = this.motivationalMessages.streak_milestones[progress.weekly.streak];
         if (streakMessage) {
@@ -58,7 +55,6 @@ class MotivationService {
         }
       }
 
-      // Добавляем статистику
       message += `\n\n📊 Ваша статистика: ${weeklyStats.compliance}% соблюдения, серия: ${progress.weekly.streak} дней`;
 
       return message;
@@ -74,7 +70,6 @@ class MotivationService {
     return messages[Math.floor(Math.random() * messages.length)];
   }
 
-  // Отправить еженедельный мотивационный отчет
   async sendWeeklyMotivation(ctx) {
     try {
       const message = await this.getMotivationalMessage(ctx.chat.id);

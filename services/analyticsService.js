@@ -154,7 +154,6 @@ class AnalyticsService {
   }
 
   formatDailyReport(metrics) {
-    // Проверяем что metrics существует и имеет данные
     if (!metrics || Object.keys(metrics).length === 0) {
       return '📊 *ЕЖЕДНЕВНЫЙ ОТЧЕТ*\n\n❌ Данных за сегодня еще нет';
     }
@@ -184,7 +183,6 @@ class AnalyticsService {
   }
 
   getTrendEmoji(metrics) {
-    // Простая логика для трендов (можно улучшить)
     return metrics.newUsers > 0 ? '📈' : '📉';
   }
 
@@ -285,7 +283,6 @@ class AnalyticsService {
             logger.error('Ошибка получения добавок', { error: err.message });
             resolve([]);
           } else {
-            // Группируем по количеству рекомендаций
             const distribution = {};
             rows.forEach(row => {
               const count = row.count || 0;
@@ -300,9 +297,8 @@ class AnalyticsService {
 
   // 👤 УДОВЛЕТВОРЕННОСТЬ ПОЛЬЗОВАТЕЛЕЙ (заглушка)
   async getUserSatisfaction() {
-    // Пока возвращаем заглушку, можно добавить систему оценок позже
     return {
-      estimated_satisfaction: 85, // в процентах
+      estimated_satisfaction: 85,
       based_on: 'completion_rate_and_retention'
     };
   }
@@ -314,7 +310,7 @@ class AnalyticsService {
         return null;
       }
 
-      const metrics = await this.getKeyMetrics(1); // За последние 24 часа
+      const metrics = await this.getKeyMetrics(1);
 
       if (!metrics || Object.keys(metrics).length === 0) {
         logger.warn('Нет данных для ежедневного отчета');

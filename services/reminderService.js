@@ -31,13 +31,11 @@ class ReminderService {
 
     console.log('⏰ Инициализация упрощенного сервиса напоминаний...');
 
-    // Проверяем доступность Telegram client
     if (!this.telegram) {
       console.error('❌ Telegram client не доступен при инициализации!');
       return false;
     }
 
-    // Останавливаем предыдущий интервал если был
     if (this.checkInterval) {
       clearInterval(this.checkInterval);
       this.checkInterval = null;
@@ -54,12 +52,9 @@ class ReminderService {
   async startEnhancedReminderChecker() {
     console.log('🔍 Запуск проверщика напоминаний...');
 
-    // Проверяем напоминания сразу при старте
     await this.checkDueReminders();
 
-    // Затем каждые 30 секунд с защитой от наложения
     this.checkInterval = setInterval(async () => {
-      // Проверяем что предыдущая проверка завершилась
       if (!this.checkInProgress) {
         this.checkInProgress = true;
         try {
@@ -72,19 +67,17 @@ class ReminderService {
       } else {
         console.log('⚠️ Проверка напоминаний уже выполняется, пропускаем...');
       }
-    }, 30000); // 30 секунд
+    }, 30000);
 
     console.log('✅ Улучшенный проверщик напоминаний запущен');
   }
 
-  // Проверить due напоминания
   async checkDueReminders() {
     try {
       const now = new Date();
-      const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
-      const currentDay = now.getDay(); // 0-6 (воскресенье-суббота)
+      const currentTime = now.toTimeString().slice(0, 5);
+      const currentDay = now.getDay();
 
-      // Логируем только если время изменилось
       if (!this.lastCheckTime || this.lastCheckTime !== currentTime) {
         console.log(`🔍 Проверка напоминаний для: ${currentTime}, день: ${currentDay}`);
         this.lastCheckTime = currentTime;
@@ -113,10 +106,8 @@ class ReminderService {
     const normalizedCurrentTime = TimeHelper.normalizeTime(currentTime);
 
     return new Promise((resolve) => {
-      // Конвертируем день недели в формат базы (1-7, где 1=понедельник)
       const dbDayIndex = currentDay === 0 ? 7 : currentDay;
 
-      // Ищем напоминания с точным временем И которые активны
       db.all(
         `SELECT r.*
          FROM reminders r
@@ -129,7 +120,7 @@ class ReminderService {
            AND ih.supplement_name = r.supplement_name
            AND DATE(ih.taken_at) = DATE('now')
            AND ih.status = 'taken'
-         )`, // Не показываем если уже приняли сегодня
+         )`,
         [normalizedCurrentTime, dbDayIndex],
         (err, reminders) => {
           if (err) {
@@ -146,7 +137,6 @@ class ReminderService {
   // Отправить напоминание сразу
   async sendReminderNow(reminder) {
     try {
-      // 🔒 ЗАЩИТА ОТ ДУБЛИРОВАНИЯ - проверяем не отправляли ли уже это напоминание
       const reminderKey = `sent_${reminder.chat_id}_${reminder.supplement_name}_${reminder.time}`;
 
       if (global.sentReminders && global.sentReminders[reminderKey]) {
@@ -154,25 +144,21 @@ class ReminderService {
         return false;
       }
 
-      // Помечаем как отправленное
       if (!global.sentReminders) global.sentReminders = {};
       global.sentReminders[reminderKey] = Date.now();
 
-      // Очищаем через 5 минут (на случай если бот перезапустится)
       setTimeout(() => {
         if (global.sentReminders && global.sentReminders[reminderKey]) {
           delete global.sentReminders[reminderKey];
         }
       }, 5 * 60 * 1000);
 
-      // Проверяем разрешены ли уведомления
       const canSend = await this.canSendNotification(reminder.chat_id);
       if (!canSend) {
         console.log(`🔕 Уведомления отключены для пользователя ${reminder.chat_id}`);
         return false;
       }
 
-      // Проверяем не отправляли ли уже напоминание сегодня
       const alreadySent = await this.checkIfReminderSentToday(reminder);
       if (alreadySent) {
         console.log(`⚠️ Напоминание уже отправлено сегодня: ${reminder.supplement_name}`);
@@ -197,14 +183,12 @@ class ReminderService {
 
       console.log(`✅ Отправлено напоминание пользователю ${reminder.chat_id}: ${reminder.supplement_name}`);
 
-      // Помечаем как отправленное сегодня
       await this.markReminderSent(reminder);
       return true;
 
     } catch (error) {
       console.error('❌ Ошибка отправки напоминания:', error);
 
-      // Если пользователь заблокировал бота, деактивируем напоминание
       if (error.response && error.response.error_code === 403) {
         console.log(`🚫 Пользователь ${reminder.chat_id} заблокировал бота, деактивируем напоминания`);
         await this.deactivateUserReminders(reminder.chat_id);
@@ -414,13 +398,12 @@ class ReminderService {
     console.log('✅ Сервис напоминаний остановлен');
   }
 
-  // Умное распределение времени напоминаний
   async optimizeReminderTimes(chatId, supplements) {
     const existingReminders = await this.getUserReminders(chatId);
     const usedTimes = new Set(existingReminders.map(r => r.time));
 
     const optimizedSchedule = [];
-    const timeSlots = ['08:00', '12:00', '18:00', '20:00']; // Оптимальные слоты
+    const timeSlots = ['08:00', '12:00', '18:00', '20:00'];
 
     supplements.forEach(supplement => {
       let bestTime = this.findBestTime(supplement, usedTimes, timeSlots);
@@ -438,22 +421,18 @@ class ReminderService {
   findBestTime(supplement, usedTimes, availableSlots) {
     const name = supplement.name.toLowerCase();
 
-    // Утренние добавки (энергия, витамины)
     if (name.includes('витамин') || name.includes('коэнзим') || name.includes('энергия')) {
       return this.findAvailableTime('08:00', usedTimes, availableSlots);
     }
 
-    // Дневные (с едой)
     if (name.includes('омега') || name.includes('железо') || name.includes('цинк')) {
       return this.findAvailableTime('12:00', usedTimes, availableSlots);
     }
 
-    // Вечерние (сон, релакс)
     if (name.includes('магний') || name.includes('мелатонин') || name.includes('глицин')) {
       return this.findAvailableTime('20:00', usedTimes, availableSlots);
     }
 
-    // По умолчанию - первое свободное время
     return this.findAvailableTime('10:00', usedTimes, availableSlots);
   }
 
@@ -464,7 +443,7 @@ class ReminderService {
       return settings.allow_notifications;
     } catch (error) {
       console.error('❌ Ошибка проверки настроек уведомлений:', error);
-      return true; // По умолчанию разрешаем
+      return true;
     }
   }
 }

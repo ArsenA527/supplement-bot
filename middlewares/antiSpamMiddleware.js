@@ -1,4 +1,3 @@
-// /middlewares/antiSpamMiddleware.js
 const antiSpam = require('../utils/antiSpam');
 
 function withAntiSpam(handler, actionType = 'default') {
@@ -19,10 +18,7 @@ function withAntiSpam(handler, actionType = 'default') {
 
     try {
       await handler(ctx);
-    } finally {
-      // Не освобождаем сразу - защита на все время timeoutMs
-      // antiSpam.release(chatId, requestKey);
-    }
+    } finally { }
   };
 }
 

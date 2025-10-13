@@ -28,8 +28,6 @@ function getMainMenuKeyboard(isPremium = false) {
 function getQuestionKeyboard(question, progress = { current: 0, total: 0 }) {
   if (!question.options) return null;
 
-
-  // Для множественного выбора - особый формат
   const keyboard = question.options.map((option, index) => [
     {
       text: `${index + 1}. ${option}`,
@@ -37,7 +35,6 @@ function getQuestionKeyboard(question, progress = { current: 0, total: 0 }) {
     }
   ])
 
-  // Кнопка отмены и прогресс
   const progressText = `📊 ${progress.current}/${progress.total}`;
   keyboard.push([
     { text: '❌ Отменить опрос', callback_data: 'cancel_survey' },
@@ -152,7 +149,6 @@ function getSettingsKeyboard() {
 // Клавиатура после завершения опроса
 function getSurveyCompletionKeyboard(isPremium = false) {
   const buttons = [
-    // [{ text: '💊 Посмотреть рекомендации', callback_data: 'view_recommendations' }],
     [{ text: '🔄 Пройти заново', callback_data: 'restart_survey' }]
   ];
 

@@ -10,7 +10,6 @@ class SessionManager {
     console.log(`💾 GET session for ${chatId}:`, session ? 'EXISTS' : 'NULL');
 
     if (session && Date.now() - session.lastUpdated > 30 * 60 * 1000) {
-      // Сессия устарела (30 минут)
       this.delete(chatId);
       return null;
     }
