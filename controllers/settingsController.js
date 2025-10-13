@@ -53,7 +53,6 @@ class SettingsController {
       }
     });
 
-    // 🔥 СОХРАНЯЕМ В МЕНЕДЖЕР СЕССИЙ
     sessionManager.set(ctx.chat.id, {
       waitingForTimePeriod: period,
       timestamp: Date.now()

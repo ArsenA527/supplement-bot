@@ -471,6 +471,13 @@ async function handleTextCommands(ctx) {
 
   const session = sessionManager.get(ctx.chat.id);
 
+  if (text === '↩️ Назад к настройкам') {
+    console.log('↩️ Принудительный возврат к настройкам');
+    sessionManager.delete(ctx.chat.id); // Очищаем состояние ВЫБОРА ВРЕМЕНИ
+    await settingsController.showReminderSettings(ctx);
+    return;
+  }
+
   // Если пользователь выбирает время
   if (session && session.waitingForTimePeriod) {
     console.log(`⏰ Пользователь выбирает время для ${session.waitingForTimePeriod}: ${text}`);
