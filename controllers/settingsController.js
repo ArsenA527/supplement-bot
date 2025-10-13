@@ -145,6 +145,91 @@ class SettingsController {
     }).sort((a, b) => a.time.localeCompare(b.time)); // Сортируем по времени
   }
 
+  // ✏️ Обработка редактирования отдельного напоминания
+  async handleEditIndividualReminder(ctx, text) {
+    try {
+      const session = sessionManager.get(ctx.chat.id);
+      if (!session || !session.periodReminders) {
+        await ctx.reply('❌ Сессия устарела. Вернитесь в настройки напоминаний.');
+        return;
+      }
+
+      // Извлекаем номер напоминания из текста
+      const reminderNumber = this.extractReminderNumber(text);
+      if (!reminderNumber || reminderNumber > session.periodReminders.length) {
+        await ctx.reply('❌ Неверный номер напоминания.');
+        return;
+      }
+
+      const reminder = session.periodReminders[reminderNumber - 1];
+      const period = session.managingPeriod;
+      const periodLabel = this.getPeriodLabel(period).toLowerCase();
+
+      await this.showReminderOptions(ctx, reminder, period, reminderNumber);
+
+    } catch (error) {
+      console.error('❌ Ошибка редактирования напоминания:', error);
+      await ctx.reply('❌ Ошибка загрузки настроек напоминания.');
+    }
+  }
+
+  // 🔄 Обработка массового изменения напоминаний
+  async handleEditAllReminders(ctx, text) {
+    try {
+      const session = sessionManager.get(ctx.chat.id);
+      if (!session || !session.managingPeriod) {
+        await ctx.reply('❌ Сессия устарела. Вернитесь в настройки напоминаний.');
+        return;
+      }
+
+      const period = session.managingPeriod;
+      const periodLabel = this.getPeriodLabel(period).toLowerCase();
+
+      // Используем существующий функционал выбора времени
+      await this.showTimePeriodSettings(ctx, period);
+
+    } catch (error) {
+      console.error('❌ Ошибка массового изменения:', error);
+      await ctx.reply('❌ Ошибка загрузки настроек.');
+    }
+  }
+
+  // 📋 Показать опции для конкретного напоминания
+  async showReminderOptions(ctx, reminder, period, reminderNumber) {
+    const periodLabel = this.getPeriodLabel(period).toLowerCase();
+
+    const message = `⚙️ *Настройки напоминания ${reminderNumber}*\n\n` +
+      `💊 ${reminder.supplement_name}\n` +
+      `📏 ${reminder.dosage}\n` +
+      `⏰ ${reminder.time}\n\n` +
+      `*Выберите действие:*`;
+
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        keyboard: [
+          ['⏰ Изменить время', '🗑️ Удалить напоминание'],
+          [`↩️ Назад к ${periodLabel} напоминаниям`]
+        ],
+        resize_keyboard: true
+      }
+    });
+
+    // Сохраняем текущее напоминание в сессии
+    const sessionManager = require('../utils/sessionManager');
+    sessionManager.set(ctx.chat.id, {
+      ...sessionManager.get(ctx.chat.id),
+      editingReminder: reminder,
+      editingReminderNumber: reminderNumber
+    });
+  }
+
+  // 🔢 Извлечение номера напоминания из текста
+  extractReminderNumber(text) {
+    const match = text.match(/напоминание (\d+)/);
+    return match ? parseInt(match[1]) : null;
+  }
+
   // Группировка временных слотов по периодам
   getTimeSlotsByPeriod(period) {
     const slots = {
