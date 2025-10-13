@@ -627,7 +627,7 @@ bot.on('text', async (ctx) => {
 
 // ==================== ЗАПУСК И ОБРАБОТКА ОШИБОК ====================
 
-bot.on('callback_query', (ctx) => {
+bot.on('callback_query', async (ctx) => {
   const callbackData = ctx.callbackQuery.data;
   console.log('📨 Callback received:', callbackData);
 
@@ -642,10 +642,21 @@ bot.on('callback_query', (ctx) => {
       callbackData !== 'payment_confirmed' &&
       callbackData !== 'test_payment' &&
       callbackData !== 'cancel_survey') {
-
     // Передаем в обработчик опросов
     require('./controllers/surveyController').handleButtonAnswer(ctx);
   }
+
+  if (callbackData.startsWith('intake_') || callbackData.startsWith('reminder_')) {
+    const parts = callbackData.split('_');
+    const action = parts[1];
+    const reminderId = parts[2];
+
+    const reminderController = new ReminderController();
+    await reminderController.handleReminderAction(ctx, action, reminderId);
+    return;
+  }
+
+
 });
 
 // Глобальный обработчик ошибок
