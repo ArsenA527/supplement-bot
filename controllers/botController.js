@@ -20,14 +20,11 @@ function getReminderController() {
 async function handleStart(ctx) {
   const chatId = ctx.chat.id;
 
-
-  // ПРОВЕРЯЕМ ЕСТЬ ЛИ НЕЗАВЕРШЕННЫЙ ОПРОС
   try {
     const surveyService = require('../services/surveyService');
     const state = await surveyService.getUserState(chatId);
 
     if (state && state.current > 0 && state.current < state.total) {
-      // Есть незавершенный опрос - предлагаем выбор
       const questions = await surveyService.getQuestionsForUser(chatId);
       const totalQuestions = questions.length;
 
@@ -50,13 +47,11 @@ async function handleStart(ctx) {
     }
   } catch (error) {
     console.error('❌ Ошибка проверки состояния опроса:', error);
-    // Продолжаем как обычно - не ломаем весь /start из-за этой проверки
   }
 
 
   const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
 
-  // Получаем краткую статистику для мотивации
   let motivationText = '';
   try {
     const reminderService = require('../services/reminderService');
@@ -66,9 +61,7 @@ async function handleStart(ctx) {
     if (stats.total > 0) {
       motivationText = `\n\n📊 На этой неделе: ${stats.compliance}% соблюдения режима`;
     }
-  } catch (error) {
-    // Игнорируем ошибки статистики для новых пользователей
-  }
+  } catch (error) {}
 
   const welcomeText = `👋 Привет! Я твой персональный консультант по БАДам.
 
@@ -196,9 +189,8 @@ async function handleProfile(ctx) {
 
     profileText += `<b>💎 Подписка</b>: ${isPremium ? 'Premium ✅' : 'Free'}`;
 
-    // Используем HTML вместо Markdown
     ctx.reply(profileText, {
-      parse_mode: 'HTML', // МЕНЯЕМ НА HTML
+      parse_mode: 'HTML',
       ...getMainMenuKeyboard(isPremium)
     });
   }).catch(err => {
@@ -212,8 +204,6 @@ async function handleViewRecommendations(ctx) {
 
   try {
     await ctx.answerCbQuery('📋 Загружаю ваши рекомендации...');
-
-    // Получаем результаты опроса
     const answers = await surveyService.getSurveyResults(chatId);
 
     if (!answers || Object.keys(answers).length === 0) {
@@ -221,14 +211,12 @@ async function handleViewRecommendations(ctx) {
       return;
     }
 
-    // Генерируем рекомендации (как в completeSurvey)
     const recommendations = recommendationService.generateRecommendations(answers);
     const message = recommendationService.formatRecommendations(recommendations);
 
-    // Отправляем рекомендации
     await ctx.reply(message, {
       parse_mode: 'Markdown',
-      ...getMainMenuKeyboard(true) // Предполагаем что пользователь premium после опроса
+      ...getMainMenuKeyboard(true)
     });
 
   } catch (error) {
@@ -335,7 +323,6 @@ async function showSettingsMenu(ctx) {
 }
 
 // Меню статистики
-// Меню статистики - теперь это комплексный отчет
 async function showStatisticsMenu(ctx) {
   try {
     const chatId = ctx.chat.id;
@@ -364,7 +351,6 @@ async function showStatisticsMenu(ctx) {
       goalService.getUserGoals(chatId)
     ]);
 
-    // Формируем комплексный отчет
     let message = `💪 *ВАШ ПЕРСОНАЛЬНЫЙ ОТЧЕТ*\n\n`;
 
     // 🎯 Раздел целей
@@ -399,7 +385,7 @@ async function showStatisticsMenu(ctx) {
       weeklyHistory.slice(0, 10).forEach(item => {
         const date = new Date(item.taken_at).toLocaleDateString('ru-RU');
         if (!recentDays[date]) recentDays[date] = [];
-        if (recentDays[date].length < 3) { // Ограничиваем по дням и количеству
+        if (recentDays[date].length < 3) {
           recentDays[date].push(item);
         }
       });
@@ -431,7 +417,6 @@ async function showStatisticsMenu(ctx) {
         message += `${index + 1}. ${rec}\n`;
       });
     } else {
-      // Умные рекомендации based на статистике
       if (monthlyStats.compliance >= 90) {
         message += `🎉 Отличная дисциплина! Продолжайте в том же духе!\n`;
       } else if (monthlyStats.compliance >= 70) {
@@ -473,12 +458,102 @@ async function handleTextCommands(ctx) {
 
   if (text === '↩️ Назад к настройкам') {
     console.log('↩️ Принудительный возврат к настройкам');
-    sessionManager.delete(ctx.chat.id); // Очищаем состояние ВЫБОРА ВРЕМЕНИ
+    sessionManager.delete(ctx.chat.id);
     await settingsController.showReminderSettings(ctx);
     return;
   }
 
-  // Если пользователь выбирает время
+  if (text.startsWith('✏️ ') && text.includes('(')) {
+    console.log('✏️ Редактирование напоминания:', text);
+    await settingsController.handleEditIndividualReminder(ctx, text);
+    return;
+  }
+
+  if (text.startsWith('🔄 Изменить все ')) {
+    console.log('🔄 Массовое изменение:', text);
+    await settingsController.handleEditAllReminders(ctx, text);
+    return;
+  }
+
+  if (text.startsWith('↩️ Назад к ') && text.includes('напоминаниям')) {
+    console.log('↩️ Возврат к напоминаниям периода');
+    const periodSession = sessionManager.get(ctx.chat.id);
+    if (periodSession && periodSession.managingPeriod) {
+      await settingsController.showPeriodReminders(ctx, periodSession.managingPeriod);
+    } else {
+      await settingsController.showReminderSettings(ctx);
+    }
+    return;
+  }
+
+  if (text === '⏰ Изменить время') {
+    console.log('⏰ Изменение времени напоминания');
+
+    const timeSession = sessionManager.get(ctx.chat.id);
+    console.log('💾 Сессия при изменении времени:', timeSession);
+
+    if (timeSession && timeSession.currentReminder) {
+      await settingsController.showTimeSelectionForReminder(
+        ctx,
+        timeSession.currentReminder,
+        timeSession.managingPeriod
+      );
+    } else {
+      console.log('❌ Сессия не содержит currentReminder');
+      await ctx.reply('❌ Сессия устарела. Вернитесь в настройки напоминаний.');
+    }
+    return;
+  }
+
+  if (text === '🗑️ Удалить напоминание') {
+    console.log('🗑️ Удаление напоминания');
+
+    const deleteSession = sessionManager.get(ctx.chat.id);
+    console.log('💾 Сессия при удалении:', deleteSession);
+
+    if (deleteSession && deleteSession.currentReminder) {
+      await settingsController.showDeleteReminderConfirmation(
+        ctx,
+        deleteSession.currentReminder,
+        deleteSession.managingPeriod
+      );
+    } else {
+      console.log('❌ Сессия не содержит currentReminder');
+      await ctx.reply('❌ Сессия устарела. Вернитесь в настройки напоминаний.');
+    }
+    return;
+  }
+
+  if (text === '✅ Да, удалить напоминание') {
+    console.log('✅ Подтверждение удаления');
+    await settingsController.confirmDeleteReminder(ctx);
+    return;
+  }
+
+  if (text === '❌ Нет, оставить напоминание' || text === '❌ Отменить изменение') {
+    console.log('❌ Отмена действия');
+    const cancelSession = sessionManager.get(ctx.chat.id);
+    if (cancelSession && cancelSession.managingPeriod) {
+      await settingsController.showPeriodReminders(ctx, cancelSession.managingPeriod);
+    } else {
+      await settingsController.showReminderSettings(ctx);
+    }
+    return;
+  }
+
+  const timeSlots = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00',
+                    '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
+                    '18:00', '19:00', '20:00', '21:00', '22:00'];
+
+  if (timeSlots.includes(text)) {
+    const timeSession = sessionManager.get(ctx.chat.id);
+    if (timeSession && timeSession.changingReminderTime) {
+      console.log('⏰ Сохранение времени:', text);
+      await settingsController.saveReminderTime(ctx, text);
+      return;
+    }
+  }
+
   if (session && session.waitingForTimePeriod) {
     console.log(`⏰ Пользователь выбирает время для ${session.waitingForTimePeriod}: ${text}`);
     await require('./settingsController').processTimeSelection(ctx, text);
@@ -525,7 +600,7 @@ async function handleTextCommands(ctx) {
       }
       break;
 
-    case '💎 Premium статус': // Premium кнопка
+    case '💎 Premium статус':
       if (isPremium) {
         console.log('💎 Показ статуса Premium');
         await require('./subscriptionController').checkSubscriptionStatus(ctx);
@@ -550,7 +625,7 @@ async function handleTextCommands(ctx) {
       handleHelp(ctx);
       break;
 
-    case '⏰ Мои напоминания': // Premium кнопка
+    case '⏰ Мои напоминания':
       if (isPremium) {
         console.log('⏰ Показ напоминаний');
         try {
@@ -566,10 +641,10 @@ async function handleTextCommands(ctx) {
       }
       break;
 
-    case '📊 Статистика': // Premium кнопка
+    case '📊 Статистика':
       if (isPremium) {
         console.log('📊 Показ статистики');
-        await showStatisticsMenu(ctx); // Теперь async
+        await showStatisticsMenu(ctx);
       } else {
         ctx.reply('❌ Детальная статистика доступна только Premium пользователям. /subscribe');
         await showMainMenu(ctx);
@@ -578,7 +653,7 @@ async function handleTextCommands(ctx) {
 
     case '📈 График прогресса':
       console.log('📈 Показ графика прогресса');
-      await settingsController.showProgressChart(ctx);  // ИСПРАВЛЕНО
+      await settingsController.showProgressChart(ctx);
       break;
 
     case '⏰ Настроить напоминания':
@@ -618,15 +693,18 @@ async function handleTextCommands(ctx) {
       break;
 
     case '🌅 Утренние напоминания':
-      await settingsController.showTimePeriodSettings(ctx, 'morning');
+      console.log('🌅 Показ утренних напоминаний');
+      await settingsController.showPeriodReminders(ctx, 'morning');
       break;
 
     case '☀️ Дневные напоминания':
-      await settingsController.showTimePeriodSettings(ctx, 'afternoon');
+      console.log('☀️ Показ дневных напоминаний');
+      await settingsController.showPeriodReminders(ctx, 'afternoon');
       break;
 
     case '🌙 Вечерние напоминания':
-      await settingsController.showTimePeriodSettings(ctx, 'evening');
+      console.log('🌙 Показ вечерних напоминаний');
+      await settingsController.showPeriodReminders(ctx, 'evening');
       break;
 
     case '📊 Мои данные':
@@ -677,7 +755,6 @@ async function handleTextCommands(ctx) {
   }
 }
 
-// Новая функция для принудительного показа меню
 async function showMainMenu(ctx) {
   const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
   ctx.reply('Главное меню:', getMainMenuKeyboard(isPremium));

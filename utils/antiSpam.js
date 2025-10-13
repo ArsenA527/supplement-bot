@@ -1,11 +1,9 @@
-// /utils/antiSpam.js
 class AntiSpam {
   constructor() {
     this.processingRequests = new Map();
-    this.timeoutMs = 2000; // 2 секунды защиты
+    this.timeoutMs = 2000;
   }
 
-  // Проверяем можно ли обработать запрос
   canProcess(chatId, actionType) {
     const key = `${chatId}_${actionType}`;
 
@@ -13,10 +11,8 @@ class AntiSpam {
       return false;
     }
 
-    // Помечаем как обрабатываемый
     this.processingRequests.set(key, Date.now());
 
-    // Автоматически очищаем через timeoutMs
     setTimeout(() => {
       this.processingRequests.delete(key);
     }, this.timeoutMs);
@@ -24,13 +20,11 @@ class AntiSpam {
     return true;
   }
 
-  // Принудительно освобождаем запрос (если обработка завершена)
   release(chatId, actionType) {
     const key = `${chatId}_${actionType}`;
     this.processingRequests.delete(key);
   }
 
-  // Получаем оставшееся время блокировки
   getRemainingTime(chatId, actionType) {
     const key = `${chatId}_${actionType}`;
     const startTime = this.processingRequests.get(key);

@@ -1,5 +1,5 @@
 const ReminderService = require('../services/reminderService');
-const { getMainMenuKeyboard } = require('../keyboards'); // Исправляем импорт
+const { getMainMenuKeyboard } = require('../keyboards');
 
 class ReminderController {
   constructor(bot) {
@@ -22,22 +22,18 @@ class ReminderController {
     const chatId = ctx.chat.id;
 
     try {
-      // Сначала удаляем старые напоминания
       await this.clearUserReminders(chatId);
 
-      // Получаем настройки времени пользователя
       const settingsService = require('../services/settingsService');
       const settings = await settingsService.getUserSettings(chatId);
 
       let createdCount = 0;
 
       for (const supplement of recommendations) {
-        // Используем период из рекомендации или умное распределение
         let time;
         if (supplement.period && settings[`${supplement.period}_time`]) {
           time = settings[`${supplement.period}_time`];
         } else {
-          // Умное распределение based на типе добавки
           time = this.getSmartTimeForSupplement(supplement, settings);
         }
 
@@ -55,7 +51,6 @@ class ReminderController {
         }
       }
 
-      // Отправляем расписание пользователю
       if (createdCount > 0) {
         let scheduleMessage = `📅 *Ваше расписание:*\n\n`;
 
@@ -81,7 +76,6 @@ class ReminderController {
     }
   }
 
-  // Умное распределение времени based на типе добавки
   getSmartTimeForSupplement(supplement, settings) {
     const name = supplement.name.toLowerCase();
 
@@ -95,8 +89,6 @@ class ReminderController {
       return settings.morning_time || '08:00';
     }
   }
-
-  // Очистить напоминания пользователя
   async clearUserReminders(chatId) {
     return new Promise((resolve) => {
       const db = require('../config/database');
@@ -107,11 +99,9 @@ class ReminderController {
     });
   }
 
-  // Вспомогательный метод для поиска свободного времени
   findAvailableTime(usedTimes, baseTime) {
     const [baseHours, baseMinutes] = baseTime.split(':').map(Number);
 
-    // Пробуем сдвинуть на 30 минут
     for (let i = 1; i <= 6; i++) {
       const minutes = (baseMinutes + i * 30) % 60;
       const hours = baseHours + Math.floor((baseMinutes + i * 30) / 60);
@@ -123,81 +113,13 @@ class ReminderController {
       }
     }
 
-    // Если все занято, возвращаем исходное
     return baseTime;
   }
-
-// ⚙️ Показать настройки напоминания
-  async showReminderSettings(ctx, reminderId) {
-    try {
-      const reminder = await this.getReminderById(reminderId);
-
-      if (!reminder) {
-        await ctx.answerCbQuery('❌ Напоминание не найдено');
-        return;
-      }
-
-      const { getReminderSettingsKeyboard } = require('../keyboards');
-
-      // Редактируем сообщение, показывая настройки
-      await ctx.editMessageText(
-        `⚙️ *Настройки напоминания*\n\n` +
-        `💊 ${reminder.supplement_name}\n` +
-        `📏 ${reminder.dosage}\n` +
-        `⏰ ${reminder.time}\n\n` +
-        `*Выберите действие:*`,
-        {
-          parse_mode: 'Markdown',
-          ...getReminderSettingsKeyboard(reminderId)
-        }
-      );
-
-      await ctx.answerCbQuery();
-
-    } catch (error) {
-      console.error('❌ Ошибка показа настроек напоминания:', error);
-      await ctx.answerCbQuery('❌ Ошибка загрузки настроек');
-    }
-  }
-
-  // ↩️ Вернуться назад к основным действиям
-  async showReminderActions(ctx, reminderId) {
-    try {
-      const reminder = await this.getReminderById(reminderId);
-
-      if (!reminder) {
-        await ctx.answerCbQuery('❌ Напоминание не найдено');
-        return;
-      }
-
-      const { getReminderActionsKeyboard } = require('../keyboards');
-
-      // Возвращаемся к исходному сообщению
-      await ctx.editMessageText(
-        `⏰ *Время приема!*\n\n` +
-        `💊 ${reminder.supplement_name}\n` +
-        `📏 ${reminder.dosage}\n\n` +
-        `Подтвердите прием:`,
-        {
-          parse_mode: 'Markdown',
-          ...getReminderActionsKeyboard(reminderId)
-        }
-      );
-
-      await ctx.answerCbQuery();
-
-    } catch (error) {
-      console.error('❌ Ошибка возврата к действиям:', error);
-      await ctx.answerCbQuery('❌ Ошибка загрузки');
-    }
-  }
-
 
   async showUserReminders(ctx) {
     const chatId = ctx.chat.id;
     const reminders = await this.reminderService.getUserReminders(chatId);
 
-    // Проверяем подписку
     const subscriptionService = require('../services/subscriptionService');
     const isPremium = await subscriptionService.isSubscriptionActive(chatId);
 
@@ -215,7 +137,6 @@ class ReminderController {
       message += `⏰ ${reminder.time} - ${reminder.supplement_name}\n`;
       message += `   📏 ${reminder.dosage}\n`;
 
-      // Добавляем информацию о приеме с едой
       if (foodInfo) {
         message += `   ${foodInfo}\n`;
       }
@@ -252,7 +173,6 @@ class ReminderController {
     return null;
   }
 
-  // Показать историю приема
   async showIntakeHistory(ctx, days = 7) {
     const chatId = ctx.chat.id;
     const history = await this.reminderService.getIntakeHistory(chatId, days);
@@ -294,37 +214,6 @@ class ReminderController {
     try {
       console.log(`🔵 Обработка действия: ${action} для напоминания ${reminderId}`);
 
-      // Обработка настроек
-      if (action === 'settings') {
-        await this.showReminderSettings(ctx, reminderId);
-        return;
-      }
-
-      // Обработка возврата назад
-      if (action === 'back') {
-        await this.showReminderActions(ctx, reminderId);
-        return;
-      }
-
-      // Обработка временного отключения (заглушка)
-      if (action === 'disable') {
-        await ctx.answerCbQuery('⏸️ Функция временного отключения скоро будет доступна');
-        return;
-      }
-
-      // Обработка изменения времени (заглушка)
-      if (action === 'change_time') {
-        await ctx.answerCbQuery('⏰ Функция изменения времени скоро будет доступна');
-        return;
-      }
-
-      // Обработка удаления (заглушка)
-      if (action === 'delete') {
-        await ctx.answerCbQuery('🗑️ Функция удаления скоро будет доступна');
-        return;
-      }
-
-      // Старая логика для принятия/пропуска
       const db = require('../config/database');
 
       db.get('SELECT * FROM reminders WHERE id = ?', [reminderId], async (err, reminder) => {
@@ -356,7 +245,6 @@ class ReminderController {
 
           case 'later':
             message = '⏰ Напомню через 1 минуту';
-            // Напомнить через 1 минуту (для теста)
             setTimeout(() => {
               ctx.reply(`⏰ Напоминание: ${reminder.supplement_name} (${reminder.dosage})`,
                 {
@@ -377,7 +265,6 @@ class ReminderController {
 
         ctx.answerCbQuery(message);
 
-        // Пытаемся удалить сообщение
         try {
           await ctx.deleteMessage();
         } catch (error) {

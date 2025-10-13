@@ -18,13 +18,12 @@ console.log('   BOT_TOKEN length:', process.env.BOT_TOKEN ? process.env.BOT_TOKE
 
 if (!process.env.BOT_TOKEN) {
   console.log('⚠️ BOT_TOKEN не найден, пробуем .env');
-  require('dotenv').config(); // Загружаем обычный .env
+  require('dotenv').config();
 
   if (!process.env.BOT_TOKEN) {
     console.error('❌ CRITICAL: BOT_TOKEN не найден ни в одном .env файле!');
     console.log('📁 Проверьте файлы в директории:', __dirname);
 
-    // Покажем какие файлы есть
     const fs = require('fs');
     const files = fs.readdirSync(__dirname);
     console.log('📋 Файлы в директории:', files.filter(f => f.includes('.env')));
@@ -49,7 +48,7 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 const db = require('./config/database');
 
 global.botInstance = bot;
-global.reminderBot = bot; // Для сервиса напоминаний
+global.reminderBot = bot;
 
 // ==================== ИМПОРТЫ КОНТРОЛЛЕРОВ И СЕРВИСОВ ====================
 const botController = require('./controllers/botController');
@@ -88,7 +87,6 @@ function initializeReminders() {
   });
 }
 
-// Запускаем инициализацию
 initializeReminders();
 
 // ==================== MIDDLEWARE ====================
@@ -131,7 +129,7 @@ bot.use(async (ctx, next) => {
       });
     }
     ctx.session = sessions.get(chatId);
-    ctx.session.lastActivity = Date.now(); // Обновляем активность
+    ctx.session.lastActivity = Date.now();
   }
 
   // 3. Инъекция данных подписки
@@ -153,7 +151,6 @@ bot.use(async (ctx, next) => {
 
   // 5. Обновление активности пользователя в БД
   if (chatId && ctx.message) {
-    // Можно добавить запись в БД для аналитики
     setTimeout(() => {
       analyticsService.trackEvent(chatId, 'user_activity', {
         type: ctx.message.text ? 'text_message' : 'other'
@@ -177,9 +174,8 @@ setInterval(() => {
   if (clearedCount > 0) {
     console.log(`🧹 Очищено ${clearedCount} старых сессий`);
   }
-}, 60 * 60 * 1000); // Каждый час
+}, 60 * 60 * 1000);
 
-// Логирование всех сообщений
 bot.use(async (ctx, next) => {
   const chatId = ctx.chat?.id;
   const username = ctx.from?.username || 'unknown';
@@ -375,7 +371,6 @@ bot.action(/intake_taken_(\d+)/, async (ctx) => {
         console.log('✅ Прием записан в историю');
         await ctx.answerCbQuery('✅ Прием подтвержден!');
 
-        // Удаляем сообщение с кнопками
         try {
           await ctx.deleteMessage();
           console.log('🗑️ Сообщение удалено');
@@ -383,7 +378,6 @@ bot.action(/intake_taken_(\d+)/, async (ctx) => {
           console.log('⚠️ Не удалось удалить сообщение:', deleteError.message);
         }
 
-        // Отправляем подтверждение
         await NotificationManager.success(ctx, `💊 Прием "${reminder.supplement_name}" записан!`);
 
       } catch (error) {
@@ -484,7 +478,7 @@ bot.action(/intake_later_(\d+)/, async (ctx) => {
         } catch (error) {
           console.error('❌ Ошибка повторного напоминания:', error);
         }
-      }, 600000); // 10 минут
+      }, 600000);
 
       await NotificationManager.info(ctx, `⏰ Напомню о приеме "${reminder.supplement_name}" через 10 минут.`);
     });
@@ -546,11 +540,6 @@ bot.action('main_menu', async (ctx) => {
   await ctx.answerCbQuery();
 });
 
-// bot.action('view_recommendations', (ctx) => {
-//   const { handleViewRecommendations } = require('./controllers/surveyController');
-//   return handleViewRecommendations(ctx);
-// });
-
 bot.action('restart_survey', (ctx) => {
   surveyController.handleStartSurvey(ctx);
   ctx.answerCbQuery();
@@ -585,8 +574,6 @@ bot.on('text', async (ctx) => {
 
     console.log(`📨 Текст получен: "${text}" от ${chatId}`);
 
-
-    // Команды главного меню
     const menuCommands = [
       '📋 Пройти опрос', '📋 Новый опрос', '💊 Мои рекомендации',
       '👤 Мой профиль', '💎 Апгрейд до Premium', '💎 Получить Premium',
@@ -607,7 +594,6 @@ bot.on('text', async (ctx) => {
       return;
     }
 
-    // Проверяем, находится ли пользователь в опросе
     const surveyService = require('./services/surveyService');
     const question = await surveyService.getCurrentQuestion(chatId);
 
@@ -631,7 +617,6 @@ bot.on('callback_query', async (ctx) => {
   const callbackData = ctx.callbackQuery.data;
   console.log('📨 Callback received:', callbackData);
 
-  // Если callback еще не обработан специфическими обработчиками
   if (!callbackData.startsWith('intake_') &&
       !callbackData.startsWith('history_') &&
       !callbackData.startsWith('admin_') &&
@@ -642,21 +627,8 @@ bot.on('callback_query', async (ctx) => {
       callbackData !== 'payment_confirmed' &&
       callbackData !== 'test_payment' &&
       callbackData !== 'cancel_survey') {
-    // Передаем в обработчик опросов
     require('./controllers/surveyController').handleButtonAnswer(ctx);
   }
-
-  if (callbackData.startsWith('intake_') || callbackData.startsWith('reminder_')) {
-    const parts = callbackData.split('_');
-    const action = parts[1];
-    const reminderId = parts[2];
-
-    const reminderController = new ReminderController();
-    await reminderController.handleReminderAction(ctx, action, reminderId);
-    return;
-  }
-
-
 });
 
 // Глобальный обработчик ошибок
@@ -691,14 +663,12 @@ function setupDailyReports() {
 
   setTimeout(() => {
     analyticsService.generateDailyReport();
-    // Повторяем каждые 24 часа
     setInterval(() => analyticsService.generateDailyReport(), 24 * 60 * 60 * 1000);
   }, timeUntilReport);
 
   logger.info('Ежедневные отчеты настроены');
 }
 
-// После функции setupDailyReports ДОБАВЬТЕ:
 function setupWeeklyMotivation() {
   const motivationService = require('./services/motivationService');
 
@@ -715,10 +685,8 @@ function setupWeeklyMotivation() {
   const timeUntilMotivation = nextMonday - now;
 
   setTimeout(() => {
-    // Отправляем мотивацию всем активным пользователям
     sendMotivationToActiveUsers();
 
-    // Повторяем каждую неделю
     setInterval(sendMotivationToActiveUsers, 7 * 24 * 60 * 60 * 1000);
   }, timeUntilMotivation);
 
@@ -729,7 +697,6 @@ async function sendMotivationToActiveUsers() {
   const db = require('./config/database');
   const motivationService = require('./services/motivationService');
 
-  // Получаем пользователей, активных за последние 30 дней
   db.all(
     `SELECT DISTINCT chat_id FROM analytics
      WHERE created_at > datetime('now', '-30 days')`,
@@ -741,7 +708,6 @@ async function sendMotivationToActiveUsers() {
 
       for (const row of rows) {
         try {
-          // Создаем контекст для отправки сообщения
           const fakeCtx = {
             chat: { id: row.chat_id },
             reply: (message, options) => {
@@ -750,8 +716,6 @@ async function sendMotivationToActiveUsers() {
           };
 
           await motivationService.sendWeeklyMotivation(fakeCtx);
-
-          // Пауза между отправками, чтобы не превысить лимиты Telegram
           await new Promise(resolve => setTimeout(resolve, 100));
         } catch (error) {
           logger.error('Ошибка отправки мотивации пользователю', {

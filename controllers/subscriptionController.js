@@ -3,15 +3,13 @@ const paymentService = require('../services/paymentService');
 const { getMainMenuKeyboard } = require('../keyboards');
 
 class SubscriptionController {
-  // Показать информацию о подписках
   async showSubscriptionPlans(ctx) {
-    const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id); // ДОБАВЛЯЕМ
+    const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
 
     const plans = subscriptionService.getSubscriptionPlans();
 
     let message = `💎 *Доступные подписки:*\n\n`;
 
-    // Free план
     message += `🎁 *Бесплатно:*\n`;
     plans.free.features.forEach(feat => {
       message += `✓ ${feat}\n`;
@@ -26,19 +24,17 @@ class SubscriptionController {
 
     ctx.reply(message, {
       parse_mode: 'Markdown',
-      ...getMainMenuKeyboard(isPremium) // ПЕРЕДАЕМ isPremium
+      ...getMainMenuKeyboard(isPremium)
     });
   }
 
-  // Обработчик команды /subscribe
   async handleSubscribe(ctx) {
-    const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id); // ДОБАВЛЯЕМ
+    const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
 
     const plans = subscriptionService.getSubscriptionPlans();
     const premiumPlan = plans.premium;
 
     try {
-      // Создаем тестовый платеж
       const paymentUrl = await paymentService.createTestPayment(ctx.chat.id, {
         name: 'Premium подписка',
         price: premiumPlan.price
@@ -64,17 +60,16 @@ class SubscriptionController {
     } catch (error) {
       console.error('❌ Ошибка создания платежа:', error);
       ctx.reply('❌ Ошибка создания платежа. Попробуйте позже.',
-        getMainMenuKeyboard(isPremium) // ПЕРЕДАЕМ isPremium
+        getMainMenuKeyboard(isPremium)
       );
     }
   }
 
-  // Проверить статус подписки
   async checkSubscriptionStatus(ctx) {
     const chatId = ctx.chat.id;
     const subscription = await subscriptionService.getUserSubscription(chatId);
     const paymentStatus = await paymentService.getPaymentStatus(chatId);
-    const isPremium = await subscriptionService.isSubscriptionActive(chatId); // ДОБАВЛЯЕМ
+    const isPremium = await subscriptionService.isSubscriptionActive(chatId);
 
     let message = `📋 *Статус вашей подписки:*\n\n`;
     message += `• План: ${subscription.plan === 'premium' ? '💎 Premium' : '🎁 Free'}\n`;
@@ -97,16 +92,14 @@ class SubscriptionController {
 
     ctx.reply(message, {
       parse_mode: 'Markdown',
-      ...getMainMenuKeyboard(isPremium) // ПЕРЕДАЕМ isPremium
+      ...getMainMenuKeyboard(isPremium)
     });
   }
 
-  // Обработка подтверждения оплаты
   async handlePaymentConfirmation(ctx) {
     const chatId = ctx.chat.id;
 
     try {
-      // Активируем premium подписку на 7 дней для теста
       const endDate = new Date();
       endDate.setDate(endDate.getDate() + 7);
 
@@ -116,7 +109,6 @@ class SubscriptionController {
         end_date: endDate.toISOString()
       });
 
-      // Очищаем текущую сессию опроса если есть
       const surveyService = require('../services/surveyService');
       await surveyService.completeSurvey(chatId);
 
@@ -129,7 +121,7 @@ class SubscriptionController {
         `*Используйте /survey для нового расширенного опроса!*`,
       {
         parse_mode: 'Markdown',
-        ...getMainMenuKeyboard(true) // true = isPremium (после активации)
+        ...getMainMenuKeyboard(true)
       });
 
     } catch (error) {

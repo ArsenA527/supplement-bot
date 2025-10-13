@@ -62,7 +62,6 @@ class GoalService {
         [chatId],
         (err, row) => {
           if (err || !row) {
-            // Если целей нет, создаем на основе опроса
             this.createGoalsFromSurvey(chatId).then(resolve);
           } else {
             try {

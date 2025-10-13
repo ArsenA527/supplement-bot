@@ -92,7 +92,6 @@ module.exports = {
       const stats = await service.getIntakeStats(ctx.chat.id, 30);
       const weeklyStats = await service.getIntakeStats(ctx.chat.id, 7);
 
-      // Добавляем анализ эффективности
       let complianceAnalysis = '';
       if (stats.compliance >= 90) {
         complianceAnalysis = '🎉 Отличная дисциплина!';
@@ -127,7 +126,6 @@ module.exports = {
       const isActive = await subscriptionService.isSubscriptionActive(chatId);
       const canStart = await surveyService.canStartSurvey(chatId);
 
-      // Добавляем больше полезной информации
       const now = new Date();
       let daysLeft = 'неограниченно';
       if (subscription.end_date) {
@@ -154,7 +152,6 @@ module.exports = {
         message += `• Окончание: ${endDate.toLocaleDateString('ru-RU')}\n`;
       }
 
-      // Добавляем рекомендации
       if (!isActive && subscription.plan === 'free') {
         message += `\n💡 *Рекомендация:* Используйте /subscribe для получения Premium доступа`;
       }
@@ -178,7 +175,6 @@ module.exports = {
         end_date: endDate.toISOString()
       });
 
-      // Очищаем сессию опроса для нового прохождения
       const surveyService = require('../services/surveyService');
       await surveyService.completeSurvey(ctx.chat.id);
 
@@ -204,7 +200,6 @@ module.exports = {
       const db = require('../config/database');
       const chatId = ctx.chat.id;
 
-      // Добавляем подтверждение и информацию о том, что будет удалено
       const remindersCount = await new Promise(resolve => {
         db.get('SELECT COUNT(*) as count FROM reminders WHERE chat_id = ?', [chatId], (err, row) => {
           resolve(row?.count || 0);
@@ -234,7 +229,7 @@ module.exports = {
 
       ctx.reply(message, {
         parse_mode: 'Markdown',
-        ...getMainMenuKeyboard(false) // false так как данные очищены
+        ...getMainMenuKeyboard(false)
       });
     } catch (error) {
       console.error('❌ Ошибка очистки данных:', error);
@@ -259,7 +254,6 @@ module.exports = {
 
       let message = `📊 *История приема за ${days} дней:*\n\n`;
 
-      // Группируем по датам
       const dailyStats = {};
       history.forEach(item => {
         const date = new Date(item.taken_at).toLocaleDateString('ru-RU');
@@ -310,7 +304,6 @@ module.exports = {
       const currentTime = now.toTimeString().slice(0, 5);
       const currentDay = now.getDay();
 
-      // Вспомогательные функции внутри метода
       const getDayName = (dayIndex) => {
         const days = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
         return days[dayIndex];
@@ -318,7 +311,6 @@ module.exports = {
 
       const isReminderActiveToday = (reminder, currentDay) => {
         if (!reminder.days || reminder.days.length !== 7) return true;
-        // Конвертируем день недели (0=воскресенье -> 6, 1=понедельник -> 0 и т.д.)
         const dbDayIndex = currentDay === 0 ? 6 : currentDay - 1;
         return reminder.days[dbDayIndex] === '1';
       };
@@ -449,7 +441,6 @@ module.exports = {
       const analyticsService = require('../services/analyticsService');
       const metrics = await analyticsService.getKeyMetrics(30);
 
-      // Добавляем анализ трендов
       const weeklyMetrics = await analyticsService.getKeyMetrics(7);
       const userGrowth = metrics.newUsers > 0 ? '📈' : '📉';
       const conversionTrend = metrics.premiumConversionRate > 10 ? '🟢' : metrics.premiumConversionRate > 5 ? '🟡' : '🔴';
@@ -580,7 +571,6 @@ module.exports = {
 
       ctx.reply(message, { parse_mode: 'Markdown' });
 
-      // Показываем актуальное меню
       const { getMainMenuKeyboard } = require('../keyboards');
       ctx.reply('*Актуальное меню:*', {
         parse_mode: 'Markdown',

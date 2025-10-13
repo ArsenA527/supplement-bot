@@ -1,5 +1,4 @@
 class SmartReminderService {
-  // Оптимальные интервалы между напоминаниями (в минутах)
   static INTERVALS = {
     morning: 30,    // 30 минут между утренними напоминаниями
     afternoon: 45,  // 45 минут между дневными
@@ -11,17 +10,14 @@ class SmartReminderService {
     const interval = SmartReminderService.INTERVALS[period];
     const existingReminders = await this.getUserReminders(chatId);
 
-    // Фильтруем добавки для этого периода
     const periodSupplements = this.filterSupplementsForPeriod(supplements, period);
 
-    // Сортируем по приоритету (витамины утром, минералы днем, релакс вечером)
     const sortedSupplements = this.sortByOptimalTime(periodSupplements, period);
 
     const distributed = [];
     let currentTime = this.timeToMinutes(baseTime);
 
     for (const supplement of sortedSupplements) {
-      // Проверяем нет ли конфликта с существующими напоминаниями
       const optimalTime = this.findOptimalTime(currentTime, existingReminders, interval);
 
       distributed.push({
@@ -85,12 +81,10 @@ class SmartReminderService {
   findOptimalTime(baseTime, existingReminders, interval) {
     let candidateTime = baseTime;
 
-    // Ищем свободный слот
     while (this.hasTimeConflict(candidateTime, existingReminders)) {
       candidateTime += interval;
 
-      // Если вышли за пределы периода, возвращаемся к базовому времени
-      if (candidateTime > baseTime + 180) { // 3 часа максимум
+      if (candidateTime > baseTime + 180) {
         candidateTime = baseTime;
         break;
       }
@@ -102,16 +96,16 @@ class SmartReminderService {
   hasTimeConflict(time, existingReminders) {
     return existingReminders.some(reminder => {
       const reminderTime = this.timeToMinutes(reminder.time);
-      return Math.abs(reminderTime - time) < 15; // Конфликт если разница < 15 минут
+      return Math.abs(reminderTime - time) < 15;
     });
   }
 
   // Умные интервалы based на типе добавок
   getSmartInterval(supplement1, supplement2) {
     const incompatiblePairs = [
-      ['кальций', 'железо'], // Конфликтующие минералы
-      ['тирозин', 'мелатонин'], // Стимулятор и релаксант
-      ['витамин с', 'медь'] // Взаимодействующие вещества
+      ['кальций', 'железо'],
+      ['тирозин', 'мелатонин'],
+      ['витамин с', 'медь']
     ];
 
     // Проверяем на конфликтующие пары
@@ -122,8 +116,7 @@ class SmartReminderService {
       supplement2.name.toLowerCase().includes(pair[0]))
     );
 
-    // Увеличиваем интервал для конфликтующих пар
-    return hasConflict ? 60 : 30; // 60 минут для конфликтующих
+    return hasConflict ? 60 : 30;
   }
 
   // Автоматическое создание умного расписания

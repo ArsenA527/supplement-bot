@@ -16,9 +16,7 @@ class HealthService {
   }
 
   async checkBotAPI() {
-    // Проверяем что бот может отправлять сообщения
     try {
-      // Эта проверка будет добавлена позже
       return true;
     } catch (error) {
       logger.error('Health check: Bot API error', { error: error.message });

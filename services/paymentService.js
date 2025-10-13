@@ -2,20 +2,16 @@ const db = require('../config/database');
 const subscriptionService = require('./subscriptionService');
 
 class PaymentService {
-  // Создание тестового платежа (без реальной интеграции пока)
   async createTestPayment(chatId, plan) {
     try {
-      // Генерируем тестовый ID платежа
       const paymentId = 'test_' + Date.now();
 
-      // Сохраняем платеж в БД как "ожидающий"
       await this.savePayment(chatId, {
         id: paymentId,
         amount: plan.price,
         status: 'pending'
       }, plan);
 
-      // Возвращаем тестовую ссылку (в реальности будет ссылка на ЮКассу)
       return `https://t.me/${process.env.BOT_USERNAME}?start=payment_${paymentId}`;
 
     } catch (error) {
@@ -24,7 +20,6 @@ class PaymentService {
     }
   }
 
-  // Сохранение платежа в БД
   async savePayment(chatId, payment, plan) {
     return new Promise((resolve, reject) => {
       db.run(
@@ -51,17 +46,14 @@ class PaymentService {
     });
   }
 
-  // Подтверждение тестового платежа
   async confirmTestPayment(paymentId) {
     return new Promise((resolve, reject) => {
-      // Находим платеж
       db.get('SELECT * FROM payments WHERE yookassa_id = ?', [paymentId], async (err, payment) => {
         if (err || !payment) {
           reject(new Error('Платеж не найден'));
           return;
         }
 
-        // Обновляем статус на "успешно"
         db.run('UPDATE payments SET status = ? WHERE yookassa_id = ?',
           ['succeeded', paymentId], async (err) => {
             if (err) {
@@ -69,7 +61,6 @@ class PaymentService {
               return;
             }
 
-            // Активируем подписку
             await this.activateSubscription(payment.chat_id, payment.plan);
             resolve(true);
           });
@@ -80,7 +71,7 @@ class PaymentService {
   // Активация подписки
   async activateSubscription(chatId, planName) {
     const endDate = new Date();
-    endDate.setMonth(endDate.getMonth() + 1); // +1 месяц
+    endDate.setMonth(endDate.getMonth() + 1);
 
     await subscriptionService.updateSubscription(chatId, {
       plan: 'premium',
@@ -91,7 +82,6 @@ class PaymentService {
     console.log(`✅ Подписка активирована для пользователя ${chatId}`);
   }
 
-  // Проверка статуса платежа
   async getPaymentStatus(chatId) {
     return new Promise((resolve) => {
       db.get(

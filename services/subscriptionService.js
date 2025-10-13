@@ -51,7 +51,6 @@ class SubscriptionService {
     if (subscription.plan === 'free') return false;
     if (subscription.status !== 'active') return false;
 
-    // Проверяем дату окончания
     if (subscription.end_date) {
       const endDate = new Date(subscription.end_date);
       return endDate > new Date();

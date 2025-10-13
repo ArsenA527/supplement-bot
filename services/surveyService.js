@@ -21,7 +21,6 @@ class SurveyService {
 
     await this.saveUserData(chatId, state);
 
-    // Логируем начало опроса
     console.log(`📝 Пользователь ${chatId} начал ${state.surveyType} опрос`);
 
     return this.getCurrentQuestion(chatId);
@@ -114,9 +113,8 @@ class SurveyService {
   // Проверить может ли пользователь начать опрос
   async canStartSurvey(chatId) {
     const isPremium = await subscriptionService.isSubscriptionActive(chatId);
-    if (isPremium) return true; // Премиум без ограничений
+    if (isPremium) return true;
 
-    // Для free проверяем, не проходили ли уже опрос
     const hasCompleted = await this.hasCompletedSurvey(chatId);
     return !hasCompleted;
   }
@@ -163,9 +161,6 @@ class SurveyService {
 
     state.current++;
     await this.saveUserData(chatId, state);
-
-    // console.log(`💾 Ответ сохранен: ${question.key} = ${answer} (вопрос ${state.current}/${userQuestions.length})`);
-
     return true;
   }
 

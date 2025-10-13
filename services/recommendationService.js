@@ -160,13 +160,11 @@ function generateRecommendations(answers) {
     }
   }
 
-  // Сортируем по приоритету и лимитируем
   return allRecommendations
     .sort((a, b) => b.priority - a.priority)
     .slice(0, 6);
 }
 
-// ОБНОВЛЕННАЯ ФУНКЦИЯ ФОРМАТИРОВАНИЯ РЕКОМЕНДАЦИЙ
 function formatRecommendations(recommendations) {
   if (recommendations.length === 0) {
     return `🎉 *Ваш образ жизни близок к идеалу!*\n\nНо даже самым здоровым людям мы рекомендуем базовую поддержку:\n• Омега-3 для мозга и противовоспаления\n• Витамин D3 для иммунитета в нашем климате\n\nЭти добавки - страховка для вашего здоровья! 💪`;
@@ -176,7 +174,6 @@ function formatRecommendations(recommendations) {
 
   message += `*На основе ваших ответов мы подобрали оптимальную программу,* которая поможет:\n`;
 
-  // Динамическое описание benefits
   const allBenefits = [...new Set(recommendations.flatMap(s => s.benefits || []))];
   if (allBenefits.length > 0) {
     message += `✅ ${allBenefits.slice(0, 3).join('\n✅ ')}\n\n`;
@@ -189,7 +186,6 @@ function formatRecommendations(recommendations) {
     message += `   💊 *Дозировка:* ${supp.dosage}\n`;
     message += `   ⏰ *Время приема:* ${supp.time}\n`;
 
-    // 🔥 НОВОЕ: Информация о приеме с едой
     if (supp.with_food) {
       message += `   🍽️ *Прием:* ${supp.with_food}\n`;
     }
@@ -209,7 +205,6 @@ function formatRecommendations(recommendations) {
 
   message += `---\n🎯 *КАК ДОБИТЬСЯ МАКСИМАЛЬНОГО ЭФФЕКТА:*\n\n`;
 
-  // Умные советы based на комбинациях
   const hasMagnesium = recommendations.some(s => s.name.includes('Магний'));
   const hasVitaminD = recommendations.some(s => s.name.includes('Витамин D'));
   const hasAshwagandha = recommendations.some(s => s.name.includes('Ашваганда'));

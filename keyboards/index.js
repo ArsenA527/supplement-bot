@@ -28,8 +28,6 @@ function getMainMenuKeyboard(isPremium = false) {
 function getQuestionKeyboard(question, progress = { current: 0, total: 0 }) {
   if (!question.options) return null;
 
-
-  // Для множественного выбора - особый формат
   const keyboard = question.options.map((option, index) => [
     {
       text: `${index + 1}. ${option}`,
@@ -37,7 +35,6 @@ function getQuestionKeyboard(question, progress = { current: 0, total: 0 }) {
     }
   ])
 
-  // Кнопка отмены и прогресс
   const progressText = `📊 ${progress.current}/${progress.total}`;
   keyboard.push([
     { text: '❌ Отменить опрос', callback_data: 'cancel_survey' },
@@ -51,7 +48,7 @@ function getQuestionKeyboard(question, progress = { current: 0, total: 0 }) {
   };
 }
 
-// Клавиатура действий для напоминаний
+// Клавиатура действий для напоминаний (УПРОЩЕННАЯ ВЕРСИЯ)
 function getReminderActionsKeyboard(reminderId) {
   return {
     reply_markup: {
@@ -66,54 +63,11 @@ function getReminderActionsKeyboard(reminderId) {
             text: '⏰ Через 10 мин',
             callback_data: `intake_later_${reminderId}`,
             emoji: '⏰'
-          }
-        ],
-        [
+          },
           {
             text: '❌ Пропустить',
             callback_data: `intake_skipped_${reminderId}`,
             emoji: '❌'
-          },
-          {
-            text: '⚙️ Настройки',
-            callback_data: `reminder_settings_${reminderId}`,
-            emoji: '⚙️'
-          }
-        ]
-      ]
-    }
-  };
-}
-
-// Клавиатура настроек для конкретного напоминания
-function getReminderSettingsKeyboard(reminderId) {
-  return {
-    reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text: '⏸️ Временно отключить',
-            callback_data: `reminder_disable_${reminderId}`,
-            emoji: '⏸️'
-          },
-          {
-            text: '⏰ Изменить время',
-            callback_data: `reminder_change_time_${reminderId}`,
-            emoji: '⏰'
-          }
-        ],
-        [
-          {
-            text: '🗑️ Удалить напоминание',
-            callback_data: `reminder_delete_${reminderId}`,
-            emoji: '🗑️'
-          }
-        ],
-        [
-          {
-            text: '↩️ Назад',
-            callback_data: `reminder_back_${reminderId}`,
-            emoji: '↩️'
           }
         ]
       ]
@@ -195,7 +149,6 @@ function getSettingsKeyboard() {
 // Клавиатура после завершения опроса
 function getSurveyCompletionKeyboard(isPremium = false) {
   const buttons = [
-    // [{ text: '💊 Посмотреть рекомендации', callback_data: 'view_recommendations' }],
     [{ text: '🔄 Пройти заново', callback_data: 'restart_survey' }]
   ];
 

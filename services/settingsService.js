@@ -14,7 +14,6 @@ class SettingsService {
         [chatId],
         (err, row) => {
           if (err || !row) {
-            // Создаем настройки по умолчанию
             this.createDefaultSettings(chatId).then(resolve);
           } else {
 
@@ -85,7 +84,6 @@ class SettingsService {
       if (allowedFields.includes(key)) {
         updateFields.push(`${key} = ?`);
 
-        // Если это поле времени - нормализуем
         if (key.includes('_time')) {
           updateValues.push(TimeHelper.normalizeTime(updates[key]));
         } else {
@@ -101,7 +99,6 @@ class SettingsService {
     updateValues.push(chatId);
 
     return new Promise((resolve, reject) => {
-      // Пробуем без updated_at (как у вас работает)
       const sqlWithoutUpdated = `UPDATE notification_settings
                                 SET ${updateFields.join(', ')}
                                 WHERE chat_id = ?`;
@@ -116,7 +113,6 @@ class SettingsService {
           let remindersUpdatedCount = 0;
 
           try {
-          // Для каждого измененного времени обновляем напоминания
             for (const [key, value] of Object.entries(updates)) {
               if (key.includes('_time') && oldSettings[key] !== value) {
                 const period = key.replace('_time', '');
@@ -126,8 +122,6 @@ class SettingsService {
                 if (oldTime !== newTime) {
                   const updated = await this.updateRemindersForPeriod(chatId, period, oldTime, newTime);
                   remindersUpdatedCount += updated;
-
-                  // Трекаем изменения
                   await analyticsService.trackSettingsUsage(chatId, key, oldTime, newTime);
                 }
               }
@@ -150,11 +144,10 @@ class SettingsService {
   async syncRemindersWithNewTime(chatId, updates, oldSettings) {
     try {
       const reminderService = require('./reminderService');
-      const service = new reminderService(); // Без бота, только для БД операций
+      const service = new reminderService();
 
       let updatedReminders = 0;
 
-      // Для каждого измененного периода времени
       for (const [timeType, newTime] of Object.entries(updates)) {
         if (!timeType.includes('_time')) continue;
 
@@ -185,7 +178,6 @@ class SettingsService {
     return new Promise((resolve) => {
       const db = require('../config/database');
 
-      // Определяем временной диапазон для периода
       const timeRanges = {
         morning: { start: '06:00', end: '11:00' },
         afternoon: { start: '12:00', end: '17:00' },
@@ -198,13 +190,12 @@ class SettingsService {
         return;
       }
 
-      // Обновляем напоминания в этом диапазоне
       db.run(
         `UPDATE reminders
         SET time = ?
         WHERE chat_id = ?
         AND time BETWEEN ? AND ?
-        AND time != ?`, // Не обновляем если уже новое время
+        AND time != ?`,
         [newTime, chatId, range.start, range.end, newTime],
         function(err) {
           if (err) {
@@ -296,7 +287,6 @@ class SettingsService {
   async exportUserData(chatId) {
     const userData = {};
 
-    // Собираем все данные пользователя
     const promises = [
       this.getUserProfile(chatId),
       this.getUserReminders(chatId),
@@ -309,7 +299,7 @@ class SettingsService {
     return {
       profile,
       reminders,
-      history: history.slice(0, 100), // Ограничиваем историю
+      history: history.slice(0, 100),
       goals,
       export_date: new Date().toISOString()
     };
