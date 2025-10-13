@@ -230,33 +230,44 @@ class SettingsController {
   }
 
   // 📋 Показать опции для конкретного напоминания
-  async showReminderOptions(ctx, reminder, period, reminderNumber) {
-    const periodLabel = this.getPeriodLabel(period).toLowerCase();
+  async showReminderOptions(ctx, reminder, period) {
+    try {
+      const periodLabel = this.getPeriodLabel(period).toLowerCase();
 
-    const message = `⚙️ *Настройки напоминания ${reminderNumber}*\n\n` +
-      `💊 ${reminder.supplement_name}\n` +
-      `📏 ${reminder.dosage}\n` +
-      `⏰ ${reminder.time}\n\n` +
-      `*Выберите действие:*`;
+      const message = `⚙️ *Настройки напоминания*\n\n` +
+        `💊 ${reminder.supplement_name}\n` +
+        `📏 ${reminder.dosage}\n` +
+        `⏰ ${reminder.time}\n\n` +
+        `*Выберите действие:*`;
 
-    await ctx.reply(message, {
-      parse_mode: 'Markdown',
-      reply_markup: {
-        keyboard: [
-          ['⏰ Изменить время', '🗑️ Удалить напоминание'],
-          [`↩️ Назад к ${periodLabel} напоминаниям`]
-        ],
-        resize_keyboard: true
-      }
-    });
+      await ctx.reply(message, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          keyboard: [
+            ['⏰ Изменить время', '🗑️ Удалить напоминание'],
+            [`↩️ Назад к ${periodLabel} напоминаниям`]
+          ],
+          resize_keyboard: true
+        }
+      });
 
-    // Сохраняем текущее напоминание в сессии
-    const sessionManager = require('../utils/sessionManager');
-    sessionManager.set(ctx.chat.id, {
-      ...sessionManager.get(ctx.chat.id),
-      editingReminder: reminder,
-      editingReminderNumber: reminderNumber
-    });
+      // 🔥 ВАЖНО: Сохраняем текущее напоминание в сессии
+      const sessionManager = require('../utils/sessionManager');
+      const currentSession = sessionManager.get(ctx.chat.id);
+
+      sessionManager.set(ctx.chat.id, {
+        ...currentSession, // Сохраняем существующие данные
+        currentReminder: reminder, // Добавляем текущее напоминание
+        editingReminder: true, // Флаг что мы редактируем напоминание
+        timestamp: Date.now()
+      });
+
+      console.log('💾 Сессия обновлена с текущим напоминанием:', reminder.supplement_name);
+
+    } catch (error) {
+      console.error('❌ Ошибка показа опций напоминания:', error);
+      throw error;
+    }
   }
 
   // 🔢 Извлечение номера напоминания из текста
@@ -287,37 +298,47 @@ class SettingsController {
 
   // ⏰ Показать выбор времени для напоминания
   async showTimeSelectionForReminder(ctx, reminder, period) {
-    const timeSlots = this.getTimeSlotsByPeriod(period);
-    const periodLabel = this.getPeriodLabel(period).toLowerCase();
+    try {
+      const timeSlots = this.getTimeSlotsByPeriod(period);
+      const periodLabel = this.getPeriodLabel(period).toLowerCase();
 
-    const message = `⏰ *Изменение времени для ${reminder.supplement_name}*\n\n` +
-      `Текущее время: ${reminder.time}\n\n` +
-      `Выберите новое время:`;
+      const message = `⏰ *Изменение времени для ${reminder.supplement_name}*\n\n` +
+        `Текущее время: ${reminder.time}\n\n` +
+        `Выберите новое время:`;
 
-    // Создаем клавиатуру с временными слотами
-    const keyboard = [];
-    for (let i = 0; i < timeSlots.length; i += 3) {
-      keyboard.push(timeSlots.slice(i, i + 3));
-    }
-
-    keyboard.push(['❌ Отменить изменение']);
-    keyboard.push([`↩️ Назад к ${periodLabel} напоминаниям`]);
-
-    await ctx.reply(message, {
-      parse_mode: 'Markdown',
-      reply_markup: {
-        keyboard: keyboard,
-        resize_keyboard: true
+      const keyboard = [];
+      for (let i = 0; i < timeSlots.length; i += 3) {
+        keyboard.push(timeSlots.slice(i, i + 3));
       }
-    });
 
-    // Сохраняем состояние изменения времени
-    const sessionManager = require('../utils/sessionManager');
-    sessionManager.set(ctx.chat.id, {
-      ...sessionManager.get(ctx.chat.id),
-      changingReminderTime: true,
-      currentReminder: reminder
-    });
+      keyboard.push(['❌ Отменить изменение']);
+      keyboard.push([`↩️ Назад к ${periodLabel} напоминаниям`]);
+
+      await ctx.reply(message, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          keyboard: keyboard,
+          resize_keyboard: true
+        }
+      });
+
+      // 🔥 Сохраняем состояние изменения времени
+      const sessionManager = require('../utils/sessionManager');
+      const currentSession = sessionManager.get(ctx.chat.id);
+
+      sessionManager.set(ctx.chat.id, {
+        ...currentSession,
+        changingReminderTime: true,
+        currentReminder: reminder,
+        timestamp: Date.now()
+      });
+
+      console.log('💾 Сессия обновлена для изменения времени');
+
+    } catch (error) {
+      console.error('❌ Ошибка показа выбора времени:', error);
+      throw error;
+    }
   }
 
   // 💾 Сохранение нового времени напоминания
@@ -364,34 +385,45 @@ class SettingsController {
 
   // 🗑️ Показать подтверждение удаления напоминания
   async showDeleteReminderConfirmation(ctx, reminder, period) {
-    const periodLabel = this.getPeriodLabel(period).toLowerCase();
+    try {
+      const periodLabel = this.getPeriodLabel(period).toLowerCase();
 
-    const message = `🗑️ *Удаление напоминания*\n\n` +
-      `Вы уверены, что хотите удалить это напоминание?\n\n` +
-      `💊 ${reminder.supplement_name}\n` +
-      `⏰ ${reminder.time}\n` +
-      `📏 ${reminder.dosage}\n\n` +
-      `*Это действие нельзя отменить!*`;
+      const message = `🗑️ *Удаление напоминания*\n\n` +
+        `Вы уверены, что хотите удалить это напоминание?\n\n` +
+        `💊 ${reminder.supplement_name}\n` +
+        `⏰ ${reminder.time}\n` +
+        `📏 ${reminder.dosage}\n\n` +
+        `*Это действие нельзя отменить!*`;
 
-    await ctx.reply(message, {
-      parse_mode: 'Markdown',
-      reply_markup: {
-        keyboard: [
-          ['✅ Да, удалить напоминание'],
-          ['❌ Нет, оставить напоминание'],
-          [`↩️ Назад к ${periodLabel} напоминаниям`]
-        ],
-        resize_keyboard: true
-      }
-    });
+      await ctx.reply(message, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          keyboard: [
+            ['✅ Да, удалить напоминание'],
+            ['❌ Нет, оставить напоминание'],
+            [`↩️ Назад к ${periodLabel} напоминаниям`]
+          ],
+          resize_keyboard: true
+        }
+      });
 
-    // Сохраняем состояние удаления
-    const sessionManager = require('../utils/sessionManager');
-    sessionManager.set(ctx.chat.id, {
-      ...sessionManager.get(ctx.chat.id),
-      deletingReminder: true,
-      currentReminder: reminder
-    });
+      // 🔥 Сохраняем состояние удаления
+      const sessionManager = require('../utils/sessionManager');
+      const currentSession = sessionManager.get(ctx.chat.id);
+
+      sessionManager.set(ctx.chat.id, {
+        ...currentSession,
+        deletingReminder: true,
+        currentReminder: reminder,
+        timestamp: Date.now()
+      });
+
+      console.log('💾 Сессия обновлена для удаления напоминания');
+
+    } catch (error) {
+      console.error('❌ Ошибка показа подтверждения удаления:', error);
+      throw error;
+    }
   }
 
   // ✅ Подтверждение удаления напоминания

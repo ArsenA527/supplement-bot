@@ -501,9 +501,13 @@ async function handleTextCommands(ctx) {
     return;
   }
 
+  // 🔥 Обработка изменения времени напоминания
   if (text === '⏰ Изменить время') {
     console.log('⏰ Изменение времени напоминания');
+
     const timeSession = sessionManager.get(ctx.chat.id);
+    console.log('💾 Сессия при изменении времени:', timeSession);
+
     if (timeSession && timeSession.currentReminder) {
       await settingsController.showTimeSelectionForReminder(
         ctx,
@@ -511,14 +515,19 @@ async function handleTextCommands(ctx) {
         timeSession.managingPeriod
       );
     } else {
+      console.log('❌ Сессия не содержит currentReminder');
       await ctx.reply('❌ Сессия устарела. Вернитесь в настройки напоминаний.');
     }
     return;
   }
 
+  // 🔥 Обработка удаления напоминания
   if (text === '🗑️ Удалить напоминание') {
     console.log('🗑️ Удаление напоминания');
+
     const deleteSession = sessionManager.get(ctx.chat.id);
+    console.log('💾 Сессия при удалении:', deleteSession);
+
     if (deleteSession && deleteSession.currentReminder) {
       await settingsController.showDeleteReminderConfirmation(
         ctx,
@@ -526,6 +535,7 @@ async function handleTextCommands(ctx) {
         deleteSession.managingPeriod
       );
     } else {
+      console.log('❌ Сессия не содержит currentReminder');
       await ctx.reply('❌ Сессия устарела. Вернитесь в настройки напоминаний.');
     }
     return;
