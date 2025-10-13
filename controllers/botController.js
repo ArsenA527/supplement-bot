@@ -478,6 +478,89 @@ async function handleTextCommands(ctx) {
     return;
   }
 
+  if (text.startsWith('✏️ ') && text.includes('(')) {
+    console.log('✏️ Редактирование напоминания:', text);
+    await settingsController.handleEditIndividualReminder(ctx, text);
+    return;
+  }
+
+  if (text.startsWith('🔄 Изменить все ')) {
+    console.log('🔄 Массовое изменение:', text);
+    await settingsController.handleEditAllReminders(ctx, text);
+    return;
+  }
+
+  if (text.startsWith('↩️ Назад к ') && text.includes('напоминаниям')) {
+    console.log('↩️ Возврат к напоминаниям периода');
+    const periodSession = sessionManager.get(ctx.chat.id);
+    if (periodSession && periodSession.managingPeriod) {
+      await settingsController.showPeriodReminders(ctx, periodSession.managingPeriod);
+    } else {
+      await settingsController.showReminderSettings(ctx);
+    }
+    return;
+  }
+
+  if (text === '⏰ Изменить время') {
+    console.log('⏰ Изменение времени напоминания');
+    const timeSession = sessionManager.get(ctx.chat.id);
+    if (timeSession && timeSession.currentReminder) {
+      await settingsController.showTimeSelectionForReminder(
+        ctx,
+        timeSession.currentReminder,
+        timeSession.managingPeriod
+      );
+    } else {
+      await ctx.reply('❌ Сессия устарела. Вернитесь в настройки напоминаний.');
+    }
+    return;
+  }
+
+  if (text === '🗑️ Удалить напоминание') {
+    console.log('🗑️ Удаление напоминания');
+    const deleteSession = sessionManager.get(ctx.chat.id);
+    if (deleteSession && deleteSession.currentReminder) {
+      await settingsController.showDeleteReminderConfirmation(
+        ctx,
+        deleteSession.currentReminder,
+        deleteSession.managingPeriod
+      );
+    } else {
+      await ctx.reply('❌ Сессия устарела. Вернитесь в настройки напоминаний.');
+    }
+    return;
+  }
+
+  if (text === '✅ Да, удалить напоминание') {
+    console.log('✅ Подтверждение удаления');
+    await settingsController.confirmDeleteReminder(ctx);
+    return;
+  }
+
+  if (text === '❌ Нет, оставить напоминание' || text === '❌ Отменить изменение') {
+    console.log('❌ Отмена действия');
+    const cancelSession = sessionManager.get(ctx.chat.id);
+    if (cancelSession && cancelSession.managingPeriod) {
+      await settingsController.showPeriodReminders(ctx, cancelSession.managingPeriod);
+    } else {
+      await settingsController.showReminderSettings(ctx);
+    }
+    return;
+  }
+
+  const timeSlots = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00',
+                    '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
+                    '18:00', '19:00', '20:00', '21:00', '22:00'];
+
+  if (timeSlots.includes(text)) {
+    const timeSession = sessionManager.get(ctx.chat.id);
+    if (timeSession && timeSession.changingReminderTime) {
+      console.log('⏰ Сохранение времени:', text);
+      await settingsController.saveReminderTime(ctx, text);
+      return;
+    }
+  }
+
   // Если пользователь выбирает время
   if (session && session.waitingForTimePeriod) {
     console.log(`⏰ Пользователь выбирает время для ${session.waitingForTimePeriod}: ${text}`);
@@ -631,7 +714,7 @@ async function handleTextCommands(ctx) {
       console.log('🌙 Показ вечерних напоминаний');
       await settingsController.showPeriodReminders(ctx, 'evening');
       break;
-
+/*
     case text.startsWith('✏️ Изменить утреннее напоминание') ? text : '':
     case text.startsWith('✏️ Изменить дневное напоминание') ? text : '':
     case text.startsWith('✏️ Изменить вечернее напоминание') ? text : '':
@@ -689,7 +772,7 @@ async function handleTextCommands(ctx) {
         return;
       }
       break;
-
+*/
     case '📊 Мои данные':
       console.log('📊 Управление данными');
       await settingsController.showDataManagement(ctx);

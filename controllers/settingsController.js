@@ -74,6 +74,8 @@ class SettingsController {
       const periodLabel = this.getPeriodLabel(period);
       const periodLabelLower = periodLabel.toLowerCase();
 
+      console.log(`🔍 Период: ${period}, найдено напоминаний: ${periodReminders.length}`);
+
       if (periodReminders.length === 0) {
         await ctx.reply(
           `📭 *У вас нет ${periodLabelLower} напоминаний*\n\n` +
@@ -86,18 +88,14 @@ class SettingsController {
 
       let message = `🌅 *Ваши ${periodLabelLower} напоминания*\n\n`;
 
-      // Показываем список напоминаний
       periodReminders.forEach((reminder, index) => {
         message += `${index + 1}. ${reminder.supplement_name}\n`;
         message += `   ⏰ ${reminder.time} | 📏 ${reminder.dosage}\n\n`;
       });
 
-      // Создаем клавиатуру
       const keyboard = [];
 
-      // Кнопки для каждого напоминания
       periodReminders.forEach((reminder, index) => {
-        // Сокращаем длинные названия для кнопки
         const shortName = reminder.supplement_name.length > 20
           ? reminder.supplement_name.substring(0, 17) + '...'
           : reminder.supplement_name;
@@ -105,7 +103,6 @@ class SettingsController {
         keyboard.push([`✏️ ${shortName} (${reminder.time})`]);
       });
 
-      // Кнопка для массового изменения
       keyboard.push([`🔄 Изменить все ${periodLabelLower} напоминания`]);
       keyboard.push(['↩️ Назад к настройкам']);
 
@@ -117,13 +114,17 @@ class SettingsController {
         }
       });
 
-      // Сохраняем контекст для дальнейшей обработки
       const sessionManager = require('../utils/sessionManager');
+      console.log(`💾 Сохраняем сессию для ${chatId}, период: ${period}`);
+
       sessionManager.set(ctx.chat.id, {
         managingPeriod: period,
         periodReminders: periodReminders,
         timestamp: Date.now()
       });
+
+      const savedSession = sessionManager.get(ctx.chat.id);
+      console.log(`💾 Проверка сохраненной сессии:`, savedSession ? 'OK' : 'NULL');
 
     } catch (error) {
       console.error(`❌ Ошибка загрузки ${period} напоминаний:`, error);
@@ -151,6 +152,13 @@ class SettingsController {
   async handleEditIndividualReminder(ctx, text) {
     try {
       const session = sessionManager.get(ctx.chat.id);
+      console.log('=== 🧪 DEBUG EDIT REMINDER ===');
+      console.log('Button text:', text);
+      console.log('Session:', session);
+      console.log('Period reminders:', session?.periodReminders?.map(r => r.supplement_name));
+      console.log('============================');
+
+
       if (!session || !session.periodReminders) {
         await ctx.reply('❌ Сессия устарела. Вернитесь в настройки напоминаний.');
         return;
@@ -175,15 +183,29 @@ class SettingsController {
 
   // 🔍 Поиск напоминания по тексту кнопки
   findReminderByButtonText(reminders, buttonText) {
+    console.log('🔍 Поиск напоминания по тексту:', buttonText);
+    console.log('🔍 Доступные напоминания:', reminders.map(r => r.supplement_name));
+
+    // Извлекаем название добавки из текста кнопки
     const match = buttonText.match(/✏️ (.+?) \(\d{2}:\d{2}\)/);
-    if (!match) return null;
+    if (!match) {
+      console.log('❌ Не удалось извлечь название из кнопки');
+      return null;
+    }
 
-    const searchName = match[1];
+    const searchName = match[1].trim();
+    console.log('🔍 Ищем напоминание:', searchName);
 
-    return reminders.find(reminder =>
-      reminder.supplement_name.includes(searchName) ||
-      searchName.includes(reminder.supplement_name)
-    );
+    // Ищем точное совпадение или частичное
+    const foundReminder = reminders.find(reminder => {
+      const reminderName = reminder.supplement_name.trim();
+      return reminderName === searchName ||
+            reminderName.includes(searchName) ||
+            searchName.includes(reminderName);
+    });
+
+    console.log('🔍 Найдено напоминание:', foundReminder);
+    return foundReminder;
   }
 
   // 🔄 Обработка массового изменения напоминаний
