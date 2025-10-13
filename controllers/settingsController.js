@@ -340,6 +340,82 @@ class SettingsController {
     }
   }
 
+  // 🗑️ Показать подтверждение удаления напоминания
+  async showDeleteReminderConfirmation(ctx, reminder, period) {
+    const periodLabel = this.getPeriodLabel(period).toLowerCase();
+
+    const message = `🗑️ *Удаление напоминания*\n\n` +
+      `Вы уверены, что хотите удалить это напоминание?\n\n` +
+      `💊 ${reminder.supplement_name}\n` +
+      `⏰ ${reminder.time}\n` +
+      `📏 ${reminder.dosage}\n\n` +
+      `*Это действие нельзя отменить!*`;
+
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        keyboard: [
+          ['✅ Да, удалить напоминание'],
+          ['❌ Нет, оставить напоминание'],
+          [`↩️ Назад к ${periodLabel} напоминаниям`]
+        ],
+        resize_keyboard: true
+      }
+    });
+
+    // Сохраняем состояние удаления
+    const sessionManager = require('../utils/sessionManager');
+    sessionManager.set(ctx.chat.id, {
+      ...sessionManager.get(ctx.chat.id),
+      deletingReminder: true,
+      currentReminder: reminder
+    });
+  }
+
+  // ✅ Подтверждение удаления напоминания
+  async confirmDeleteReminder(ctx) {
+    try {
+      const session = sessionManager.get(ctx.chat.id);
+      if (!session || !session.currentReminder) {
+        await ctx.reply('❌ Сессия устарела. Начните заново.');
+        return;
+      }
+
+      const reminder = session.currentReminder;
+      const period = session.managingPeriod;
+
+      // Удаляем напоминание из БД
+      const db = require('../config/database');
+      await new Promise((resolve, reject) => {
+        db.run(
+          'DELETE FROM reminders WHERE id = ?',
+          [reminder.id],
+          function(err) {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+
+      await ctx.reply(
+        `✅ Напоминание удалено!\n\n` +
+        `💊 ${reminder.supplement_name}\n` +
+        `⏰ ${reminder.time}\n` +
+        `📏 ${reminder.dosage}\n\n` +
+        `Напоминание больше не будет приходить.`,
+        { parse_mode: 'Markdown' }
+      );
+
+      // Очищаем состояние и возвращаемся к списку напоминаний
+      sessionManager.delete(ctx.chat.id);
+      await this.showPeriodReminders(ctx, period);
+
+    } catch (error) {
+      console.error('❌ Ошибка удаления напоминания:', error);
+      await ctx.reply('❌ Не удалось удалить напоминание. Попробуйте позже.');
+    }
+  }
+
   // 🔔 Управление уведомлениями
   async showNotificationSettings(ctx) {
     const settings = await settingsService.getUserSettings(ctx.chat.id);
