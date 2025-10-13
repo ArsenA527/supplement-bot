@@ -295,31 +295,31 @@ class ReminderController {
       console.log(`🔵 Обработка действия: ${action} для напоминания ${reminderId}`);
 
       // Обработка настроек
-      if (action === 'reminder_settings') {
+      if (action === 'settings') {
         await this.showReminderSettings(ctx, reminderId);
         return;
       }
 
       // Обработка возврата назад
-      if (action === 'reminder_back') {
+      if (action === 'back') {
         await this.showReminderActions(ctx, reminderId);
         return;
       }
 
       // Обработка временного отключения (заглушка)
-      if (action === 'reminder_disable') {
+      if (action === 'disable') {
         await ctx.answerCbQuery('⏸️ Функция временного отключения скоро будет доступна');
         return;
       }
 
       // Обработка изменения времени (заглушка)
-      if (action === 'reminder_change_time') {
+      if (action === 'change_time') {
         await ctx.answerCbQuery('⏰ Функция изменения времени скоро будет доступна');
         return;
       }
 
       // Обработка удаления (заглушка)
-      if (action === 'reminder_delete') {
+      if (action === 'delete') {
         await ctx.answerCbQuery('🗑️ Функция удаления скоро будет доступна');
         return;
       }
