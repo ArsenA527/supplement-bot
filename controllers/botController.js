@@ -96,7 +96,6 @@ async function handleHelp(ctx) {
 *Напоминания:*
 /myreminders - Настройки напоминаний
 /myhistory - История приема
-/mystats - Статистика приема
 
 
 *Для помощи:* /help`;
