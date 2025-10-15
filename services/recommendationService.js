@@ -1,131 +1,196 @@
 const recommendationRules = {
-  // БАЗА - КРИТИЧЕСКИ ВАЖНЫЕ ДЛЯ ВСЕХ (по вашей экспертизе)
+  // БАЗА - ФУНДАМЕНТАЛЬНЫЕ ДЕФИЦИТЫ (на основе эпидемиологии и биохимии)
   base: {
     condition: () => true,
     supplements: [
       {
-        name: 'Витамин D3 + K2',
-        dosage: '2000-5000 МЕ D3 + 100 мкг K2',
-        time: 'утром',
-        reason: 'Фундамент! 80% мужчин в дефиците. Без D3 падает тестостерон, иммунитет, настроение.',
-        benefits: ['Тестостерон', 'Иммунитет', 'Настроение'],
-        with_food: 'С жирной пищей для усвоения',
-        important: 'Сначала проверьте уровень 25(OH)D в крови!',
-        priority: 10,
-        period: 'morning'
-      },
-      {
-        name: 'Магний (глицинат)',
-        dosage: '300-400 мг',
+        name: 'Магний (глицинат/малат)',
+        dosage: '300-400 мг элементарного магния',
         time: 'вечером',
-        reason: 'Буфер между тобой и психушкой. Успокаивает нервную систему, улучшает сон.',
-        benefits: ['Качество сна', 'Снижение тревожности', 'Расслабление мышц'],
-        with_food: 'На пустой желудок перед сном',
-        important: 'Глицинат - для сна и нервов, Цитрат - если есть проблемы с ЖКТ',
-        priority: 9,
+        reason: 'Участвует в 600+ ферментативных реакциях. Критически важен для работы нервной системы, синтеза АТФ и детоксикации. 80% населения в дефиците.',
+        benefits: ['Качество сна', 'Снижение тревожности', 'Энергия', 'Расслабление мышц'],
+        with_food: 'На пустой желудок за 1-2 часа до сна',
+        important: 'Глицинат - для сна и нервов, Малат - для энергии и мышц',
+        priority: 10,
         period: 'evening'
       },
       {
         name: 'Омега-3 (EPA/DHA)',
-        dosage: '1000-2000 мг',
+        dosage: '1000-2000 мг (не менее 500 мг EPA)',
         time: 'с едой',
-        reason: 'Смазывает мозг, стабилизирует настроение, снижает воспаление.',
-        benefits: ['Работа мозга', 'Стабильность настроения', 'Противовоспалительный эффект'],
-        with_food: 'Обязательно с едой для усвоения',
-        priority: 8,
-        period: 'afternoon'
+        reason: 'Структурный компонент мембран нейронов. Снижает системное воспаление, улучшает текучесть мембран и нейротрансмиссию.',
+        benefits: ['Когнитивные функции', 'Противовоспалительный эффект', 'Здоровье сердечно-сосудистой системы'],
+        with_food: 'Обязательно с жирной пищей для усвоения',
+        important: 'Соотношение EPA/DHA не менее 1:1',
+        priority: 9,
+        period: 'lunch'
       }
     ]
   },
 
-  // АНТИСТРЕСС (активируется при высоком стрессе)
-  high_stress: {
-    condition: (answers) => answers.stress_level &&
-      ['Постоянный высокий стресс', 'Хронический стресс, выгорание'].includes(answers.stress_level),
+  // ВИТАМИН D - ОСОБЫЙ СЛУЧАЙ (условно-базовый)
+  vitamin_d: {
+    condition: (answers) => {
+      // Рекомендовать почти всем, кроме тех, кто точно знает свой уровень
+      const hasCondition = answers.chronic_conditions &&
+        !answers.chronic_conditions.includes('Нет хронических заболеваний');
+      return !hasCondition; // Более безопасный подход
+    },
     supplements: [
       {
-        name: 'Ашваганда',
-        dosage: '600 мг',
-        time: 'утром и вечером',
-        reason: 'Главный антистресс! Снижает кортизол, стабилизирует настроение, улучшает сон и либидо.',
-        benefits: ['Снижение кортизола', 'Улучшение сна', 'Повышение либидо'],
-        with_food: 'Можно с едой или без',
-        important: 'Пить курсами по 2-3 месяца',
-        combo: 'Отлично работает в паре с Магнием',
-        priority: 7,
+        name: 'Витамин D3 + K2 (МК-7)',
+        dosage: '2000-4000 МЕ D3 + 100-200 мкг K2',
+        time: 'утром с завтраком',
+        reason: 'Гормоноподобный витамин. Регулирует 2000+ генов. При дефиците нарушается работа иммунной, эндокринной и нервной систем.',
+        benefits: ['Иммуномодуляция', 'Кальциевый обмен', 'Настроение', 'Гормональный баланс'],
+        with_food: 'С жирной пищей для усвоения',
+        important: 'K2 направляет кальций в кости, а не в сосуды',
+        priority: 8,
         period: 'morning'
       }
     ]
   },
 
-  // ФОКУС И ЭНЕРГИЯ (при умственных нагрузках и тумане в голове)
-  focus_energy: {
+  // АНТИСТРЕСС И НЕРВНАЯ СИСТЕМА
+  stress_support: {
+    condition: (answers) => answers.stress_symptoms &&
+      ['Регулярный умеренный стресс', 'Постоянный высокий стресс', 'Хронический стресс, выгорание'].includes(answers.stress_symptoms),
+    supplements: [
+      {
+        name: 'Ашваганда (KSM-66)',
+        dosage: '600 мг',
+        time: 'утром и/или вечером',
+        reason: 'Адаптоген, нормализующий ось HPA (гипоталамус-гипофиз-надпочечники). Снижает кортизол, улучшает резистентность к стрессу.',
+        benefits: ['Снижение кортизола', 'Улучшение сна', 'Повышение стрессоустойчивости'],
+        with_food: 'С едой',
+        important: 'Курс 2-3 месяца, затем перерыв 1 месяц',
+        combo: 'Синергия с магнием для глубокого восстановления',
+        priority: 7,
+        period: 'morning'
+      },
+      {
+        name: 'L-Теанин',
+        dosage: '200-400 мг',
+        time: 'по необходимости при стрессе',
+        reason: 'Аминокислота, повышающая альфа-ритмы мозга. Дает состояние спокойной сосредоточенности без сонливости.',
+        benefits: ['Фокус без тревоги', 'Расслабление', 'Когнитивная функция'],
+        with_food: 'Натощак или с едой',
+        important: 'Можно комбинировать с кофеином для чистого фокуса',
+        priority: 6,
+        period: 'morning'
+      }
+    ]
+  },
+
+  // КОГНИТИВНЫЕ ФУНКЦИИ И ЭНЕРГИЯ
+  cognitive_support: {
     condition: (answers) => {
-      const highMentalLoad = answers.workload_type &&
-        ['В основном умственная', 'Умственная + стресс'].includes(answers.workload_type);
-      const lowEnergy = answers.energy_focus &&
-        ['Скачет в течение дня', 'Постоянно низкий', 'Сильная усталость с утра'].includes(answers.energy_focus);
-      return highMentalLoad || lowEnergy;
+      const mentalLoad = answers.workload_type &&
+        ['В основном умственная', 'Умственная + стресс', 'Смешанная 50/50'].includes(answers.workload_type);
+      const focusIssues = answers.memory_concentration &&
+        ['Заметил(а) ухудшение за последний год', 'Частые проблемы с фокусом и вниманием'].includes(answers.memory_concentration);
+      return mentalLoad || focusIssues;
     },
     supplements: [
       {
         name: 'L-Тирозин',
         dosage: '500-1000 мг',
-        time: 'утром',
-        reason: 'Включает голову! Предшественник дофамина - дает фокус и собранность при умственных нагрузках.',
-        benefits: ['Фокус и концентрация', 'Умственная энергия', 'Мотивация'],
+        time: 'утром натощак',
+        reason: 'Предшественник катехоламинов (дофамин, норадреналин). Восстанавливает нейромедиаторы при умственном переутомлении.',
+        benefits: ['Умственная энергия', 'Фокус и концентрация', 'Мотивация'],
         with_food: 'Натощак за 30 мин до еды',
-        important: 'Только при необходимости, не каждый день!',
-        combo: 'Идеально перед важными задачами или тренировкой',
-        priority: 6,
+        important: 'Только при необходимости, циклически',
+        combo: 'С витаминами B6 и C для синтеза нейромедиаторов',
+        priority: 7,
         period: 'morning'
       },
       {
-        name: 'Цинк (пиколинат)',
-        dosage: '15-30 мг',
-        time: 'вечером',
-        reason: 'Критически важен для тестостерона и иммунитета. Быстро расходуется при стрессе.',
-        benefits: ['Поддержка тестостерона', 'Иммунитет', 'Восстановление'],
-        with_food: 'С едой чтобы избежать тошноту',
-        important: 'Не превышайте 40 мг в день',
-        priority: 5,
-        period: 'evening'
-      }
-    ]
-  },
-
-  // АДАПТОГЕНЫ ДЛЯ ЭНЕРГИИ (при смешанных или физических нагрузках)
-  adaptogens: {
-    condition: (answers) => answers.workload_type &&
-      ['Смешанная 50/50', 'Физическая + недосып'].includes(answers.workload_type),
-    supplements: [
-      {
-        name: 'Родиола розовая',
-        dosage: '200-400 мг',
+        name: 'Цитиколин (CDP-Choline)',
+        dosage: '250-500 мг',
         time: 'утром',
-        reason: 'Адаптоген для фокуса. Учит тело справляться со стрессом, дает энергию без взрыва как кофеин.',
-        benefits: ['Устойчивость к стрессу', 'Умственная энергия', 'Адаптация к нагрузкам'],
-        with_food: 'За 20-30 минут до завтрака',
-        combo: 'Утром - родиола для фокуса, вечером - ашваганда для отключения',
-        priority: 4,
+        reason: 'Предшественник фосфатидилхолина - основного компонента мембран нейронов. Повышает уровень ацетилхолина.',
+        benefits: ['Память', 'Обучение', 'Нейропластичность'],
+        with_food: 'С едой или без',
+        important: 'Начинать с низкой дозы 250 мг',
+        priority: 6,
         period: 'morning'
       }
     ]
   },
 
-  // ГОРМОНАЛЬНАЯ ПОДДЕРЖКА (при проблемах с либидо и настроением)
-  hormonal_support: {
-    condition: (answers) => answers.mood_libido_stability &&
-      ['Либидо низкое, частые перепады настроения', 'Апатия, раздражительность, нет интереса'].includes(answers.mood_libido_stability),
+  // ИММУННАЯ СИСТЕМА
+  immune_support: {
+    condition: (answers) => answers.immune_health &&
+      ['3-4 раза в год', 'Частые и продолжительные болезни', 'Постоянно что-то беспокоит (ослабленный иммунитет)'].includes(answers.immune_health),
     supplements: [
       {
-        name: 'Ашваганда',
-        dosage: '600 мг',
-        time: 'утром и вечером',
-        reason: 'Помимо антистресс эффекта, нормализует гормональный фон и повышает либидо.',
-        benefits: ['Баланс гормонов', 'Повышение либидо', 'Стабильность настроения'],
-        with_food: 'Можно с едой или без',
-        important: 'Эффект накопительный, проявляется через 2-3 недели',
+        name: 'Цинк (пиколинат)',
+        dosage: '15-25 мг',
+        time: 'вечером',
+        reason: 'Кофактор тимулина, критичен для функции T-лимфоцитов. Антиоксидант и противовирусный агент.',
+        benefits: ['Иммунная функция', 'Антиоксидантная защита', 'Синтез тестостерона'],
+        with_food: 'С едой чтобы избетить тошноту',
+        important: 'Курс 1-2 месяца, не превышать 40 мг/сутки',
+        priority: 7,
+        period: 'evening'
+      },
+      {
+        name: 'Витамин C (липосомальный)',
+        dosage: '500-1000 мг',
+        time: 'утром и днем',
+        reason: 'Мощный антиоксидант, поддерживает функцию нейтрофилов и продукцию интерферона. Снижает продолжительность заболеваний.',
+        benefits: ['Антиоксидантная защита', 'Поддержка иммунитета', 'Синтез коллагена'],
+        with_food: 'С едой',
+        important: 'Липосомальная форма лучше усваивается и не раздражает ЖКТ',
+        priority: 6,
+        period: 'morning'
+      }
+    ]
+  },
+
+  // ВОСПАЛЕНИЕ И СУСТАВЫ
+  inflammation_support: {
+    condition: (answers) => answers.inflammation_pain &&
+      ['Периодические боли в суставах или спине при нагрузке', 'Регулярные боли, скованность в суставах/спине'].includes(answers.inflammation_pain),
+    supplements: [
+      {
+        name: 'Куркумин (с пиперином)',
+        dosage: '500-1000 мг куркуминоидов',
+        time: 'с едой',
+        reason: 'Подавляет NF-kB - главный путь активации воспалительных цитокинов. По эффективности сравним с некоторыми НПВП.',
+        benefits: ['Противовоспалительное действие', 'Поддержка суставов', 'Антиоксидантная защита'],
+        with_food: 'С жирной пищей и черным перцем (пиперин)',
+        important: 'Биодоступность критически зависит от формы',
+        priority: 6,
+        period: 'lunch'
+      }
+    ]
+  },
+
+  // ПИЩЕВАРИТЕЛЬНАЯ СИСТЕМА
+  digestive_support: {
+    condition: (answers) => answers.digestion &&
+      ['Вздутие/газы после еды', 'Периодические запоры или диарея', 'Частая изжога, тяжесть, несварение'].includes(answers.digestion),
+    supplements: [
+      {
+        name: 'Пробиотики (Lactobacillus + Bifidobacterium)',
+        dosage: '10-50 млрд КОЕ',
+        time: 'утром натощак',
+        reason: 'Восстанавливают микробиом, улучшают целостность кишечного барьера, синтезируют витамины группы B.',
+        benefits: ['Здоровье микробиома', 'Иммунная функция', 'Синтез витаминов'],
+        with_food: 'За 30 минут до еды',
+        important: 'Курс 1-2 месяца, менять штаммы',
+        priority: 7,
+        period: 'morning'
+      },
+      {
+        name: 'L-Глутамин',
+        dosage: '5-10 г',
+        time: 'утром натощак и перед сном',
+        reason: 'Основной источник энергии для энтероцитов. Восстанавливает целостность кишечного барьера при "дырявом кишечнике".',
+        benefits: ['Восстановление слизистой ЖКТ', 'Иммунная функция', 'Детоксикация'],
+        with_food: 'Натощак в порошке с водой',
+        important: 'Особенно важен при стрессовых нагрузках',
         priority: 6,
         period: 'morning'
       }
@@ -133,24 +198,17 @@ const recommendationRules = {
   }
 };
 
-// ОБНОВЛЕННАЯ ФУНКЦИЯ ГЕНЕРАЦИИ РЕКОМЕНДАЦИЙ
+// УЛУЧШЕННАЯ ФУНКЦИЯ ГЕНЕРАЦИИ РЕКОМЕНДАЦИЙ
 function generateRecommendations(answers) {
   const allRecommendations = [];
   const seenSupplements = new Set();
 
-  // Сначала БАЗОВЫЕ (всегда)
-  if (recommendationRules.base.condition(answers)) {
-    recommendationRules.base.supplements.forEach(supplement => {
-      if (!seenSupplements.has(supplement.name)) {
-        allRecommendations.push(supplement);
-        seenSupplements.add(supplement.name);
-      }
-    });
-  }
+  // Проходим по всем правилам в порядке приоритета
+  const ruleOrder = ['base', 'vitamin_d', 'stress_support', 'cognitive_support', 'immune_support', 'inflammation_support', 'digestive_support'];
 
-  // Затем СПЕЦИФИЧЕСКИЕ по всем правилам
-  for (const [ruleName, rule] of Object.entries(recommendationRules)) {
-    if (ruleName !== 'base' && rule.condition(answers)) {
+  for (const ruleName of ruleOrder) {
+    const rule = recommendationRules[ruleName];
+    if (rule && rule.condition(answers)) {
       for (const supplement of rule.supplements) {
         if (!seenSupplements.has(supplement.name)) {
           allRecommendations.push(supplement);
@@ -160,69 +218,88 @@ function generateRecommendations(answers) {
     }
   }
 
+  // Сортируем по приоритету и ограничиваем количество
   return allRecommendations
     .sort((a, b) => b.priority - a.priority)
-    .slice(0, 6);
+    .slice(0, 6); // Максимум 6 добавок чтобы не перегружать
 }
 
-function formatRecommendations(recommendations) {
+// ФОРМАТИРОВАНИЕ РЕКОМЕНДАЦИЙ С БИОХИМИЧЕСКИМ ОБОСНОВАНИЕМ
+function formatRecommendations(recommendations, answers) {
   if (recommendations.length === 0) {
-    return `🎉 *Ваш образ жизни близок к идеалу!*\n\nНо даже самым здоровым людям мы рекомендуем базовую поддержку:\n• Омега-3 для мозга и противовоспаления\n• Витамин D3 для иммунитета в нашем климате\n\nЭти добавки - страховка для вашего здоровья! 💪`;
+    return `🎉 *Ваш образ жизни близок к идеалу!*\n\nДля поддержания здоровья рекомендуем базовые нутриенты:\n• Магний - для нервной системы\n• Омега-3 - для мозга и противовоспаления\n\nЭти добавки - страховка от дефицитов! 💪`;
   }
 
-  let message = `🌟 *ВАШ ПЕРСОНАЛЬНЫЙ ПЛАН ОЗДОРОВЛЕНИЯ* 🌟\n\n`;
+  let message = `🔬 *ПЕРСОНАЛЬНЫЙ ПЛАН НУТРИЦИОЛОГИЧЕСКОЙ КОРРЕКЦИИ*\n*по методике профессора Дадали*\n\n`;
 
-  message += `*На основе ваших ответов мы подобрали оптимальную программу,* которая поможет:\n`;
+  // Группируем по времени приема для удобства
+  const byPeriod = {
+    morning: [],
+    lunch: [],
+    afternoon: [],
+    evening: []
+  };
 
-  const allBenefits = [...new Set(recommendations.flatMap(s => s.benefits || []))];
-  if (allBenefits.length > 0) {
-    message += `✅ ${allBenefits.slice(0, 3).join('\n✅ ')}\n\n`;
-  }
-
-  message += `---\n📋 *ВАШИ ДОБАВКИ ДЛЯ МАКСИМАЛЬНОГО РЕЗУЛЬТАТА:*\n\n`;
-
-  recommendations.forEach((supp, index) => {
-    message += `**${index + 1}. ${supp.name}**\n`;
-    message += `   💊 *Дозировка:* ${supp.dosage}\n`;
-    message += `   ⏰ *Время приема:* ${supp.time}\n`;
-
-    if (supp.with_food) {
-      message += `   🍽️ *Прием:* ${supp.with_food}\n`;
+  recommendations.forEach(supp => {
+    if (byPeriod[supp.period]) {
+      byPeriod[supp.period].push(supp);
     }
-
-    message += `   💫 *Почему это важно:* ${supp.reason}\n`;
-
-    if (supp.important) {
-      message += `   💡 *Ключевой совет:* ${supp.important}\n`;
-    }
-
-    if (supp.combo) {
-      message += `   🔄 *Отлично сочетается:* ${supp.combo}\n`;
-    }
-
-    message += `\n`;
   });
 
-  message += `---\n🎯 *КАК ДОБИТЬСЯ МАКСИМАЛЬНОГО ЭФФЕКТА:*\n\n`;
+  // Утренние добавки
+  if (byPeriod.morning.length > 0) {
+    message += `🌅 *УТРЕННИЙ КОМПЛЕКС (с завтраком):*\n`;
+    byPeriod.morning.forEach(supp => {
+      message += `• **${supp.name}** - ${supp.dosage}\n`;
+      if (supp.with_food) message += `  🍽️ ${supp.with_food}\n`;
+      message += `  💫 ${supp.reason}\n\n`;
+    });
+  }
+
+  // Дневные добавки
+  if (byPeriod.lunch.length > 0) {
+    message += `🍽️ *ОБЕДЕННЫЙ КОМПЛЕКС (с едой):*\n`;
+    byPeriod.lunch.forEach(supp => {
+      message += `• **${supp.name}** - ${supp.dosage}\n`;
+      message += `  💫 ${supp.reason}\n\n`;
+    });
+  }
+
+  // Вечерние добавки
+  if (byPeriod.evening.length > 0) {
+    message += `🌙 *ВЕЧЕРНИЙ КОМПЛЕКС (перед сном):*\n`;
+    byPeriod.evening.forEach(supp => {
+      message += `• **${supp.name}** - ${supp.dosage}\n`;
+      if (supp.with_food) message += `  🍽️ ${supp.with_food}\n`;
+      message += `  💫 ${supp.reason}\n\n`;
+    });
+  }
+
+  // Ключевые синергии
+  message += `---\n⚗️ *КЛЮЧЕВЫЕ БИОХИМИЧЕСКИЕ СИНЕРГИИ:*\n\n`;
 
   const hasMagnesium = recommendations.some(s => s.name.includes('Магний'));
   const hasVitaminD = recommendations.some(s => s.name.includes('Витамин D'));
-  const hasAshwagandha = recommendations.some(s => s.name.includes('Ашваганда'));
+  const hasZinc = recommendations.some(s => s.name.includes('Цинк'));
 
   if (hasMagnesium && hasVitaminD) {
-    message += `💡 *Комбо-совет:* Принимайте Магний и Витамин D вместе - они усиливают действие друг друга!\n\n`;
+    message += `• **Магний + Витамин D** - магний необходим для активации витамина D\n`;
   }
 
-  if (hasAshwagandha && hasMagnesium) {
-    message += `💡 *Комбо-совет:* Ашваганда утром + Магний вечером = идеальная антистресс комбинация!\n\n`;
+  if (hasZinc && hasVitaminD) {
+    message += `• **Цинк + Витамин D** - синергия в иммунной функции\n`;
   }
 
-  message += `📅 *Регулярность важнее дозировки!* Старайтесь принимать добавки ежедневно.\n\n`;
-  message += `🔄 *Через 30 дней* пройдите опрос заново для корректировки плана.\n\n`;
+  // Важные предупреждения
+  message += `\n---\n⚠️ *ВНИМАНИЕ: БЕЗОПАСНОСТЬ ПРЕВЫШЕ ВСЕГО*\n\n`;
+  message += `• Перед началом приема проконсультируйтесь с врачом\n`;
+  message += `• Учтите ваши хронические заболевания и принимаемые лекарства\n`;
+  message += `• Начинайте с минимальных доз для оценки переносимости\n`;
+  message += `• Идеальный подход - сдать анализы на дефициты перед началом\n\n`;
 
-  message += `⚠️ *Важно:* Перед началом приема проконсультируйтесь с врачом, особенно если у вас есть хронические заболевания.`;
+  message += `🔄 *Через 4-6 недель* рекомендую повторную консультацию для коррекции плана.`;
 
   return message;
 }
 
-module.exports = { generateRecommendations, formatRecommendations };
+module.exports = { generateRecommendations, formatRecommendations, recommendationRules };
