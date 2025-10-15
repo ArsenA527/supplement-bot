@@ -1932,3 +1932,10 @@
 {"timestamp":"2025-10-15T05:27:36.697Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-15T05-27-36-695Z.db"}
 {"timestamp":"2025-10-15T05:27:36.968Z","level":"INFO","message":"Ежедневные отчеты настроены"}
 {"timestamp":"2025-10-15T05:27:36.969Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-10-15T06:00:00.016Z","level":"INFO","message":"Ежедневный отчет сгенерирован и отправлен"}
+{"timestamp":"2025-10-15T06:01:27.255Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-10-15T06:01:27.294Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-13T12-54-49-318Z.db"}
+{"timestamp":"2025-10-15T06:01:27.295Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-15T06-01-27-292Z.db"}
+{"timestamp":"2025-10-15T06:01:27.611Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-10-15T06:01:27.615Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-10-15T06:03:31.794Z","level":"INFO","message":"Настройки по умолчанию созданы","chatId":725240491}

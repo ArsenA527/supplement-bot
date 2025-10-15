@@ -104,17 +104,6 @@ const recommendationRules = {
         priority: 7,
         period: 'morning'
       },
-      {
-        name: 'Цитиколин (CDP-Choline)',
-        dosage: '250-500 мг',
-        time: 'утром',
-        reason: 'Предшественник фосфатидилхолина - основного компонента мембран нейронов. Повышает уровень ацетилхолина.',
-        benefits: ['Память', 'Обучение', 'Нейропластичность'],
-        with_food: 'С едой или без',
-        important: 'Начинать с низкой дозы 250 мг',
-        priority: 6,
-        period: 'morning'
-      }
     ]
   },
 

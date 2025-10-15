@@ -284,9 +284,9 @@ class SettingsController {
 
   getPeriodLabel(period) {
     const labels = {
-      morning: '🌅 Утренние',
-      afternoon: '☀️ Дневные',
-      evening: '🌙 Вечерние'
+      morning: 'Утренние',
+      afternoon: 'Дневные',
+      evening: 'Вечерние'
     };
     return labels[period] || 'Напоминаний';
   }
