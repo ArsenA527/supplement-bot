@@ -139,7 +139,7 @@ async function handleProfile(ctx) {
 
         const categories = {
       '📋 ОСНОВНАЯ ИНФОРМАЦИЯ': [
-        'age_range', 'weight_category'
+        'age_range', 'weight_category', 'gender'
       ],
       '💼 ОБРАЗ ЖИЗНИ И НАГРУЗКИ': [
         'workload_type', 'physical_activity', 'diet_type'
@@ -151,7 +151,7 @@ async function handleProfile(ctx) {
         'sleep_quality_detailed', 'sleep_quality'
       ],
       '💪 ГОРМОНАЛЬНОЕ ЗДОРОВЬЕ': [
-        'libido_mood'
+        'mood_libido_stability'
       ],
       '🚭 ПРИВЫЧКИ': [
         'alcohol_consumption', 'smoking_habits'
@@ -160,7 +160,7 @@ async function handleProfile(ctx) {
         'memory_concentration'
       ],
       '🏥 ФИЗИЧЕСКОЕ ЗДОРОВЬЕ': [
-        'immune_health', 'joint_health', 'digestion', 'skin_health',
+        'immune_health', 'inflammation_pain', 'digestion',
         'blood_pressure', 'chronic_conditions'
       ],
       '💊 ЛЕКАРСТВА И АЛЛЕРГИИ': [
@@ -237,9 +237,9 @@ function generateProgressBar(percentage) {
 function formatKey(key) {
   const keyMap = {
     // БАЗОВАЯ ИНФОРМАЦИЯ
+    'gender': 'Пол:',
     'age_range': '📅 Возраст',
-    'height_range': '📏 Рост',
-    'weight_category': '⚖️ Вес',
+    'body_composition': '⚖️ Телосложение',
 
     // ОБРАЗ ЖИЗНИ И НАГРУЗКИ
     'workload_type': '💼 Тип нагрузки',
@@ -256,7 +256,7 @@ function formatKey(key) {
     'sleep_quality': '🌙 Сон (общее)',
 
     // ГОРМОНАЛЬНОЕ ЗДОРОВЬЕ
-    'libido_mood': '💪 Либидо и настроение',
+    'mood_libido_stability': '💪 Либидо и настроение',
 
     // ПРИВЫЧКИ
     'alcohol_consumption': '🍷 Алкоголь',
@@ -267,9 +267,8 @@ function formatKey(key) {
 
     // ФИЗИЧЕСКОЕ ЗДОРОВЬЕ
     'immune_health': '🛡️ Иммунитет',
-    'joint_health': '🦵 Суставы',
+    'inflammation_pain': '🦵 Суставы',
     'digestion': '🍽️ Пищеварение',
-    'skin_health': '✨ Кожа',
     'blood_pressure': '🩸 Давление',
     'chronic_conditions': '🏥 Хронические заболевания',
 

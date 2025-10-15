@@ -115,8 +115,8 @@ const recommendationRules = {
 
   // ГОРМОНАЛЬНАЯ ПОДДЕРЖКА (при проблемах с либидо и настроением)
   hormonal_support: {
-    condition: (answers) => answers.libido_mood &&
-      ['Либидо низкое, частые перепады настроения', 'Апатия, раздражительность, нет интереса'].includes(answers.libido_mood),
+    condition: (answers) => answers.mood_libido_stability &&
+      ['Либидо низкое, частые перепады настроения', 'Апатия, раздражительность, нет интереса'].includes(answers.mood_libido_stability),
     supplements: [
       {
         name: 'Ашваганда',
