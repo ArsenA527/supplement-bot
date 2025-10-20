@@ -163,3 +163,7 @@
 {"timestamp":"2025-10-13T06:00:00.019Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
 {"timestamp":"2025-10-14T06:00:00.007Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
 {"timestamp":"2025-10-15T06:00:00.016Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
+{"timestamp":"2025-10-16T06:00:00.014Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
+{"timestamp":"2025-10-17T05:59:58.516Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
+{"timestamp":"2025-10-18T05:59:58.542Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
+{"timestamp":"2025-10-19T05:59:57.393Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}

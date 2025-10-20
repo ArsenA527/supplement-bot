@@ -1239,3 +1239,6 @@
 2025-10-15T04:10:47: Failed to fetch updates. Waiting: 1s 502: Bad Gateway
 2025-10-15T09:00:00: (node:10676) Warning: Accessing non-existent property 'telegram' of module exports inside circular dependency
 2025-10-15T09:00:00: (Use `node --trace-warnings ...` to show where the warning was created)
+2025-10-16T09:00:00: (node:10112) Warning: Accessing non-existent property 'telegram' of module exports inside circular dependency
+2025-10-16T09:00:00: (Use `node --trace-warnings ...` to show where the warning was created)
+2025-10-17T08:59:58: (node:10112) Warning: Accessing non-existent property 'telegram' of module exports inside circular dependency
