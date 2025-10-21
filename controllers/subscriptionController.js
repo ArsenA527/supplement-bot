@@ -77,7 +77,11 @@ class SubscriptionController {
 
     if (subscription.end_date) {
       const endDate = new Date(subscription.end_date);
+      const today = new Date();
+      const daysLeft = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+
       message += `• Действует до: ${endDate.toLocaleDateString('ru-RU')}\n`;
+      message += `• Осталось дней: ${daysLeft}\n`;
     }
 
     if (paymentStatus) {
@@ -101,7 +105,7 @@ class SubscriptionController {
 
     try {
       const endDate = new Date();
-      endDate.setDate(endDate.getDate() + 7);
+      endDate.setDate(endDate.getMonth() + 1);
 
       await subscriptionService.updateSubscription(chatId, {
         plan: 'premium',
@@ -112,7 +116,7 @@ class SubscriptionController {
       const surveyService = require('../services/surveyService');
       await surveyService.completeSurvey(chatId);
 
-      ctx.reply(`🎉 *Premium подписка активирована на 7 дней!*\n\n` +
+      ctx.reply(`🎉 *Premium подписка активирована на 30 дней!*\n\n` +
         `Теперь вам доступны:\n` +
         `• 📋 Расширенный опрос (17+ вопросов)\n` +
         `• 💊 Персональные дозировки\n` +
