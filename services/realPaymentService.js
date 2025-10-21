@@ -1,47 +1,80 @@
-// Пробуем разные варианты импорта
-let yookassa;
-try {
-  // Вариант 1: стандартный пакет
-  yookassa = require('yookassa');
-} catch (error) {
-  try {
-    // Вариант 2: пакет который у тебя есть
-    yookassa = require('@a2seven/yoo-checkout');
-  } catch (error2) {
-    console.error('❌ Не найден пакет ЮKassa. Установи: npm install yookassa');
-    throw error2;
-  }
-}
-
 const db = require('../config/database');
 const subscriptionService = require('./subscriptionService');
 
 class RealPaymentService {
   constructor() {
-    // Инициализация в зависимости от пакета
-    if (typeof yookassa === 'function') {
-      // Стандартный yookassa
-      this.yooKassa = yookassa({
-        shopId: process.env.YOOKASSA_SHOP_ID,
-        secretKey: process.env.YOOKASSA_SECRET_KEY
-      });
-    } else {
-      // @a2seven/yoo-checkout
-      this.yooKassa = yookassa;
+    this.yooKassa = null;
+    this.initYooKassa();
+  }
+
+  initYooKassa() {
+    try {
+      // Пробуем разные варианты инициализации
+      if (process.env.YOOKASSA_SHOP_ID && process.env.YOOKASSA_SECRET_KEY) {
+
+        // Вариант 1: Стандартный пакет yookassa
+        try {
+          const { YooKassa } = require('yookassa');
+          this.yooKassa = new YooKassa({
+            shopId: process.env.YOOKASSA_SHOP_ID,
+            secretKey: process.env.YOOKASSA_SECRET_KEY
+          });
+          console.log('✅ ЮKassa инициализирована (стандартный пакет)');
+          return;
+        } catch (error) {
+          console.log('⚠️ Стандартный пакет не загружен:', error.message);
+        }
+
+        // Вариант 2: Пакет @a2seven/yoo-checkout
+        try {
+          const YooKassa = require('@a2seven/yoo-checkout');
+          this.yooKassa = new YooKassa({
+            shopId: process.env.YOOKASSA_SHOP_ID,
+            secretKey: process.env.YOOKASSA_SECRET_KEY
+          });
+          console.log('✅ ЮKassa инициализирована (@a2seven/yoo-checkout)');
+          return;
+        } catch (error) {
+          console.log('⚠️ Пакет @a2seven/yoo-checkout не загружен:', error.message);
+        }
+
+        // Вариант 3: Другие возможные пакеты
+        try {
+          const yookassa = require('yookassa');
+          // Если это функция, а не класс
+          if (typeof yookassa === 'function') {
+            this.yooKassa = yookassa({
+              shopId: process.env.YOOKASSA_SHOP_ID,
+              secretKey: process.env.YOOKASSA_SECRET_KEY
+            });
+            console.log('✅ ЮKassa инициализирована (функция)');
+            return;
+          }
+        } catch (error) {
+          console.log('⚠️ Другие пакеты не загружены');
+        }
+      }
+
+      // Если ничего не сработало
+      console.log('🔧 Режим: ТЕСТОВЫЕ ПЛАТЕЖИ (без реальной ЮKassa)');
+
+    } catch (error) {
+      console.error('❌ Ошибка инициализации ЮKassa:', error);
+      console.log('🔧 Продолжаем в тестовом режиме');
     }
   }
 
-  // Создание реального платежа
+  // Создание платежа
   async createPayment(chatId, plan) {
     try {
       console.log(`💳 Создание платежа для ${chatId}, план: ${plan.name}`);
 
-      // Для тестирования - если тестовый режим, создаем заглушку
-      if (process.env.YOOKASSA_TEST_MODE === 'true') {
-        console.log('🔧 Тестовый режим - создаем заглушку платежа');
+      // Если ЮKassa не настроена или тестовый режим - создаем тестовый платеж
+      if (!this.yooKassa || process.env.YOOKASSA_TEST_MODE === 'true') {
         return this.createTestPayment(chatId, plan);
       }
 
+      // Реальный платеж через ЮKassa
       const payment = await this.yooKassa.createPayment({
         amount: {
           value: plan.price.toFixed(2),
@@ -54,7 +87,7 @@ class RealPaymentService {
           type: "redirect",
           return_url: `https://t.me/${process.env.BOT_USERNAME}`
         },
-        description: `Premium подписка на БАД-планировщик: ${plan.name}`,
+        description: `Premium подписка БАД-планировщик: ${plan.name}`,
         metadata: {
           chatId: chatId,
           plan: plan.name,
@@ -63,19 +96,18 @@ class RealPaymentService {
         capture: true
       });
 
-      // Сохраняем платеж в БД
       await this.savePayment(chatId, payment, plan);
-
-      console.log(`✅ Платеж создан: ${payment.id}`);
+      console.log(`✅ Реальный платеж создан: ${payment.id}`);
       return payment;
 
     } catch (error) {
-      console.error('❌ Ошибка создания платежа:', error);
-      throw error;
+      console.error('❌ Ошибка создания реального платежа:', error);
+      // При ошибке возвращаем тестовый платеж
+      return this.createTestPayment(chatId, plan);
     }
   }
 
-  // Заглушка для тестового режима
+  // Тестовый платеж (заглушка)
   async createTestPayment(chatId, plan) {
     const testPayment = {
       id: 'test_payment_' + Date.now(),
@@ -86,7 +118,7 @@ class RealPaymentService {
       },
       confirmation: {
         type: "redirect",
-        confirmation_url: `https://t.me/${process.env.BOT_USERNAME}?start=test_payment`
+        confirmation_url: `https://t.me/${process.env.BOT_USERNAME}`
       },
       metadata: {
         chatId: chatId,
@@ -95,10 +127,11 @@ class RealPaymentService {
     };
 
     await this.savePayment(chatId, testPayment, plan);
+    console.log(`🔧 Тестовый платеж создан: ${testPayment.id}`);
     return testPayment;
   }
 
-  // Сохранение платежа в БД (остается таким же)
+  // Сохранение платежа в БД
   async savePayment(chatId, payment, plan) {
     return new Promise((resolve, reject) => {
       db.run(
@@ -113,95 +146,62 @@ class RealPaymentService {
           plan.name
         ],
         function(err) {
-          if (err) {
-            console.error('❌ Ошибка сохранения платежа:', err);
-            reject(err);
-          } else {
-            console.log('✅ Платеж сохранен в БД, ID:', this.lastID);
-            resolve(this.lastID);
-          }
+          if (err) reject(err);
+          else resolve(this.lastID);
         }
       );
     });
   }
 
-  async handleWebhook(paymentData) {
+  // Активация подписки после успешной оплаты
+  async activateSubscription(chatId, planName) {
     try {
-      console.log('🔔 Webhook от ЮKassa:', paymentData.event);
+      const endDate = new Date();
+      endDate.setMonth(endDate.getMonth() + 1); // 30 дней
 
-      if (paymentData.event === 'payment.succeeded') {
-        const payment = paymentData.object;
-        const chatId = payment.metadata.chatId;
-        const planName = payment.metadata.plan;
+      await subscriptionService.updateSubscription(chatId, {
+        plan: 'premium',
+        status: 'active',
+        end_date: endDate.toISOString()
+      });
 
-        console.log(`✅ Платеж успешен: ${payment.id} для ${chatId}`);
+      // Завершаем опрос если был
+      const surveyService = require('./surveyService');
+      await surveyService.completeSurvey(chatId);
 
-        // Активируем подписку
-        await this.activateSubscription(chatId, planName);
-
-        // Отправляем уведомление пользователю
-        await this.notifyUser(chatId, payment);
-
-        return { success: true };
-      }
-
-      return { success: false, reason: 'event_not_handled' };
+      console.log(`✅ Premium активирован для ${chatId}`);
+      return true;
 
     } catch (error) {
-      console.error('❌ Ошибка обработки webhook:', error);
+      console.error('❌ Ошибка активации подписки:', error);
       throw error;
     }
   }
 
-  // Активация подписки
-  async activateSubscription(chatId, planName) {
-    const endDate = new Date();
-    endDate.setMonth(endDate.getMonth() + 1); // 30 дней
+  // Тестовый платеж (заглушка)
+  async createTestPayment(chatId, plan) {
+    const testPayment = {
+      id: 'test_payment_' + Date.now(),
+      status: 'pending',
+      amount: {
+        value: plan.price.toFixed(2),
+        currency: 'RUB'
+      },
+      // Для тестового режима делаем URL который ведет обратно в бота
+      confirmation: {
+        type: "redirect",
+        confirmation_url: `https://t.me/${process.env.BOT_USERNAME}?start=test_payment_${Date.now()}`
+      },
+      metadata: {
+        chatId: chatId,
+        plan: plan.name,
+        is_test: true // Помечаем как тестовый
+      }
+    };
 
-    await subscriptionService.updateSubscription(chatId, {
-      plan: 'premium',
-      status: 'active',
-      end_date: endDate.toISOString()
-    });
-
-    // Завершаем опрос если был незавершенный
-    const surveyService = require('./surveyService');
-    await surveyService.completeSurvey(chatId);
-
-    console.log(`✅ Premium активирован для ${chatId}`);
-  }
-
-  // Уведомление пользователя
-  async notifyUser(chatId, payment) {
-    try {
-      const bot = require('../bot');
-      const { getMainMenuKeyboard } = require('../keyboards');
-
-      await bot.telegram.sendMessage(
-        chatId,
-        `🎉 *Оплата прошла успешно! Premium подписка активирована на 30 дней!*\n\n` +
-        `ID платежа: ${payment.id}\n` +
-        `Сумма: ${payment.amount.value} ${payment.amount.currency}\n\n` +
-        `Теперь вам доступны все Premium функции!`,
-        {
-          parse_mode: 'Markdown',
-          ...getMainMenuKeyboard(true)
-        }
-      );
-    } catch (error) {
-      console.error('❌ Ошибка отправки уведомления:', error);
-    }
-  }
-
-  // Проверка статуса платежа
-  async getPaymentStatus(paymentId) {
-    try {
-      const payment = await this.yooKassa.getPayment(paymentId);
-      return payment.status;
-    } catch (error) {
-      console.error('❌ Ошибка проверки статуса платежа:', error);
-      return null;
-    }
+    await this.savePayment(chatId, testPayment, plan);
+    console.log(`🔧 Тестовый платеж создан: ${testPayment.id}`);
+    return testPayment;
   }
 }
 

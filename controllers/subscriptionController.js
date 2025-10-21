@@ -29,33 +29,76 @@ class SubscriptionController {
   }
 
   async handleSubscribe(ctx) {
-    const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
+    const chatId = ctx.chat.id;
+    const isPremium = await subscriptionService.isSubscriptionActive(chatId);
+
+    if (isPremium) {
+      await this.checkSubscriptionStatus(ctx);
+      return;
+    }
 
     const plans = subscriptionService.getSubscriptionPlans();
     const premiumPlan = plans.premium;
 
     try {
-      const paymentUrl = await paymentService.createTestPayment(ctx.chat.id, {
-        name: 'Premium подписка',
-        price: premiumPlan.price
-      });
+      const realPaymentService = require('../services/realPaymentService');
+      const payment = await realPaymentService.createPayment(chatId, premiumPlan);
 
-      ctx.reply(`🚀 *Оформление Premium подписки*\n\n` +
-        `Стоимость: ${premiumPlan.price} руб/мес\n` +
-        `Период: 30 дней\n\n` +
-        `*ТЕСТОВЫЙ РЕЖИМ* - для активации нажмите "Я оплатил(а)"\n\n` +
-        `В реальной версии вы будете перенаправлены на страницу оплаты.`,
-      {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: '💳 Тестовая оплата', callback_data: 'test_payment' }],
-            [{ text: '✅ Я оплатил(а)', callback_data: 'payment_confirmed' }],
-            [{ text: '📋 Информация о подписках', callback_data: 'subscription_info' }],
-            [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
-          ]
-        }
-      });
+      // РАЗДЕЛЯЕМ ТЕСТОВЫЙ И РЕАЛЬНЫЙ РЕЖИМ
+      if (payment.metadata && payment.metadata.is_test) {
+        // ТЕСТОВЫЙ РЕЖИМ - простой вариант
+        await ctx.reply(
+          `🧪 *ТЕСТОВАЯ АКТИВАЦИЯ PREMIUM*\n\n` +
+          `Стоимость: ${premiumPlan.price} руб/мес\n` +
+          `Период: 30 дней\n\n` +
+          `Для активации Premium нажмите кнопку ниже:`,
+          {
+            parse_mode: 'Markdown',
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: '✅ Активировать Premium', callback_data: 'payment_confirmed' }],
+                [{ text: '❌ Отмена', callback_data: 'main_menu' }]
+              ]
+            }
+          }
+        );
+      } else {
+        // РЕАЛЬНЫЙ РЕЖИМ - полный процесс оплаты
+        await ctx.reply(
+          `🚀 *ОФОРМЛЕНИЕ PREMIUM ПОДПИСКИ*\n\n` +
+          `💎 План: ${premiumPlan.name}\n` +
+          `💰 Стоимость: ${premiumPlan.price} руб\n` +
+          `📅 Период: 30 дней\n\n` +
+          `*Нажмите кнопку "💳 Оплатить" для перехода к оплате:*`,
+          {
+            parse_mode: 'Markdown',
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: '💳 Оплатить', url: payment.confirmation.confirmation_url }]
+              ]
+            }
+          }
+        );
+
+        // Второе сообщение с инструкциями
+        await ctx.reply(
+          `📋 *После оплаты:*\n\n` +
+          `1. Вернитесь в этого бота\n` +
+          `2. Нажмите кнопку "✅ Я оплатил(а)"\n` +
+          `3. Premium активируется автоматически\n\n` +
+          `Если возникли проблемы - нажмите "🔄 Проверить статус"`,
+          {
+            parse_mode: 'Markdown',
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: '✅ Я оплатил(а)', callback_data: 'payment_confirmed' }],
+                [{ text: '🔄 Проверить статус', callback_data: 'check_payment_status' }],
+                [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
+              ]
+            }
+          }
+        );
+      }
 
     } catch (error) {
       console.error('❌ Ошибка создания платежа:', error);
