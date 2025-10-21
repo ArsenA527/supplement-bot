@@ -46,17 +46,47 @@ class SubscriptionService {
 
   // Проверить активна ли подписка
   async isSubscriptionActive(chatId) {
-    const subscription = await this.getUserSubscription(chatId);
+    try {
+      const subscription = await this.getUserSubscription(chatId);
+      console.log(`🔍 Проверка подписки ${chatId}:`, subscription);
 
-    if (subscription.plan === 'free') return false;
-    if (subscription.status !== 'active') return false;
+      if (!subscription) {
+        console.log('❌ Подписка не найдена');
+        return false;
+      }
 
-    if (subscription.end_date) {
-      const endDate = new Date(subscription.end_date);
-      return endDate > new Date();
+      // Проверяем план
+      const isPremiumPlan = subscription.plan === 'premium';
+      console.log(`📋 План: ${subscription.plan}, Premium: ${isPremiumPlan}`);
+
+      // Проверяем статус
+      const isActiveStatus = subscription.status === 'active';
+      console.log(`📊 Статус: ${subscription.status}, Активен: ${isActiveStatus}`);
+
+      // Проверяем дату окончания - ИСПРАВЛЯЕМ БАГ!
+      let isNotExpired = true;
+      if (subscription.end_date) {
+        const now = new Date();
+        const endDate = new Date(subscription.end_date);
+
+        // ДЕБАГ: выводим обе даты для сравнения
+        console.log(`📅 Сейчас: ${now.toISOString()}`);
+        console.log(`📅 Окончание: ${endDate.toISOString()}`);
+        console.log(`📅 endDate > now: ${endDate > now}`);
+
+        isNotExpired = endDate > now;
+        console.log(`📅 Не истекла: ${isNotExpired}`);
+      }
+
+      const result = isPremiumPlan && isActiveStatus && isNotExpired;
+      console.log(`🎯 Итог проверки Premium: ${result}`);
+
+      return result;
+
+    } catch (error) {
+      console.error('❌ Ошибка проверки подписки:', error);
+      return false;
     }
-
-    return true;
   }
 
   // Получить информацию о тарифах
