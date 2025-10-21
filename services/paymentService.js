@@ -71,7 +71,10 @@ class PaymentService {
   // Активация подписки
   async activateSubscription(chatId, planName) {
     const endDate = new Date();
+    console.log(`💳 Активация через платеж, текущая дата: ${endDate.toISOString()}`);
+
     endDate.setMonth(endDate.getMonth() + 1);
+    console.log(`💳 Дата после +1 месяц: ${endDate.toISOString()}`);
 
     await subscriptionService.updateSubscription(chatId, {
       plan: 'premium',

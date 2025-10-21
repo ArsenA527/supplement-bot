@@ -163,11 +163,90 @@ module.exports = {
     }
   },
 
+  // Добавь эту команду для исправления даты
+  fixSubscriptionDate: async (ctx) => {
+    try {
+      const chatId = ctx.chat.id;
+      console.log(`🔧 Исправление даты для ${chatId}`);
+
+      const endDate = new Date();
+      console.log(`📅 Текущая дата: ${endDate.toISOString()}`);
+
+      endDate.setMonth(endDate.getMonth() + 1); // +1 месяц
+      console.log(`📅 Новая дата окончания: ${endDate.toISOString()}`);
+
+      await subscriptionService.updateSubscription(chatId, {
+        plan: 'premium',
+        status: 'active',
+        end_date: endDate.toISOString()
+      });
+
+      // Проверяем
+      const sub = await subscriptionService.getUserSubscription(chatId);
+      const isActive = await subscriptionService.isSubscriptionActive(chatId);
+
+      console.log(`🔍 Проверка после исправления:`);
+      console.log(`- Сохраненная дата: ${sub.end_date}`);
+      console.log(`- Premium активен: ${isActive}`);
+
+      ctx.reply(`✅ Дата исправлена!\n\n` +
+        `Новая дата окончания: ${new Date(sub.end_date).toLocaleDateString('ru-RU')}\n` +
+        `Premium статус: ${isActive ? '✅ Активен' : '❌ Не активен'}`);
+
+    } catch (error) {
+      console.error('❌ Ошибка исправления даты:', error);
+      ctx.reply('❌ Ошибка исправления даты: ' + error.message);
+    }
+  },
+
+  // Принудительная активация Premium
+  forcePremium: async (ctx) => {
+    try {
+      const chatId = ctx.chat.id;
+
+      // Просто устанавливаем подписку без сложных проверок
+      const db = require('../config/database');
+
+      await new Promise((resolve, reject) => {
+        db.run(
+          `INSERT OR REPLACE INTO subscriptions (chat_id, plan, status, end_date)
+          VALUES (?, ?, ?, ?)`,
+          [
+            chatId,
+            'premium',
+            'active',
+            null // Без даты окончания - вечная подписка для теста
+          ],
+          function(err) {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+
+      // Проверяем
+      const isActive = await subscriptionService.isSubscriptionActive(chatId);
+
+      ctx.reply(`🎉 Premium принудительно активирован!\n` +
+        `Статус: ${isActive ? '✅ Активен' : '❌ Не активен'}\n\n` +
+        `Проверь командами:\n` +
+        `/debugsub - статус подписки\n` +
+        `/checkmenustatus - меню Premium`);
+
+    } catch (error) {
+      console.error('❌ Ошибка принудительной активации:', error);
+      ctx.reply('❌ Ошибка: ' + error.message);
+    }
+  },
+
   // Активация premium вручную
   activatePremium: async (ctx) => {
     try {
       const endDate = new Date();
+      console.log(`🔵 Ручная активация, текущая дата: ${endDate.toISOString()}`);
+
       endDate.setMonth(endDate.getMonth() + 1);
+      console.log(`🔵 Дата после +1 месяц: ${endDate.toISOString()}`);
 
       await subscriptionService.updateSubscription(ctx.chat.id, {
         plan: 'premium',

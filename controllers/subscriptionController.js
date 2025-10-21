@@ -104,17 +104,32 @@ class SubscriptionController {
     const chatId = ctx.chat.id;
 
     try {
-      const endDate = new Date();
-      endDate.setDate(endDate.getMonth() + 1);
+      console.log(`🔵 Активация Premium для ${chatId}`);
 
+      const endDate = new Date();
+      console.log(`📅 Текущая дата: ${endDate.toISOString()}`);
+
+      endDate.setMonth(endDate.getMonth() + 1); // +1 месяц
+      console.log(`📅 Дата после +1 месяц: ${endDate.toISOString()}`);
+
+      // 1. Обновляем подписку
       await subscriptionService.updateSubscription(chatId, {
         plan: 'premium',
         status: 'active',
         end_date: endDate.toISOString()
       });
 
+      // 2. Проверяем что сохранилось - ИСПРАВЛЯЕМ ОШИБКУ!
+      const updatedSub = await subscriptionService.getUserSubscription(chatId); // БЫЛО: updated
+      console.log(`🔍 Сохраненная дата: ${updatedSub.end_date}`);
+
+      // 3. Завершаем опрос (если был незавершенный)
       const surveyService = require('../services/surveyService');
       await surveyService.completeSurvey(chatId);
+
+      // 4. Проверяем активацию
+      const isPremiumNow = await subscriptionService.isSubscriptionActive(chatId);
+      console.log(`🔍 Проверка Premium после активации: ${isPremiumNow}`);
 
       ctx.reply(`🎉 *Premium подписка активирована на 30 дней!*\n\n` +
         `Теперь вам доступны:\n` +
