@@ -37,39 +37,50 @@ class SubscriptionController {
       return;
     }
 
+
     const plans = subscriptionService.getSubscriptionPlans();
     const premiumPlan = plans.premium;
 
-    try {
-      const realPaymentService = require('../services/realPaymentService');
-      const payment = await realPaymentService.createPayment(chatId, premiumPlan);
+    // ДОБАВЬТЕ ЭТУ ПРОВЕРКУ
+    if (!premiumPlan || !premiumPlan.name || !premiumPlan.price) {
+      console.error('❌ Ошибка: план premium не определен правильно', premiumPlan);
+      await ctx.reply('❌ Ошибка конфигурации подписки. Обратитесь в поддержку.');
+      return;
+    }
 
-      // РАЗДЕЛЯЕМ ТЕСТОВЫЙ И РЕАЛЬНЫЙ РЕЖИМ
-      if (payment.metadata && payment.metadata.is_test) {
-        // ТЕСТОВЫЙ РЕЖИМ - простой вариант
+    console.log(`🔍 Создание платежа для ${chatId}, план:`, premiumPlan);
+
+    try {
+      const paymentService = require('../services/simplePaymentService');
+      const payment = await paymentService.createPayment(chatId, premiumPlan);
+
+      const isTestPayment = payment.metadata?.is_test;
+
+      if (isTestPayment) {
+        // ТЕСТОВЫЙ РЕЖИМ
         await ctx.reply(
-          `🧪 *ТЕСТОВАЯ АКТИВАЦИЯ PREMIUM*\n\n` +
+          `🧪 *ТЕСТОВАЯ ОПЛАТА PREMIUM*\n\n` +
           `Стоимость: ${premiumPlan.price} руб/мес\n` +
           `Период: 30 дней\n\n` +
-          `Для активации Premium нажмите кнопку ниже:`,
+          `Для активации Premium нажмите кнопку:`,
           {
             parse_mode: 'Markdown',
             reply_markup: {
               inline_keyboard: [
-                [{ text: '✅ Активировать Premium', callback_data: 'payment_confirmed' }],
+                [{ text: '✅ Активировать Premium', callback_data: `payment_confirm_${payment.id}` }],
                 [{ text: '❌ Отмена', callback_data: 'main_menu' }]
               ]
             }
           }
         );
       } else {
-        // РЕАЛЬНЫЙ РЕЖИМ - полный процесс оплаты
+        // РЕАЛЬНЫЙ РЕЖИМ
         await ctx.reply(
           `🚀 *ОФОРМЛЕНИЕ PREMIUM ПОДПИСКИ*\n\n` +
           `💎 План: ${premiumPlan.name}\n` +
           `💰 Стоимость: ${premiumPlan.price} руб\n` +
           `📅 Период: 30 дней\n\n` +
-          `*Нажмите кнопку "💳 Оплатить" для перехода к оплате:*`,
+          `*Нажмите кнопку для оплаты:*`,
           {
             parse_mode: 'Markdown',
             reply_markup: {
@@ -80,19 +91,18 @@ class SubscriptionController {
           }
         );
 
-        // Второе сообщение с инструкциями
         await ctx.reply(
           `📋 *После оплаты:*\n\n` +
-          `1. Вернитесь в этого бота\n` +
-          `2. Нажмите кнопку "✅ Я оплатил(а)"\n` +
+          `1. Вернитесь в бота\n` +
+          `2. Нажмите "✅ Я оплатил(а)"\n` +
           `3. Premium активируется автоматически\n\n` +
-          `Если возникли проблемы - нажмите "🔄 Проверить статус"`,
+          `Или проверьте статус:`,
           {
             parse_mode: 'Markdown',
             reply_markup: {
               inline_keyboard: [
-                [{ text: '✅ Я оплатил(а)', callback_data: 'payment_confirmed' }],
-                [{ text: '🔄 Проверить статус', callback_data: 'check_payment_status' }],
+                [{ text: '✅ Я оплатил(а)', callback_data: `payment_check_${payment.id}` }],
+                [{ text: '🔄 Проверить статус', callback_data: `payment_status_${payment.id}` }],
                 [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
               ]
             }

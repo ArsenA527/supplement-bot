@@ -93,6 +93,7 @@ class SubscriptionService {
   getSubscriptionPlans() {
     return {
       free: {
+        name: 'Free',
         price: 0,
         features: [
           'Базовый опрос (8 вопросов)',
@@ -101,6 +102,7 @@ class SubscriptionService {
         ]
       },
       premium: {
+        name: 'Premium',
         price: 490,
         period: 'month',
         features: [
