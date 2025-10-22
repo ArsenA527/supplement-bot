@@ -1,11 +1,9 @@
 const subscriptionService = require('../services/subscriptionService');
-const paymentService = require('../services/paymentService');
 const { getMainMenuKeyboard } = require('../keyboards');
 
 class SubscriptionController {
   async showSubscriptionPlans(ctx) {
     const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
-
     const plans = subscriptionService.getSubscriptionPlans();
 
     let message = `💎 *Доступные подписки:*\n\n`;
@@ -20,7 +18,7 @@ class SubscriptionController {
       message += `✓ ${feat}\n`;
     });
 
-    message += `\n💳 *Для оформления подписки нажмите:* /subscribe`;
+    message += `\n💳 *Для оформления подписки:* /subscribe`;
 
     ctx.reply(message, {
       parse_mode: 'Markdown',
@@ -37,21 +35,20 @@ class SubscriptionController {
       return;
     }
 
-
     const plans = subscriptionService.getSubscriptionPlans();
     const premiumPlan = plans.premium;
 
-    // ДОБАВЬТЕ ЭТУ ПРОВЕРКУ
+    // Проверка плана
     if (!premiumPlan || !premiumPlan.name || !premiumPlan.price) {
-      console.error('❌ Ошибка: план premium не определен правильно', premiumPlan);
-      await ctx.reply('❌ Ошибка конфигурации подписки. Обратитесь в поддержку.');
+      console.error('❌ Ошибка: план premium не определен', premiumPlan);
+      await ctx.reply('❌ Ошибка конфигурации подписки.');
       return;
     }
 
-    console.log(`🔍 Создание платежа для ${chatId}, план:`, premiumPlan);
+    console.log(`🔍 Начинаем процесс подписки для ${chatId}`);
 
     try {
-      const paymentService = require('../services/simplePaymentService');
+      const paymentService = require('../services/directPaymentService');
       const payment = await paymentService.createPayment(chatId, premiumPlan);
 
       const isTestPayment = payment.metadata?.is_test;
@@ -80,7 +77,7 @@ class SubscriptionController {
           `💎 План: ${premiumPlan.name}\n` +
           `💰 Стоимость: ${premiumPlan.price} руб\n` +
           `📅 Период: 30 дней\n\n` +
-          `*Нажмите кнопку для оплаты:*`,
+          `*Нажмите кнопку для перехода к оплате:*`,
           {
             parse_mode: 'Markdown',
             reply_markup: {
@@ -93,10 +90,10 @@ class SubscriptionController {
 
         await ctx.reply(
           `📋 *После оплаты:*\n\n` +
-          `1. Вернитесь в бота\n` +
-          `2. Нажмите "✅ Я оплатил(а)"\n` +
+          `1. Вернитесь в этого бота\n` +
+          `2. Нажмите кнопку "✅ Я оплатил(а)"\n` +
           `3. Premium активируется автоматически\n\n` +
-          `Или проверьте статус:`,
+          `Если возникли проблемы - используйте кнопки ниже:`,
           {
             parse_mode: 'Markdown',
             reply_markup: {
@@ -112,7 +109,8 @@ class SubscriptionController {
 
     } catch (error) {
       console.error('❌ Ошибка создания платежа:', error);
-      ctx.reply('❌ Ошибка создания платежа. Попробуйте позже.',
+      await ctx.reply(
+        '❌ Ошибка создания платежа. Попробуйте позже или обратитесь в поддержку.',
         getMainMenuKeyboard(isPremium)
       );
     }
@@ -121,7 +119,6 @@ class SubscriptionController {
   async checkSubscriptionStatus(ctx) {
     const chatId = ctx.chat.id;
     const subscription = await subscriptionService.getUserSubscription(chatId);
-    const paymentStatus = await paymentService.getPaymentStatus(chatId);
     const isPremium = await subscriptionService.isSubscriptionActive(chatId);
 
     let message = `📋 *Статус вашей подписки:*\n\n`;
@@ -137,10 +134,6 @@ class SubscriptionController {
       message += `• Осталось дней: ${daysLeft}\n`;
     }
 
-    if (paymentStatus) {
-      message += `• Платеж: ${paymentStatus === 'succeeded' ? '✅ Успешно' : '⏳ Ожидание'}\n`;
-    }
-
     if (subscription.plan === 'free') {
       message += `\n💡 Для получения Premium доступа: /subscribe`;
     } else {
@@ -153,55 +146,77 @@ class SubscriptionController {
     });
   }
 
+  // Обработка callback от платежей
+  async handlePaymentCallback(ctx) {
+    const callbackData = ctx.callbackQuery.data;
+
+    if (callbackData.startsWith('payment_confirm_')) {
+      await this.handlePaymentConfirmation(ctx);
+    } else if (callbackData.startsWith('payment_check_')) {
+      await this.handlePaymentCheck(ctx);
+    } else if (callbackData.startsWith('payment_status_')) {
+      await this.handlePaymentStatus(ctx);
+    }
+  }
+
   async handlePaymentConfirmation(ctx) {
-    const chatId = ctx.chat.id;
+    const paymentId = ctx.callbackQuery.data.replace('payment_confirm_', '');
+    const paymentService = require('../services/directPaymentService');
 
     try {
-      console.log(`🔵 Активация Premium для ${chatId}`);
+      await ctx.answerCbQuery('🔄 Активируем Premium...');
 
-      const endDate = new Date();
-      console.log(`📅 Текущая дата: ${endDate.toISOString()}`);
+      // Для тестовых платежей сразу активируем
+      if (paymentId.startsWith('test_payment_')) {
+        await paymentService.processSuccessfulPayment(paymentId);
+        await ctx.reply(`🎉 *Premium подписка активирована!*\n\nТеперь вам доступны все функции!`, {
+          parse_mode: 'Markdown',
+          ...getMainMenuKeyboard(true)
+        });
+      } else {
+        // Для реальных платежей проверяем статус
+        const status = await paymentService.checkPaymentStatus(paymentId);
+        if (status === 'succeeded') {
+          await paymentService.processSuccessfulPayment(paymentId);
+          await ctx.reply(`🎉 *Платеж подтвержден! Premium активирован!*`, {
+            parse_mode: 'Markdown',
+            ...getMainMenuKeyboard(true)
+          });
+        } else {
+          await ctx.reply(`⏳ Платеж еще обрабатывается. Статус: ${status}\n\nПопробуйте проверить позже.`);
+        }
+      }
 
-      endDate.setMonth(endDate.getMonth() + 1); // +1 месяц
-      console.log(`📅 Дата после +1 месяц: ${endDate.toISOString()}`);
-
-      // 1. Обновляем подписку
-      await subscriptionService.updateSubscription(chatId, {
-        plan: 'premium',
-        status: 'active',
-        end_date: endDate.toISOString()
-      });
-
-      // 2. Проверяем что сохранилось - ИСПРАВЛЯЕМ ОШИБКУ!
-      const updatedSub = await subscriptionService.getUserSubscription(chatId); // БЫЛО: updated
-      console.log(`🔍 Сохраненная дата: ${updatedSub.end_date}`);
-
-      // 3. Завершаем опрос (если был незавершенный)
-      const surveyService = require('../services/surveyService');
-      await surveyService.completeSurvey(chatId);
-
-      // 4. Проверяем активацию
-      const isPremiumNow = await subscriptionService.isSubscriptionActive(chatId);
-      console.log(`🔍 Проверка Premium после активации: ${isPremiumNow}`);
-
-      ctx.reply(`🎉 *Premium подписка активирована на 30 дней!*\n\n` +
-        `Теперь вам доступны:\n` +
-        `• 📋 Расширенный опрос (17+ вопросов)\n` +
-        `• 💊 Персональные дозировки\n` +
-        `• ⏰ Умные напоминания\n` +
-        `• 🔄 Неограниченные опросы\n\n` +
-        `*Используйте /survey для нового расширенного опроса!*`,
-      {
-        parse_mode: 'Markdown',
-        ...getMainMenuKeyboard(true)
-      });
+      // Удаляем сообщение с кнопками
+      await ctx.deleteMessage();
 
     } catch (error) {
-      console.error('❌ Ошибка активации подписки:', error);
-      const isPremium = await subscriptionService.isSubscriptionActive(chatId);
-      ctx.reply('❌ Ошибка активации подписки. Обратитесь в поддержку.',
-        getMainMenuKeyboard(isPremium)
-      );
+      console.error('❌ Ошибка активации:', error);
+      await ctx.answerCbQuery('❌ Ошибка активации');
+    }
+  }
+
+  async handlePaymentCheck(ctx) {
+    const paymentId = ctx.callbackQuery.data.replace('payment_check_', '');
+    await ctx.answerCbQuery('🔍 Проверяем статус...');
+    await this.handlePaymentConfirmation(ctx); // Та же логика
+  }
+
+  async handlePaymentStatus(ctx) {
+    const paymentId = ctx.callbackQuery.data.replace('payment_status_', '');
+    const paymentService = require('../services/directPaymentService');
+
+    try {
+      await ctx.answerCbQuery('🔍 Проверяем статус платежа...');
+      const status = await paymentService.checkPaymentStatus(paymentId);
+
+      await ctx.reply(`📊 *Статус платежа:* ${status}\n\n` +
+        `Если статус "succeeded" - Premium уже активирован.\n` +
+        `Если "pending" - платеж еще обрабатывается.`);
+
+    } catch (error) {
+      console.error('❌ Ошибка проверки:', error);
+      await ctx.answerCbQuery('❌ Ошибка проверки');
     }
   }
 }

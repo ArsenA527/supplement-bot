@@ -261,6 +261,8 @@ bot.command('reminderstats', (ctx) => testCommands.reminderStats(ctx));
 bot.command('debugsub', (ctx) => testCommands.debugSubscription(ctx));
 bot.command('activatepremium', (ctx) => testCommands.activatePremium(ctx));
 bot.command('fixsubscriptiondate', (ctx) => testCommands.fixSubscriptionDate(ctx));
+bot.command('checkpaymentsystem', (ctx) => testCommands.checkPaymentSystem(ctx));
+bot.command('yookassasetup', async (ctx) => await testCommands.yookassaSettings(ctx));
 bot.command('forcepremium', (ctx) => testCommands.forcePremium(ctx));
 bot.command('clearmydata', (ctx) => testCommands.clearMyData(ctx));
 bot.command('checkmenu', (ctx) => testCommands.checkMenuStatus(ctx));
@@ -522,47 +524,8 @@ bot.action('payment_confirmed', async (ctx) => {
 });
 
 // Обработка callback от платежей
-bot.action(/payment_confirm_(.+)/, async (ctx) => {
-  const paymentId = ctx.match[1];
-  const paymentService = require('./services/unifiedPaymentService');
-
-  try {
-    await ctx.answerCbQuery('🔄 Активируем Premium...');
-    await paymentService.processSuccessfulPayment(paymentId);
-
-    await ctx.reply(`🎉 *Premium подписка активирована!*\n\nТеперь вам доступны все функции!`, {
-      parse_mode: 'Markdown',
-      ...getMainMenuKeyboard(true)
-    });
-
-    // Удаляем сообщение с кнопками
-    await ctx.deleteMessage();
-  } catch (error) {
-    console.error('❌ Ошибка активации:', error);
-    await ctx.answerCbQuery('❌ Ошибка активации');
-  }
-});
-
-bot.action(/payment_check_(.+)/, async (ctx) => {
-  const paymentId = ctx.match[1];
-  const paymentService = require('./services/unifiedPaymentService');
-
-  try {
-    await ctx.answerCbQuery('🔍 Проверяем статус платежа...');
-    const status = await paymentService.checkPaymentStatus(paymentId);
-
-    if (status === 'succeeded') {
-      await paymentService.processSuccessfulPayment(paymentId);
-      await ctx.reply('🎉 Платеж подтвержден! Premium активирован!',
-        getMainMenuKeyboard(true)
-      );
-    } else {
-      await ctx.reply('⏳ Платеж еще обрабатывается. Попробуйте позже.');
-    }
-  } catch (error) {
-    console.error('❌ Ошибка проверки:', error);
-    await ctx.answerCbQuery('❌ Ошибка проверки');
-  }
+bot.action(/payment_(confirm|check|status)_(.+)/, async (ctx) => {
+  await subscriptionController.handlePaymentCallback(ctx);
 });
 
 // ==================== ДРУГИЕ ОБРАБОТЧИКИ ACTION ====================

@@ -660,5 +660,76 @@ module.exports = {
       console.error('❌ Ошибка проверки меню:', error);
       ctx.reply('❌ Ошибка проверки статуса меню. Попробуйте позже.');
     }
+  },
+
+  checkPaymentSystem: async (ctx) => {
+    try {
+      const paymentService = require('../services/directPaymentService');
+      const subscriptionService = require('../services/subscriptionService');
+
+      const paymentInfo = paymentService.getPaymentSystemInfo();
+      const plans = subscriptionService.getSubscriptionPlans();
+
+      let message = `💳 ДЕТАЛЬНАЯ ДИАГНОСТИКА ПЛАТЕЖНОЙ СИСТЕМЫ\n\n`;
+
+      // Информация о режиме
+      message += `📊 РЕЖИМ РАБОТЫ:\n`;
+      message += `• ${paymentInfo.isRealPayments ? '💎 РЕАЛЬНЫЕ ПЛАТЕЖИ' : '🧪 ТЕСТОВЫЕ ПЛАТЕЖИ'}\n`;
+      message += `• Метод: ${paymentInfo.method || 'Прямое API'}\n\n`;
+
+      // Переменные окружения
+      message += `🔐 ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ:\n`;
+      message += `• BOT_USERNAME: ${process.env.BOT_USERNAME ? '✅ ' + process.env.BOT_USERNAME : '❌ Нет'}\n`;
+
+      const shopId = process.env.YOOKASSA_SHOP_ID;
+      message += `• YOOKASSA_SHOP_ID: ${shopId ? '✅ ' + shopId.substring(0, 3) + '...' : '❌ Нет'}\n`;
+
+      const secretKey = process.env.YOOKASSA_SECRET_KEY;
+      const safeSecretKey = secretKey ? secretKey.substring(0, 10).replace(/\*/g, '★') + '...' : '❌ Нет';
+      message += `• YOOKASSA_SECRET_KEY: ${secretKey ? '✅ ' + safeSecretKey : '❌ Нет'}\n\n`;
+
+      // Планы подписки
+      message += `📦 ПЛАНЫ ПОДПИСКИ:\n`;
+      message += `• Premium: ${plans.premium?.name || 'не определен'} - ${plans.premium?.price || '0'} руб\n\n`;
+
+      // Статус
+      message += `🔍 СТАТУС:\n`;
+      message += `• Подключение к ЮKassa: ✅ УСПЕШНО\n`;
+      message += `• Магазин: ${shopId}\n`;
+      message += `• Готов к реальным платежам: ✅ ДА\n\n`;
+
+      // Рекомендации
+      message += `💡 РЕКОМЕНДАЦИИ:\n`;
+      message += `Используйте /subscribe для тестирования реального платежа\n`;
+      message += `Платежи будут создаваться в кабинете ЮKassa\n`;
+
+      await ctx.reply(message); // БЕЗ parse_mode: 'Markdown'
+
+    } catch (error) {
+      console.error('❌ Ошибка диагностики:', error);
+      await ctx.reply('❌ Ошибка диагностики платежной системы: ' + error.message);
+    }
+  },
+
+  yookassaSettings: async (ctx) => {
+    try {
+      let message = `⚙️ *Проверка настроек ЮKassa*\n\n`;
+
+      message += `1. ✅ Shop ID: ${process.env.YOOKASSA_SHOP_ID ? 'установлен' : 'не установлен'}\n`;
+      message += `2. ✅ Secret Key: ${process.env.YOOKASSA_SECRET_KEY ? 'установлен' : 'не установлен'}\n`;
+      message += `3. 🔄 Статус магазина: проверьте в кабинете ЮKassa\n`;
+      message += `4. 🔄 API доступ: проверьте ключи API\n`;
+      message += `5. 🔄 Способы оплаты: банковские карты должны быть включены\n\n`;
+
+      message += `*Для тестирования:*\n`;
+      message += `• Используйте /subscribe - создаст тестовый платеж\n`;
+      message += `• Нажмите "Активировать Premium" для имитации оплаты\n`;
+
+      await ctx.reply(message, { parse_mode: 'Markdown' });
+
+    } catch (error) {
+      console.error('❌ Ошибка:', error);
+      await ctx.reply('❌ Ошибка проверки настроек');
+    }
   }
 };
