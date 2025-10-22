@@ -664,46 +664,38 @@ module.exports = {
 
   checkPaymentSystem: async (ctx) => {
     try {
-      const paymentService = require('../services/directPaymentService');
+      const paymentService = require('../services/telegramPaymentService');
       const subscriptionService = require('../services/subscriptionService');
 
       const paymentInfo = paymentService.getPaymentSystemInfo();
       const plans = subscriptionService.getSubscriptionPlans();
 
-      let message = `💳 ДЕТАЛЬНАЯ ДИАГНОСТИКА ПЛАТЕЖНОЙ СИСТЕМЫ\n\n`;
+      let message = `💳 ДИАГНОСТИКА ПЛАТЕЖНОЙ СИСТЕМЫ\n\n`;
 
-      // Информация о режиме
-      message += `📊 РЕЖИМ РАБОТЫ:\n`;
-      message += `• ${paymentInfo.isRealPayments ? '💎 РЕАЛЬНЫЕ ПЛАТЕЖИ' : '🧪 ТЕСТОВЫЕ ПЛАТЕЖИ'}\n`;
-      message += `• Метод: ${paymentInfo.method || 'Прямое API'}\n\n`;
+      message += `📊 МЕТОД ПЛАТЕЖЕЙ:\n`;
+      message += `• Telegram Payments (встроенные)\n`;
+      message += `• Provider Token: ${paymentInfo.providerToken}\n`;
+      message += `• Валюта: ${paymentInfo.currency}\n\n`;
 
-      // Переменные окружения
-      message += `🔐 ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ:\n`;
-      message += `• BOT_USERNAME: ${process.env.BOT_USERNAME ? '✅ ' + process.env.BOT_USERNAME : '❌ Нет'}\n`;
+      message += `📦 ПЛАН ПОДПИСКИ:\n`;
+      message += `• ${plans.premium?.name || 'Premium'} - ${plans.premium?.price || '0'} руб\n\n`;
 
-      const shopId = process.env.YOOKASSA_SHOP_ID;
-      message += `• YOOKASSA_SHOP_ID: ${shopId ? '✅ ' + shopId.substring(0, 3) + '...' : '❌ Нет'}\n`;
-
-      const secretKey = process.env.YOOKASSA_SECRET_KEY;
-      const safeSecretKey = secretKey ? secretKey.substring(0, 10).replace(/\*/g, '★') + '...' : '❌ Нет';
-      message += `• YOOKASSA_SECRET_KEY: ${secretKey ? '✅ ' + safeSecretKey : '❌ Нет'}\n\n`;
-
-      // Планы подписки
-      message += `📦 ПЛАНЫ ПОДПИСКИ:\n`;
-      message += `• Premium: ${plans.premium?.name || 'не определен'} - ${plans.premium?.price || '0'} руб\n\n`;
-
-      // Статус
       message += `🔍 СТАТУС:\n`;
-      message += `• Подключение к ЮKassa: ✅ УСПЕШНО\n`;
-      message += `• Магазин: ${shopId}\n`;
-      message += `• Готов к реальным платежам: ✅ ДА\n\n`;
 
-      // Рекомендации
-      message += `💡 РЕКОМЕНДАЦИИ:\n`;
-      message += `Используйте /subscribe для тестирования реального платежа\n`;
-      message += `Платежи будут создаваться в кабинете ЮKassa\n`;
+      if (!paymentInfo.providerToken) {
+        message += `❌ Provider Token не установлен\n\n`;
+        message += `💡 РЕКОМЕНДАЦИИ:\n`;
+        message += `1. Получите provider_token от @BotFather\n`;
+        message += `2. Добавьте в .env: YOOKASSA_PROVIDER_TOKEN=ваш_токен\n`;
+        message += `3. Перезапустите бота\n`;
+      } else {
+        message += `✅ Готов к приему платежей\n\n`;
+        message += `💡 ИСПОЛЬЗОВАНИЕ:\n`;
+        message += `Используйте /subscribe для тестирования\n`;
+        message += `Платежи будут проходить через Telegram\n`;
+      }
 
-      await ctx.reply(message); // БЕЗ parse_mode: 'Markdown'
+      await ctx.reply(message);
 
     } catch (error) {
       console.error('❌ Ошибка диагностики:', error);
@@ -731,5 +723,45 @@ module.exports = {
       console.error('❌ Ошибка:', error);
       await ctx.reply('❌ Ошибка проверки настроек');
     }
+  },
+
+  checkTelegramPayments: async (ctx) => {
+    try {
+      const paymentService = require('../services/telegramPaymentService');
+
+      let message = `💳 *СТАТУС TELEGRAM PAYMENTS*\n\n`;
+
+      const paymentInfo = paymentService.getPaymentSystemInfo();
+
+      message += `📊 *РЕЖИМ:* ${paymentInfo.providerToken.includes('LIVE') ? '💎 LIVE' : '🧪 TEST'}\n`;
+      message += `🔧 *Метод:* ${paymentInfo.method}\n`;
+      message += `✅ *Provider Token:* ${paymentInfo.providerToken}\n`;
+      message += `📈 *Статус:* ${paymentInfo.status}\n\n`;
+
+      if (paymentInfo.providerToken.includes('LIVE')) {
+        message += `🎉 *ВСЕ НАСТРОЕНО ДЛЯ РЕАЛЬНЫХ ПЛАТЕЖЕЙ!*\n\n`;
+        message += `💡 *Что делать:*\n`;
+        message += `1. Используйте /subscribe\n`;
+        message += `2. Оплачивайте реальной картой\n`;
+        message += `3. Деньги будут поступать на ваш аккаунт ЮKassa\n\n`;
+        message += `⚠️ *Примечание:*\n`;
+        message += `• Secret Key не требуется\n`;
+        message += `• Telegram сам обрабатывает платежи\n`;
+        message += `• Вы получите provider_payment_charge_id\n`;
+      } else {
+        message += `❌ *Проблема:* Provider Token не настроен\n\n`;
+        message += `💡 *Решение:*\n`;
+        message += `1. Получите provider_token от @BotFather\n`;
+        message += `2. Добавьте в .env: YOOKASSA_PROVIDER_TOKEN=ваш_токен\n`;
+        message += `3. Перезапустите бота\n`;
+      }
+
+      await ctx.reply(message, { parse_mode: 'Markdown' });
+
+    } catch (error) {
+      console.error('❌ Ошибка проверки:', error);
+      await ctx.reply('❌ Ошибка проверки статуса платежей');
+    }
   }
+
 };

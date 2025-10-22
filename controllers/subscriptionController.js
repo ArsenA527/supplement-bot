@@ -38,69 +38,33 @@ class SubscriptionController {
     const plans = subscriptionService.getSubscriptionPlans();
     const premiumPlan = plans.premium;
 
-    // Проверка плана
-    if (!premiumPlan || !premiumPlan.name || !premiumPlan.price) {
-      console.error('❌ Ошибка: план premium не определен', premiumPlan);
-      await ctx.reply('❌ Ошибка конфигурации подписки.');
-      return;
-    }
-
-    console.log(`🔍 Начинаем процесс подписки для ${chatId}`);
-
     try {
-      const paymentService = require('../services/directPaymentService');
-      const payment = await paymentService.createPayment(chatId, premiumPlan);
+      const paymentService = require('../services/telegramPaymentService');
 
-      const isTestPayment = payment.metadata?.is_test;
+      if (paymentService.providerToken) {
+        // Режим REAL PAYMENTS
+        const invoice = await paymentService.createInvoice(chatId, premiumPlan);
+        await ctx.replyWithInvoice(invoice);
+        console.log('✅ Инвойс отправлен (REAL PAYMENTS)');
 
-      if (isTestPayment) {
-        // ТЕСТОВЫЙ РЕЖИМ
+      } else {
+        // Режим MANUAL ACTIVATION
         await ctx.reply(
-          `🧪 *ТЕСТОВАЯ ОПЛАТА PREMIUM*\n\n` +
-          `Стоимость: ${premiumPlan.price} руб/мес\n` +
+          `💎 *PREMIUM ПОДПИСКА*\n\n` +
+          `Стоимость: ${premiumPlan.price} руб\n` +
           `Период: 30 дней\n\n` +
+          `*Включает:*\n` +
+          `• Расширенный опрос (17+ вопросов)\n` +
+          `• Персональные дозировки\n` +
+          `• Умные напоминания\n` +
+          `• Неограниченные опросы\n\n` +
+          `⚠️ *Система платежей в процессе настройки*\n` +
           `Для активации Premium нажмите кнопку:`,
           {
             parse_mode: 'Markdown',
             reply_markup: {
               inline_keyboard: [
-                [{ text: '✅ Активировать Premium', callback_data: `payment_confirm_${payment.id}` }],
-                [{ text: '❌ Отмена', callback_data: 'main_menu' }]
-              ]
-            }
-          }
-        );
-      } else {
-        // РЕАЛЬНЫЙ РЕЖИМ
-        await ctx.reply(
-          `🚀 *ОФОРМЛЕНИЕ PREMIUM ПОДПИСКИ*\n\n` +
-          `💎 План: ${premiumPlan.name}\n` +
-          `💰 Стоимость: ${premiumPlan.price} руб\n` +
-          `📅 Период: 30 дней\n\n` +
-          `*Нажмите кнопку для перехода к оплате:*`,
-          {
-            parse_mode: 'Markdown',
-            reply_markup: {
-              inline_keyboard: [
-                [{ text: '💳 Оплатить', url: payment.confirmation.confirmation_url }]
-              ]
-            }
-          }
-        );
-
-        await ctx.reply(
-          `📋 *После оплаты:*\n\n` +
-          `1. Вернитесь в этого бота\n` +
-          `2. Нажмите кнопку "✅ Я оплатил(а)"\n` +
-          `3. Premium активируется автоматически\n\n` +
-          `Если возникли проблемы - используйте кнопки ниже:`,
-          {
-            parse_mode: 'Markdown',
-            reply_markup: {
-              inline_keyboard: [
-                [{ text: '✅ Я оплатил(а)', callback_data: `payment_check_${payment.id}` }],
-                [{ text: '🔄 Проверить статус', callback_data: `payment_status_${payment.id}` }],
-                [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
+                [{ text: '✅ Активировать Premium', callback_data: 'manual_premium_activate' }]
               ]
             }
           }
@@ -108,10 +72,20 @@ class SubscriptionController {
       }
 
     } catch (error) {
-      console.error('❌ Ошибка создания платежа:', error);
+      console.error('❌ Ошибка создания инвойса:', error);
+
+      // Fallback на ручную активацию
       await ctx.reply(
-        '❌ Ошибка создания платежа. Попробуйте позже или обратитесь в поддержку.',
-        getMainMenuKeyboard(isPremium)
+        `💎 *PREMIUM ПОДПИСКА*\n\n` +
+        `Для активации Premium нажмите кнопку:`,
+        {
+          parse_mode: 'Markdown',
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '✅ Активировать Premium', callback_data: 'manual_premium_activate' }]
+            ]
+          }
+        }
       );
     }
   }
