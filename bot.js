@@ -261,6 +261,9 @@ bot.command('reminderstats', (ctx) => testCommands.reminderStats(ctx));
 bot.command('debugsub', (ctx) => testCommands.debugSubscription(ctx));
 bot.command('activatepremium', (ctx) => testCommands.activatePremium(ctx));
 bot.command('fixsubscriptiondate', (ctx) => testCommands.fixSubscriptionDate(ctx));
+bot.command('checkpaymentsystem', (ctx) => testCommands.checkPaymentSystem(ctx));
+bot.command('paymentstatus', (ctx) => testCommands.checkTelegramPayments(ctx));
+bot.command('yookassasetup', async (ctx) => await testCommands.yookassaSettings(ctx));
 bot.command('forcepremium', (ctx) => testCommands.forcePremium(ctx));
 bot.command('clearmydata', (ctx) => testCommands.clearMyData(ctx));
 bot.command('checkmenu', (ctx) => testCommands.checkMenuStatus(ctx));
@@ -522,47 +525,8 @@ bot.action('payment_confirmed', async (ctx) => {
 });
 
 // Обработка callback от платежей
-bot.action(/payment_confirm_(.+)/, async (ctx) => {
-  const paymentId = ctx.match[1];
-  const paymentService = require('./services/unifiedPaymentService');
-
-  try {
-    await ctx.answerCbQuery('🔄 Активируем Premium...');
-    await paymentService.processSuccessfulPayment(paymentId);
-
-    await ctx.reply(`🎉 *Premium подписка активирована!*\n\nТеперь вам доступны все функции!`, {
-      parse_mode: 'Markdown',
-      ...getMainMenuKeyboard(true)
-    });
-
-    // Удаляем сообщение с кнопками
-    await ctx.deleteMessage();
-  } catch (error) {
-    console.error('❌ Ошибка активации:', error);
-    await ctx.answerCbQuery('❌ Ошибка активации');
-  }
-});
-
-bot.action(/payment_check_(.+)/, async (ctx) => {
-  const paymentId = ctx.match[1];
-  const paymentService = require('./services/unifiedPaymentService');
-
-  try {
-    await ctx.answerCbQuery('🔍 Проверяем статус платежа...');
-    const status = await paymentService.checkPaymentStatus(paymentId);
-
-    if (status === 'succeeded') {
-      await paymentService.processSuccessfulPayment(paymentId);
-      await ctx.reply('🎉 Платеж подтвержден! Premium активирован!',
-        getMainMenuKeyboard(true)
-      );
-    } else {
-      await ctx.reply('⏳ Платеж еще обрабатывается. Попробуйте позже.');
-    }
-  } catch (error) {
-    console.error('❌ Ошибка проверки:', error);
-    await ctx.answerCbQuery('❌ Ошибка проверки');
-  }
+bot.action(/payment_(confirm|check|status)_(.+)/, async (ctx) => {
+  await subscriptionController.handlePaymentCallback(ctx);
 });
 
 // ==================== ДРУГИЕ ОБРАБОТЧИКИ ACTION ====================
@@ -674,6 +638,68 @@ bot.on('callback_query', async (ctx) => {
       callbackData !== 'test_payment' &&
       callbackData !== 'cancel_survey') {
     require('./controllers/surveyController').handleButtonAnswer(ctx);
+  }
+});
+
+// Обработка PreCheckoutQuery (подтверждение платежа)
+bot.on('pre_checkout_query', async (ctx) => {
+  console.log('🔵 PRE_CHECKOUT_QUERY:', {
+    id: ctx.preCheckoutQuery.id,
+    from: ctx.preCheckoutQuery.from.id,
+    currency: ctx.preCheckoutQuery.currency,
+    amount: ctx.preCheckoutQuery.total_amount,
+    payload: ctx.preCheckoutQuery.invoice_payload
+  });
+
+  try {
+    await ctx.answerPreCheckoutQuery(true);
+    console.log('✅ PreCheckoutQuery подтвержден');
+  } catch (error) {
+    console.error('❌ Ошибка подтверждения PreCheckoutQuery:', error);
+    await ctx.answerPreCheckoutQuery(false, "Ошибка обработки платежа");
+  }
+});
+
+// Обработка успешного платежа
+bot.on('successful_payment', async (ctx) => {
+  try {
+    console.log('💰 SUCCESSFUL_PAYMENT:', {
+    charge_id: ctx.message.successful_payment.provider_payment_charge_id,
+    amount: ctx.message.successful_payment.total_amount,
+    currency: ctx.message.successful_payment.currency,
+    payload: ctx.message.successful_payment.invoice_payload
+  });
+
+    const paymentService = require('./services/telegramPaymentService');
+    await paymentService.processSuccessfulPayment(
+      ctx.message.successful_payment,
+      ctx.chat.id
+    );
+
+    // Отправляем подтверждение пользователю
+    await ctx.reply(
+      `🎉 *Оплата прошла успешно!*\n\n` +
+      `💎 *Premium подписка активирована на 30 дней!*\n\n` +
+      `Теперь вам доступны:\n` +
+      `• 📋 Расширенный опрос (17+ вопросов)\n` +
+      `• 💊 Персональные дозировки\n` +
+      `• ⏰ Умные напоминания\n` +
+      `• 🔄 Неограниченные опросы\n\n` +
+      `*ID транзакции:* ${ctx.message.successful_payment.provider_payment_charge_id}\n` +
+      `*Сумма:* ${ctx.message.successful_payment.total_amount / 100} RUB\n\n` +
+      `Используйте /survey для нового расширенного опроса!`,
+      { parse_mode: 'Markdown' }
+    );
+
+    console.log(`✅ Платеж обработан для пользователя ${ctx.chat.id}`);
+
+  } catch (error) {
+    console.error('❌ Ошибка обработки успешного платежа:', error);
+    await ctx.reply(
+      '❌ Произошла ошибка при активации подписки. ' +
+      'Пожалуйста, обратитесь в поддержку и сообщите ID транзакции: ' +
+      ctx.message.successful_payment.provider_payment_charge_id
+    );
   }
 });
 

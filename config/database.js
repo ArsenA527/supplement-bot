@@ -115,6 +115,8 @@ db.serialize(() => {
       status TEXT,
       yookassa_id TEXT,
       plan TEXT,
+      provider_payload TEXT,
+      telegram_payment_charge_id TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (chat_id) REFERENCES users (chat_id)
     )`, (err) => {

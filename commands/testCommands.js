@@ -660,5 +660,108 @@ module.exports = {
       console.error('❌ Ошибка проверки меню:', error);
       ctx.reply('❌ Ошибка проверки статуса меню. Попробуйте позже.');
     }
+  },
+
+  checkPaymentSystem: async (ctx) => {
+    try {
+      const paymentService = require('../services/telegramPaymentService');
+      const subscriptionService = require('../services/subscriptionService');
+
+      const paymentInfo = paymentService.getPaymentSystemInfo();
+      const plans = subscriptionService.getSubscriptionPlans();
+
+      let message = `💳 ДИАГНОСТИКА ПЛАТЕЖНОЙ СИСТЕМЫ\n\n`;
+
+      message += `📊 МЕТОД ПЛАТЕЖЕЙ:\n`;
+      message += `• Telegram Payments (встроенные)\n`;
+      message += `• Provider Token: ${paymentInfo.providerToken}\n`;
+      message += `• Валюта: ${paymentInfo.currency}\n\n`;
+
+      message += `📦 ПЛАН ПОДПИСКИ:\n`;
+      message += `• ${plans.premium?.name || 'Premium'} - ${plans.premium?.price || '0'} руб\n\n`;
+
+      message += `🔍 СТАТУС:\n`;
+
+      if (!paymentInfo.providerToken) {
+        message += `❌ Provider Token не установлен\n\n`;
+        message += `💡 РЕКОМЕНДАЦИИ:\n`;
+        message += `1. Получите provider_token от @BotFather\n`;
+        message += `2. Добавьте в .env: YOOKASSA_PROVIDER_TOKEN=ваш_токен\n`;
+        message += `3. Перезапустите бота\n`;
+      } else {
+        message += `✅ Готов к приему платежей\n\n`;
+        message += `💡 ИСПОЛЬЗОВАНИЕ:\n`;
+        message += `Используйте /subscribe для тестирования\n`;
+        message += `Платежи будут проходить через Telegram\n`;
+      }
+
+      await ctx.reply(message);
+
+    } catch (error) {
+      console.error('❌ Ошибка диагностики:', error);
+      await ctx.reply('❌ Ошибка диагностики платежной системы: ' + error.message);
+    }
+  },
+
+  yookassaSettings: async (ctx) => {
+    try {
+      let message = `⚙️ *Проверка настроек ЮKassa*\n\n`;
+
+      message += `1. ✅ Shop ID: ${process.env.YOOKASSA_SHOP_ID ? 'установлен' : 'не установлен'}\n`;
+      message += `2. ✅ Secret Key: ${process.env.YOOKASSA_SECRET_KEY ? 'установлен' : 'не установлен'}\n`;
+      message += `3. 🔄 Статус магазина: проверьте в кабинете ЮKassa\n`;
+      message += `4. 🔄 API доступ: проверьте ключи API\n`;
+      message += `5. 🔄 Способы оплаты: банковские карты должны быть включены\n\n`;
+
+      message += `*Для тестирования:*\n`;
+      message += `• Используйте /subscribe - создаст тестовый платеж\n`;
+      message += `• Нажмите "Активировать Premium" для имитации оплаты\n`;
+
+      await ctx.reply(message, { parse_mode: 'Markdown' });
+
+    } catch (error) {
+      console.error('❌ Ошибка:', error);
+      await ctx.reply('❌ Ошибка проверки настроек');
+    }
+  },
+
+  checkTelegramPayments: async (ctx) => {
+    try {
+      const paymentService = require('../services/telegramPaymentService');
+
+      let message = `💳 *СТАТУС TELEGRAM PAYMENTS*\n\n`;
+
+      const paymentInfo = paymentService.getPaymentSystemInfo();
+
+      message += `📊 *РЕЖИМ:* ${paymentInfo.providerToken.includes('LIVE') ? '💎 LIVE' : '🧪 TEST'}\n`;
+      message += `🔧 *Метод:* ${paymentInfo.method}\n`;
+      message += `✅ *Provider Token:* ${paymentInfo.providerToken}\n`;
+      message += `📈 *Статус:* ${paymentInfo.status}\n\n`;
+
+      if (paymentInfo.providerToken.includes('LIVE')) {
+        message += `🎉 *ВСЕ НАСТРОЕНО ДЛЯ РЕАЛЬНЫХ ПЛАТЕЖЕЙ!*\n\n`;
+        message += `💡 *Что делать:*\n`;
+        message += `1. Используйте /subscribe\n`;
+        message += `2. Оплачивайте реальной картой\n`;
+        message += `3. Деньги будут поступать на ваш аккаунт ЮKassa\n\n`;
+        message += `⚠️ *Примечание:*\n`;
+        message += `• Secret Key не требуется\n`;
+        message += `• Telegram сам обрабатывает платежи\n`;
+        message += `• Вы получите provider_payment_charge_id\n`;
+      } else {
+        message += `❌ *Проблема:* Provider Token не настроен\n\n`;
+        message += `💡 *Решение:*\n`;
+        message += `1. Получите provider_token от @BotFather\n`;
+        message += `2. Добавьте в .env: YOOKASSA_PROVIDER_TOKEN=ваш_токен\n`;
+        message += `3. Перезапустите бота\n`;
+      }
+
+      await ctx.reply(message, { parse_mode: 'Markdown' });
+
+    } catch (error) {
+      console.error('❌ Ошибка проверки:', error);
+      await ctx.reply('❌ Ошибка проверки статуса платежей');
+    }
   }
+
 };

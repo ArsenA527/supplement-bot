@@ -69,13 +69,7 @@ class SubscriptionService {
         const now = new Date();
         const endDate = new Date(subscription.end_date);
 
-        // ДЕБАГ: выводим обе даты для сравнения
-        console.log(`📅 Сейчас: ${now.toISOString()}`);
-        console.log(`📅 Окончание: ${endDate.toISOString()}`);
-        console.log(`📅 endDate > now: ${endDate > now}`);
-
         isNotExpired = endDate > now;
-        console.log(`📅 Не истекла: ${isNotExpired}`);
       }
 
       const result = isPremiumPlan && isActiveStatus && isNotExpired;
@@ -96,9 +90,9 @@ class SubscriptionService {
         name: 'Free',
         price: 0,
         features: [
-          'Базовый опрос (8 вопросов)',
-          'Общие рекомендации',
-          'Одноразовое прохождение'
+          'Базовый опрос (9 вопросов)',
+          'Общие рекомендации по БАДам',
+          'Однократное прохождение'
         ]
       },
       premium: {
