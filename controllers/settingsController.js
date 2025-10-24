@@ -57,7 +57,6 @@ class SettingsController {
       timestamp: Date.now()
     });
 
-    console.log(`⏰ Пользователь ${ctx.chat.id} выбирает время для периода: ${period}`);
   }
 
   // 🌅 Показать напоминания по периодам
@@ -73,7 +72,6 @@ class SettingsController {
       const periodLabel = this.getPeriodLabel(period);
       const periodLabelLower = periodLabel.toLowerCase();
 
-      console.log(`🔍 Период: ${period}, найдено напоминаний: ${periodReminders.length}`);
 
       if (periodReminders.length === 0) {
         await ctx.reply(
@@ -114,7 +112,6 @@ class SettingsController {
       });
 
       const sessionManager = require('../utils/sessionManager');
-      console.log(`💾 Сохраняем сессию для ${chatId}, период: ${period}`);
 
       sessionManager.set(ctx.chat.id, {
         managingPeriod: period,
@@ -123,7 +120,6 @@ class SettingsController {
       });
 
       const savedSession = sessionManager.get(ctx.chat.id);
-      console.log(`💾 Проверка сохраненной сессии:`, savedSession ? 'OK' : 'NULL');
 
     } catch (error) {
       console.error(`❌ Ошибка загрузки ${period} напоминаний:`, error);
@@ -151,12 +147,6 @@ class SettingsController {
   async handleEditIndividualReminder(ctx, text) {
     try {
       const session = sessionManager.get(ctx.chat.id);
-      console.log('=== 🧪 DEBUG EDIT REMINDER ===');
-      console.log('Button text:', text);
-      console.log('Session:', session);
-      console.log('Period reminders:', session?.periodReminders?.map(r => r.supplement_name));
-      console.log('============================');
-
 
       if (!session || !session.periodReminders) {
         await ctx.reply('❌ Сессия устарела. Вернитесь в настройки напоминаний.');
@@ -180,10 +170,7 @@ class SettingsController {
     }
   }
 
-  // 🔍 Поиск напоминания по тексту кнопки
   findReminderByButtonText(reminders, buttonText) {
-    console.log('🔍 Поиск напоминания по тексту:', buttonText);
-    console.log('🔍 Доступные напоминания:', reminders.map(r => r.supplement_name));
 
     const match = buttonText.match(/✏️ (.+?) \(\d{2}:\d{2}\)/);
     if (!match) {

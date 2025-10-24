@@ -4,15 +4,12 @@ const subscriptionService = require('./subscriptionService');
 class TelegramPaymentService {
   constructor() {
     this.providerToken = process.env.YOOKASSA_PROVIDER_TOKEN;
-    console.log('🔧 Инициализация Telegram Payments...');
-    console.log('🔧 Provider Token:', this.providerToken ? 'LIVE ✅' : 'не установлен ❌');
 
     if (this.providerToken) {
       console.log('✅ Готов к приему реальных платежей через Telegram!');
     }
   }
 
-  // Создание инвойса (счета) через Telegram API
   async createInvoice(chatId, plan) {
     try {
       console.log(`💳 Создание инвойса для ${chatId}, план: ${plan.name}`);
@@ -51,20 +48,16 @@ class TelegramPaymentService {
     }
   }
 
-  // Описание плана
   getPlanDescription(plan) {
     return `Premium подписка на 30 дней\n\nВключает:\n${plan.features.map(f => `• ${f}`).join('\n')}`;
   }
 
-  // Обработка успешного платежа
   async processSuccessfulPayment(successfulPayment, chatId) {
     try {
       console.log('💰 Обработка успешного платежа:', successfulPayment);
 
-      // Сохраняем информацию о платеже
       await this.savePayment(chatId, successfulPayment);
 
-      // Активируем подписку (даже если сохранение платежа не удалось)
       await this.activateSubscription(chatId, 'Premium');
 
       console.log(`✅ Платеж обработан, Premium активирован для ${chatId}`);
@@ -73,7 +66,6 @@ class TelegramPaymentService {
     } catch (error) {
       console.error('❌ Ошибка обработки платежа:', error);
 
-      // Все равно пытаемся активировать Premium
       try {
         await this.activateSubscription(chatId, 'Premium');
         console.log(`✅ Premium активирован несмотря на ошибку сохранения платежа`);
@@ -130,14 +122,12 @@ class TelegramPaymentService {
       end_date: endDate.toISOString()
     });
 
-    // Завершаем опрос если был
     const surveyService = require('./surveyService');
     await surveyService.completeSurvey(chatId);
 
     console.log(`✅ Premium активирован для ${chatId}`);
   }
 
-  // Получить информацию о платежной системе
   getPaymentSystemInfo() {
     return {
       method: 'Telegram Payments',

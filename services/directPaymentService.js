@@ -10,7 +10,6 @@ class DirectPaymentService {
   }
 
   init() {
-    console.log('🔧 Инициализация прямого API платежей...');
 
     const shopId = process.env.YOOKASSA_SHOP_ID;
     const secretKey = process.env.YOOKASSA_SECRET_KEY;
@@ -23,18 +22,14 @@ class DirectPaymentService {
       (secretKey.startsWith('test_') || secretKey.startsWith('live_'));
 
     if (hasShopId && hasSecretKey) {
-      // Пробуем разные форматы аутентификации
       this.shopId = shopId;
       this.secretKey = secretKey;
 
-      // Формат 1: Basic Auth (старый способ)
       this.authBasic = Buffer.from(`${shopId}:${secretKey}`).toString('base64');
 
-      // Формат 2: Bearer Token (новый способ)
-      this.authBearer = secretKey; // Secret Key сам по себе может быть токеном
+      this.authBearer = secretKey;
 
       this.isRealPayments = true;
-      console.log('✅ Реальные платежи - тестируем аутентификацию...');
 
       // Тестируем подключение
       this.testConnection();
@@ -45,7 +40,6 @@ class DirectPaymentService {
   }
 
   async testConnection() {
-    // Тестируем разные методы аутентификации
     const methods = [
       { name: 'Bearer Token', header: `Bearer ${this.secretKey}` },
       { name: 'Basic Auth', header: `Basic ${this.authBasic}` },
@@ -65,7 +59,7 @@ class DirectPaymentService {
         });
 
         console.log(`✅ Метод "${method.name}" РАБОТАЕТ! Магазин:`, response.data.account_id);
-        this.authHeader = method.header; // Сохраняем рабочий метод
+        this.authHeader = method.header;
         return;
 
       } catch (error) {
@@ -228,11 +222,9 @@ class DirectPaymentService {
         throw new Error('Платеж не найден в БД');
       }
 
-      console.log(`🔄 Обработка платежа ${paymentId} для пользователя ${payment.chat_id}`);
       await this.activateSubscription(payment.chat_id, payment.plan);
       await this.updatePaymentStatus(paymentId, 'succeeded');
 
-      console.log(`✅ Платеж успешно обработан: ${paymentId}`);
       return true;
 
     } catch (error) {
@@ -245,7 +237,6 @@ class DirectPaymentService {
     const endDate = new Date();
     endDate.setMonth(endDate.getMonth() + 1);
 
-    console.log(`🎯 Активация Premium для ${chatId} до ${endDate}`);
 
     await subscriptionService.updateSubscription(chatId, {
       plan: 'premium',

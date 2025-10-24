@@ -5,7 +5,6 @@ class ReminderService {
   constructor(bot) {
     // Защита от множественной инициализации
     if (global.reminderServiceInstance) {
-      console.log('⚠️ ReminderService уже инициализирован, возвращаем существующий экземпляр');
       return global.reminderServiceInstance;
     }
 
@@ -18,18 +17,13 @@ class ReminderService {
     // Сохраняем экземпляр глобально
     global.reminderServiceInstance = this;
 
-    console.log('🔧 ReminderService initialized with bot:', !!bot);
-    console.log('🔧 Telegram client available:', !!this.telegram);
   }
 
   // Инициализация сервиса
   async initialize() {
     if (this.isInitialized) {
-      console.log('⚠️ ReminderService уже инициализирован');
       return true;
     }
-
-    console.log('⏰ Инициализация упрощенного сервиса напоминаний...');
 
     if (!this.telegram) {
       console.error('❌ Telegram client не доступен при инициализации!');
@@ -44,13 +38,11 @@ class ReminderService {
     await this.startEnhancedReminderChecker();
     this.isInitialized = true;
 
-    console.log('✅ Сервис напоминаний успешно инициализирован');
     return true;
   }
 
   // Запускаем улучшенный проверщик напоминаний
   async startEnhancedReminderChecker() {
-    console.log('🔍 Запуск проверщика напоминаний...');
 
     await this.checkDueReminders();
 
@@ -86,7 +78,6 @@ class ReminderService {
       const reminders = await this.getDueReminders(currentTime, currentDay);
 
       if (reminders.length > 0) {
-        console.log(`📨 Найдено ${reminders.length} напоминаний для отправки`);
 
         let sentCount = 0;
         for (const reminder of reminders) {
