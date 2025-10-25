@@ -2239,3 +2239,18 @@
 {"timestamp":"2025-10-22T08:13:51.228Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-22T08-13-51-225Z.db"}
 {"timestamp":"2025-10-22T08:13:51.490Z","level":"INFO","message":"Ежедневные отчеты настроены"}
 {"timestamp":"2025-10-22T08:13:51.491Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-10-25T05:58:34.053Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-10-25T05:58:34.192Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-22T07-44-59-008Z.db"}
+{"timestamp":"2025-10-25T05:58:34.192Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-25T05-58-34-188Z.db"}
+{"timestamp":"2025-10-25T05:58:34.554Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-10-25T05:58:34.555Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-10-25T06:02:48.452Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-10-25T06:02:48.502Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-22T08-02-06-911Z.db"}
+{"timestamp":"2025-10-25T06:02:48.502Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-25T06-02-48-499Z.db"}
+{"timestamp":"2025-10-25T06:02:48.846Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-10-25T06:02:48.847Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-10-25T06:26:11.709Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-10-25T06:26:11.758Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-22T08-02-35-432Z.db"}
+{"timestamp":"2025-10-25T06:26:11.759Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-25T06-26-11-755Z.db"}
+{"timestamp":"2025-10-25T06:26:12.102Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-10-25T06:26:12.103Z","level":"INFO","message":"Еженедельная мотивация настроена"}
