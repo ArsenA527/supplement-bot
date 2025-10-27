@@ -336,6 +336,14 @@ bot.command('dailyreport', (ctx) => testCommands.forceDailyReport(ctx));
 
 // ==================== ОБРАБОТКА КНОПОК НАПОМИНАНИЙ ====================
 
+bot.command('support', async (ctx) => {
+  await ctx.reply(
+    '💬 Опишите вашу проблему или вопрос — команда поддержки скоро ответит!'
+  );
+  ctx.session = ctx.session || {};
+  ctx.session.waitingForSupport = true;
+});
+
 // Обработка кнопки "✅ Принял"
 bot.action(/intake_taken_(\d+)/, async (ctx) => {
   console.log('🔵 Обработка кнопки Принял для reminder:', ctx.match[1]);
@@ -809,16 +817,39 @@ bot.launch().then(() => {
   console.error('❌ Ошибка запуска бота:', err);
 });
 
-// Добавляем обработку неизвестных команд
-bot.on('message', (ctx) => {
+bot.on('message', async (ctx) => {
+  // --- 1. Проверка на активный режим поддержки ---
+  if (ctx.session?.waitingForSupport) {
+    const user = ctx.from;
+    const userName = user.username
+      ? `@${user.username}`
+      : `${user.first_name || 'Пользователь'}`;
+    const userId = ctx.chat.id;
+
+    const messageText = ctx.message.text || '(без текста)';
+    const forwardedText = `📩 *Новое сообщение в поддержку:*\n\n` +
+      `👤 ${userName} (ID: ${userId})\n\n` +
+      `💬 Сообщение:\n${messageText}`;
+
+    await ctx.telegram.sendMessage(process.env.SUPPORT_CHAT_ID, forwardedText, {
+      parse_mode: 'Markdown',
+    });
+
+    await ctx.reply('✅ Ваше сообщение отправлено в поддержку. Мы ответим в ближайшее время!');
+    ctx.session.waitingForSupport = false;
+    return; // выходим, чтобы не обрабатывать дальше
+  }
+
+  // --- 2. Проверка на неизвестные команды ---
   if (ctx.message && ctx.message.text && ctx.message.text.startsWith('/')) {
     console.log(`❓ Неизвестная команда: ${ctx.message.text}`);
-    ctx.reply(
-      '❓ Неизвестная команда. Используйте /help для списка команд.',
+    return ctx.reply(
+      '❓ Неизвестная команда. Используйте /help для списка доступных команд.',
       getMainMenuKeyboard()
     );
   }
 });
+
 
 // Команда /myid - только для админа
 bot.command('myid', (ctx) => {
