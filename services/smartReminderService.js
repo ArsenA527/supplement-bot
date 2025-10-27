@@ -141,6 +141,6 @@ class SmartReminderService {
 
     return smartSchedule;
   }
-  }
+}
 
 module.exports = new SmartReminderService();
