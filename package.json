@@ -13,7 +13,7 @@
     "logs": "pm2 logs supplement-bot",
     "monit": "pm2 monit",
     "backup": "node scripts/backup.js",
-    "deploy": "scripts/deploy-production.sh"
+    "deploy": "scripts/deploy-production.bat"
   },
   "keywords": [],
   "author": "",
