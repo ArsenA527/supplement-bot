@@ -187,3 +187,11 @@ Require stack:
   code: 'MODULE_NOT_FOUND',
   requireStack: [ 'C:\\work\\supplement-bot\\bot.js' ]
 }
+2025-10-28 14:17:59 +03:00: ❌ Ошибка отправки в поддержку: [Error: SQLITE_RANGE: column index out of range] {
+  errno: 25,
+  code: 'SQLITE_RANGE'
+}
+2025-10-28 14:17:59 +03:00: ❌ Ошибка отправки в поддержку: [Error: SQLITE_RANGE: column index out of range] {
+  errno: 25,
+  code: 'SQLITE_RANGE'
+}
