@@ -51,6 +51,16 @@ db.serialize(() => {
     FOREIGN KEY (chat_id) REFERENCES users (chat_id)
   )`);
 
+  db.run(`CREATE TABLE IF NOT EXISTS support_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chat_id INTEGER,
+    message TEXT,
+    status TEXT DEFAULT 'pending',
+    admin_reply TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+
   console.log('✅ База данных инициализирована');
 });
 

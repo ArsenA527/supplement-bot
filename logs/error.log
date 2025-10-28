@@ -173,3 +173,17 @@
 {"timestamp":"2025-10-25T06:00:00.020Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
 {"timestamp":"2025-10-26T06:00:00.024Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
 {"timestamp":"2025-10-28T06:00:00.021Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
+2025-10-28 14:15:30 +03:00: ❌ Ошибка команды support: Error: Cannot find module './services/supportService'
+Require stack:
+- C:\work\supplement-bot\bot.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1405:15)
+    at Hook._require.Module.require (C:\Users\user\AppData\Local\nvm\v20.19.4\node_modules\pm2\node_modules\require-in-the-middle\index.js:81:25)
+    at require (node:internal/modules/helpers:135:16)
+    at C:\work\supplement-bot\bot.js:343:28
+    at C:\work\supplement-bot\node_modules\telegraf\composer.js:128:56
+    at async C:\work\supplement-bot\bot.js:185:3
+    at async C:\work\supplement-bot\bot.js:143:3
+    at async Promise.all (index 0) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [ 'C:\\work\\supplement-bot\\bot.js' ]
+}

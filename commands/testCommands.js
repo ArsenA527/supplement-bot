@@ -762,6 +762,32 @@ module.exports = {
       console.error('❌ Ошибка проверки:', error);
       await ctx.reply('❌ Ошибка проверки статуса платежей');
     }
+  },
+
+  supportStatus: async (ctx) => {
+    try {
+      const supportService = require('../services/supportService');
+      const history = await supportService.getUserSupportHistory(ctx.chat.id);
+
+      let message = `📋 *Ваши обращения в поддержку:*\n\n`;
+
+      if (history.length === 0) {
+        message += `У вас пока нет обращений в поддержку.\nИспользуйте /support для создания обращения.`;
+      } else {
+        history.forEach((req, index) => {
+          const date = new Date(req.created_at).toLocaleString('ru-RU');
+          const status = req.status === 'resolved' ? '✅ Решено' : '⏳ В обработке';
+          message += `${index + 1}. ${date} - ${status}\n`;
+          message += `   📝 ${req.message}\n\n`;
+        });
+      }
+
+      await ctx.reply(message, { parse_mode: 'Markdown' });
+
+    } catch (error) {
+      console.error('❌ Ошибка проверки статуса поддержки:', error);
+      await ctx.reply('❌ Ошибка загрузки истории обращений.');
+    }
   }
 
 };

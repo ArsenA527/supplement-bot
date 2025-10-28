@@ -334,14 +334,38 @@ bot.command('analytics', (ctx) => testCommands.analyticsDashboard(ctx));
 bot.command('surveystats', (ctx) => testCommands.surveyAnalytics(ctx));
 bot.command('dailyreport', (ctx) => testCommands.forceDailyReport(ctx));
 
+bot.command('mysupport', (ctx) => testCommands.supportStatus(ctx));
 // ==================== ОБРАБОТКА КНОПОК НАПОМИНАНИЙ ====================
 
+// В bot.js - замените текущий обработчик /support
 bot.command('support', async (ctx) => {
-  await ctx.reply(
-    '💬 Опишите вашу проблему или вопрос — команда поддержки скоро ответит!'
-  );
-  ctx.session = ctx.session || {};
-  ctx.session.waitingForSupport = true;
+  try {
+    const supportService = require('./services/supportService');
+
+    // Сохраняем состояние ожидания сообщения поддержки
+    ctx.session = ctx.session || {};
+    ctx.session.waitingForSupportMessage = true;
+    ctx.session.supportRequestTime = Date.now();
+
+    await ctx.reply(
+      `💬 *Служба поддержки*\n\n` +
+      `Опишите вашу проблему или вопрос, и я передам его нашей команде поддержки.\n\n` +
+      `📝 *Просто напишите ваше сообщение ниже:*\n\n` +
+      `⚠️ *Внимание:* Не отправляйте конфиденциальные данные!`,
+      {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          keyboard: [['❌ Отменить обращение']],
+          resize_keyboard: true,
+          one_time_keyboard: true
+        }
+      }
+    );
+
+  } catch (error) {
+    console.error('❌ Ошибка команды support:', error);
+    await ctx.reply('❌ Ошибка обращения в поддержку. Попробуйте позже.');
+  }
 });
 
 // Обработка кнопки "✅ Принял"
@@ -582,6 +606,101 @@ bot.action('cancel_survey', async (ctx) => {
   }
 });
 
+// В bot.js - добавьте обработчики callback_query для поддержки
+bot.action(/support_reply_(\d+)/, async (ctx) => {
+  try {
+    const userChatId = ctx.match[1];
+
+    // Сохраняем состояние ответа пользователю
+    ctx.session = ctx.session || {};
+    ctx.session.waitingForSupportReply = true;
+    ctx.session.supportReplyTo = userChatId;
+    ctx.session.supportOriginalMessage = ctx.callbackQuery.message;
+
+    await ctx.answerCbQuery('💬 Введите ответ пользователю...');
+
+    await ctx.reply(
+      `💬 *Ответ пользователю ${userChatId}*\n\n` +
+      `Введите ваш ответ:\n\n` +
+      `❌ Отправьте "отмена" для отмены`,
+      {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          keyboard: [['❌ Отменить ответ']],
+          resize_keyboard: true,
+          one_time_keyboard: true
+        }
+      }
+    );
+
+  } catch (error) {
+    console.error('❌ Ошибка ответа поддержки:', error);
+    await ctx.answerCbQuery('❌ Ошибка');
+  }
+});
+
+bot.action(/support_resolved_(\d+)/, async (ctx) => {
+  try {
+    const userChatId = ctx.match[1];
+    const supportService = require('./services/supportService');
+
+    await ctx.answerCbQuery('✅ Отмечено как решенное');
+
+    // Обновляем сообщение в группе поддержки
+    await ctx.editMessageReplyMarkup({
+      inline_keyboard: [
+        [
+          {
+            text: '💬 Ответить пользователю',
+            callback_data: `support_reply_${userChatId}`
+          }
+        ],
+        [
+          {
+            text: '✅ РЕШЕНО',
+            callback_data: `support_already_resolved`
+          }
+        ]
+      ]
+    });
+
+    await ctx.reply(`✅ Обращение от пользователя ${userChatId} отмечено как решенное`);
+
+  } catch (error) {
+    console.error('❌ Ошибка отметки решения:', error);
+    await ctx.answerCbQuery('❌ Ошибка');
+  }
+});
+
+bot.action(/support_details_(\d+)/, async (ctx) => {
+  try {
+    const userChatId = ctx.match[1];
+    const supportService = require('./services/supportService');
+
+    const history = await supportService.getUserSupportHistory(userChatId);
+
+    let message = `📋 *История обращений пользователя ${userChatId}:*\n\n`;
+
+    if (history.length === 0) {
+      message += `Нет предыдущих обращений`;
+    } else {
+      history.forEach((req, index) => {
+        const date = new Date(req.created_at).toLocaleString('ru-RU');
+        const statusIcon = req.status === 'resolved' ? '✅' : '⏳';
+        message += `${index + 1}. ${statusIcon} ${date}\n`;
+        message += `   📝 ${req.message.substring(0, 50)}${req.message.length > 50 ? '...' : ''}\n\n`;
+      });
+    }
+
+    await ctx.answerCbQuery('📋 Показана история');
+    await ctx.reply(message, { parse_mode: 'Markdown' });
+
+  } catch (error) {
+    console.error('❌ Ошибка получения истории:', error);
+    await ctx.answerCbQuery('❌ Ошибка');
+  }
+});
+
 // ==================== ОБРАБОТКА ТЕКСТА ====================
 
 // Обработка текстовых сообщений
@@ -590,7 +709,116 @@ bot.on('text', async (ctx) => {
     const text = ctx.message.text;
     const chatId = ctx.chat.id;
 
-    console.log(`📨 Текст получен: "${text}" от ${chatId}`);
+    if (ctx.session && ctx.session.waitingForSupportMessage) {
+
+      // Проверяем отмену
+      if (text === '❌ Отменить обращение') {
+        delete ctx.session.waitingForSupportMessage;
+        await ctx.reply('✅ Обращение отменено.', {
+          reply_markup: { remove_keyboard: true }
+        });
+        return;
+      }
+
+      // Проверяем время (сообщение должно быть отправлено в течение 10 минут)
+      if (Date.now() - ctx.session.supportRequestTime > 10 * 60 * 1000) {
+        delete ctx.session.waitingForSupportMessage;
+        await ctx.reply('⏰ Время для обращения истекло. Используйте /support снова.', {
+          reply_markup: { remove_keyboard: true }
+        });
+        return;
+      }
+
+      // Отправляем сообщение в поддержку
+      try {
+        const supportService = require('./services/supportService');
+
+        await supportService.forwardToSupport(chatId, text, {
+          first_name: ctx.from.first_name,
+          username: ctx.from.username,
+          last_name: ctx.from.last_name
+        });
+
+        // Очищаем состояние
+        delete ctx.session.waitingForSupportMessage;
+
+        await ctx.reply(
+          `✅ *Ваше сообщение отправлено в поддержку!*\n\n` +
+          `Мы ответим вам в ближайшее время.\n\n` +
+          `📋 *Ваше сообщение:*\n${text}`,
+          {
+            parse_mode: 'Markdown',
+            reply_markup: { remove_keyboard: true }
+          }
+        );
+
+      } catch (error) {
+        console.error('❌ Ошибка отправки в поддержку:', error);
+        await ctx.reply(
+          '❌ Не удалось отправить сообщение в поддержку. Попробуйте позже.',
+          { reply_markup: { remove_keyboard: true } }
+        );
+      }
+
+      return;
+    }
+
+    // Обработка ответов администраторов пользователям
+    if (ctx.session && ctx.session.waitingForSupportReply) {
+
+      if (text === '❌ Отменить ответ') {
+        delete ctx.session.waitingForSupportReply;
+        delete ctx.session.supportReplyTo;
+        await ctx.reply('✅ Ответ отменен.', {
+          reply_markup: { remove_keyboard: true }
+        });
+        return;
+      }
+
+      try {
+        const supportService = require('./services/supportService');
+        const userChatId = ctx.session.supportReplyTo;
+
+        await supportService.replyToUser(userChatId, text, ctx.from.first_name);
+
+        // Обновляем оригинальное сообщение в группе поддержки
+        if (ctx.session.supportOriginalMessage) {
+          await ctx.telegram.editMessageReplyMarkup(
+            ctx.session.supportOriginalMessage.chat.id,
+            ctx.session.supportOriginalMessage.message_id,
+            null,
+            {
+              inline_keyboard: [
+                [
+                  {
+                    text: '💬 ОТВЕЧЕНО',
+                    callback_data: `support_already_replied`
+                  }
+                ]
+              ]
+            }
+          );
+        }
+
+        // Очищаем состояние
+        delete ctx.session.waitingForSupportReply;
+        delete ctx.session.supportReplyTo;
+        delete ctx.session.supportOriginalMessage;
+
+        await ctx.reply(`✅ Ответ отправлен пользователю ${userChatId}`, {
+          reply_markup: { remove_keyboard: true }
+        });
+
+      } catch (error) {
+        console.error('❌ Ошибка отправки ответа:', error);
+        await ctx.reply(`❌ Ошибка: ${error.message}`, {
+          reply_markup: { remove_keyboard: true }
+        });
+      }
+
+      return;
+    }
+
 
     const menuCommands = [
       '📋 Пройти опрос', '📋 Новый опрос', '💊 Мои рекомендации',
