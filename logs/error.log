@@ -195,3 +195,4 @@ Require stack:
   errno: 25,
   code: 'SQLITE_RANGE'
 }
+{"timestamp":"2025-10-29T06:00:00.017Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
