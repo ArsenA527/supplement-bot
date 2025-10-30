@@ -196,3 +196,9 @@ Require stack:
   code: 'SQLITE_RANGE'
 }
 {"timestamp":"2025-10-29T06:00:00.017Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
+2025-10-30 04:10:46 +03:00: Failed to fetch updates. Waiting: 1s 502: Bad Gateway
+2025-10-30 04:10:47 +03:00: Failed to fetch updates. Waiting: 1s 502: Bad Gateway
+2025-10-30 04:10:48 +03:00: Failed to fetch updates. Waiting: 1s 502: Bad Gateway
+2025-10-30 04:10:49 +03:00: Failed to fetch updates. Waiting: 1s 502: Bad Gateway
+2025-10-30 04:10:50 +03:00: Failed to fetch updates. Waiting: 1s 502: Bad Gateway
+{"timestamp":"2025-10-30T06:00:00.022Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
