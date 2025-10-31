@@ -203,3 +203,4 @@ Require stack:
 2025-10-30 04:10:50 +03:00: Failed to fetch updates. Waiting: 1s 502: Bad Gateway
 {"timestamp":"2025-10-30T06:00:00.022Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
 2025-10-30 16:01:18 +03:00: Failed to fetch updates. Waiting: 1s request to https://api.telegram.org/bot8470299517:AAGCD-OzkgO-ALq12u04KAoAO82MlJoAVYo/getUpdates?offset=993482933&limit=100&timeout=30 failed, reason: read ECONNRESET
+{"timestamp":"2025-10-31T06:00:00.011Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}

@@ -2394,3 +2394,6 @@
 {"timestamp":"2025-10-31T05:40:08.648Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-31T05-40-08-645Z.db"}
 {"timestamp":"2025-10-31T05:40:08.936Z","level":"INFO","message":"Ежедневные отчеты настроены"}
 {"timestamp":"2025-10-31T05:40:08.937Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-10-31T06:00:00.012Z","level":"INFO","message":"Ежедневный отчет сгенерирован и отправлен"}
+{"timestamp":"2025-10-31T11:40:08.661Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-10-29T05-21-09-717Z.db"}
+{"timestamp":"2025-10-31T11:40:08.662Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-10-31T11-40-08-652Z.db"}
