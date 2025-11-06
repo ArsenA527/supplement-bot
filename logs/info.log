@@ -2442,3 +2442,10 @@
 {"timestamp":"2025-11-05T05:59:56.673Z","level":"INFO","message":"Ежедневный отчет сгенерирован и отправлен"}
 {"timestamp":"2025-11-05T11:40:05.425Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-11-02T23-40-06-990Z.db"}
 {"timestamp":"2025-11-05T11:40:05.425Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-11-05T11-40-05-421Z.db"}
+{"timestamp":"2025-11-05T17:40:05.438Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-11-03T05-40-06-993Z.db"}
+{"timestamp":"2025-11-05T17:40:05.439Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-11-05T17-40-05-435Z.db"}
+{"timestamp":"2025-11-05T23:40:05.463Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-11-03T11-40-07-005Z.db"}
+{"timestamp":"2025-11-05T23:40:05.465Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-11-05T23-40-05-455Z.db"}
+{"timestamp":"2025-11-06T05:40:05.482Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-11-03T17-40-07-022Z.db"}
+{"timestamp":"2025-11-06T05:40:05.482Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-11-06T05-40-05-479Z.db"}
+{"timestamp":"2025-11-06T05:59:56.659Z","level":"INFO","message":"Ежедневный отчет сгенерирован и отправлен"}
