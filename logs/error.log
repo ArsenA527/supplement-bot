@@ -289,3 +289,10 @@ Require stack:
 {"timestamp":"2025-11-04T05:59:58.328Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
 {"timestamp":"2025-11-05T05:59:56.672Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
 {"timestamp":"2025-11-06T05:59:56.659Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
+2025-11-06 14:07:37 +03:00: Failed to fetch updates. Waiting: 1s request to https://api.telegram.org/bot8470299517:AAGCD-OzkgO-ALq12u04KAoAO82MlJoAVYo/getUpdates?offset=993483027&limit=100&timeout=30 failed, reason: read ECONNRESET
+2025-11-06 15:18:56 +03:00: Failed to fetch updates. Waiting: 1s request to https://api.telegram.org/bot8470299517:AAGCD-OzkgO-ALq12u04KAoAO82MlJoAVYo/getUpdates?offset=993483028&limit=100&timeout=30 failed, reason: read ECONNRESET
+2025-11-06 18:07:32 +03:00: Failed to fetch updates. Waiting: 1s request to https://api.telegram.org/bot8470299517:AAGCD-OzkgO-ALq12u04KAoAO82MlJoAVYo/getUpdates?offset=993483029&limit=100&timeout=30 failed, reason: read ECONNRESET
+2025-11-06 18:35:34 +03:00: Failed to fetch updates. Waiting: 1s request to https://api.telegram.org/bot8470299517:AAGCD-OzkgO-ALq12u04KAoAO82MlJoAVYo/getUpdates?offset=993483029&limit=100&timeout=30 failed, reason: read ECONNRESET
+2025-11-06 18:55:50 +03:00: Failed to fetch updates. Waiting: 1s request to https://api.telegram.org/bot8470299517:AAGCD-OzkgO-ALq12u04KAoAO82MlJoAVYo/getUpdates?offset=993483029&limit=100&timeout=30 failed, reason: socket hang up
+2025-11-06 19:04:52 +03:00: Failed to fetch updates. Waiting: 1s request to https://api.telegram.org/bot8470299517:AAGCD-OzkgO-ALq12u04KAoAO82MlJoAVYo/getUpdates?offset=993483029&limit=100&timeout=30 failed, reason: read ECONNRESET
+2025-11-06 19:05:05 +03:00: Failed to fetch updates. Waiting: 1s request to https://api.telegram.org/bot8470299517:AAGCD-OzkgO-ALq12u04KAoAO82MlJoAVYo/getUpdates?offset=993483029&limit=100&timeout=30 failed, reason: getaddrinfo ENOTFOUND api.telegram.org
