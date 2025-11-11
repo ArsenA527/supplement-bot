@@ -144,7 +144,9 @@ class ReminderController {
       message += `\n`;
     });
 
-    message += `Всего: ${reminders.length} напоминаний`;
+    message += `Всего: ${reminders.length} напоминаний\n\n` +
+`⚙️ Чтобы *изменить или удалить напоминания*, перейдите в:\n` +
+`*Настройки → Настроить напоминания*`;
 
     ctx.reply(message, {
       parse_mode: 'Markdown',
