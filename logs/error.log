@@ -1078,3 +1078,4 @@ Require stack:
 2025-11-10 23:37:25 +03:00: Failed to fetch updates. Waiting: 1s request to https://api.telegram.org/bot8470299517:AAGCD-OzkgO-ALq12u04KAoAO82MlJoAVYo/getUpdates?offset=993483083&limit=100&timeout=30 failed, reason: getaddrinfo ENOTFOUND api.telegram.org
 2025-11-10 23:37:26 +03:00: Failed to fetch updates. Waiting: 1s request to https://api.telegram.org/bot8470299517:AAGCD-OzkgO-ALq12u04KAoAO82MlJoAVYo/getUpdates?offset=993483083&limit=100&timeout=30 failed, reason: getaddrinfo ENOTFOUND api.telegram.org
 2025-11-10 23:37:27 +03:00: Failed to fetch updates. Waiting: 1s request to https://api.telegram.org/bot8470299517:AAGCD-OzkgO-ALq12u04KAoAO82MlJoAVYo/getUpdates?offset=993483083&limit=100&timeout=30 failed, reason: getaddrinfo ENOTFOUND api.telegram.org
+{"timestamp":"2025-11-11T05:59:51.757Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
