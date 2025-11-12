@@ -66,6 +66,7 @@ const NotificationManager = require('./utils/notifications');
 // Сервисы
 const subscriptionService = require('./services/subscriptionService');
 const ReminderService = require('./services/reminderService');
+const SupportController = require('./controllers/supportController');
 
 // Инициализация напоминаний
 const reminderService = new ReminderService(bot);
@@ -336,13 +337,14 @@ bot.command('dailyreport', (ctx) => testCommands.forceDailyReport(ctx));
 
 // ==================== ОБРАБОТКА КНОПОК НАПОМИНАНИЙ ====================
 
-bot.command('support', async (ctx) => {
-  await ctx.reply(
-    '💬 Опишите вашу проблему или вопрос — команда поддержки скоро ответит!'
-  );
-  ctx.session = ctx.session || {};
-  ctx.session.waitingForSupport = true;
-});
+bot.command('support', SupportController.handleSupportCommand);
+// bot.command('support', async (ctx) => {
+//   await ctx.reply(
+//     '💬 Опишите вашу проблему или вопрос — команда поддержки скоро ответит!'
+//   );
+//   ctx.session = ctx.session || {};
+//   ctx.session.waitingForSupport = true;
+// });
 
 // Обработка кнопки "✅ Принял"
 bot.action(/intake_taken_(\d+)/, async (ctx) => {
@@ -820,27 +822,11 @@ bot.launch().then(() => {
 bot.on('message', async (ctx) => {
   // --- 1. Проверка на активный режим поддержки ---
   if (ctx.session?.waitingForSupport) {
-    const user = ctx.from;
-    const userName = user.username
-      ? `@${user.username}`
-      : `${user.first_name || 'Пользователь'}`;
-    const userId = ctx.chat.id;
-
-    const messageText = ctx.message.text || '(без текста)';
-    const forwardedText = `📩 *Новое сообщение в поддержку:*\n\n` +
-      `👤 ${userName} (ID: ${userId})\n\n` +
-      `💬 Сообщение:\n${messageText}`;
-
-    await ctx.telegram.sendMessage(process.env.SUPPORT_CHAT_ID, forwardedText, {
-      parse_mode: 'Markdown',
-    });
-
-    await ctx.reply('✅ Ваше сообщение отправлено в поддержку. Мы ответим в ближайшее время!');
-    ctx.session.waitingForSupport = false;
-    return; // выходим, чтобы не обрабатывать дальше
+    await SupportController.forwardToSupport(ctx, ctx.message.text || '(без текста)');
+    return;
   }
 
-  // --- 2. Проверка на неизвестные команды ---
+  // 2. Остальная логика обработки сообщений...
   if (ctx.message && ctx.message.text && ctx.message.text.startsWith('/')) {
     console.log(`❓ Неизвестная команда: ${ctx.message.text}`);
     return ctx.reply(

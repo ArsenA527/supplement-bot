@@ -2508,3 +2508,15 @@
 {"timestamp":"2025-11-12T04:45:16.990Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-11-12T04-45-16-987Z.db"}
 {"timestamp":"2025-11-12T04:45:17.315Z","level":"INFO","message":"Ежедневные отчеты настроены"}
 {"timestamp":"2025-11-12T04:45:17.316Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-11-12T05:21:53.339Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-11-12T05:21:53.382Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-11-09T23-40-02-295Z.db"}
+{"timestamp":"2025-11-12T05:21:53.382Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-11-12T05-21-53-379Z.db"}
+{"timestamp":"2025-11-12T05:21:53.678Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-11-12T05:21:53.679Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-11-12T05:22:01.889Z","level":"INFO","message":"Пользователь начал диалог с поддержкой","chatId":725240491,"username":"PrimeKingArs"}
+{"timestamp":"2025-11-12T05:46:50.993Z","level":"INFO","message":"🚀 Запуск Supplement Bot","nodeEnv":"development"}
+{"timestamp":"2025-11-12T05:46:51.034Z","level":"INFO","message":"Удален старый бэкап","file":"backup-2025-11-10T05-40-02-302Z.db"}
+{"timestamp":"2025-11-12T05:46:51.035Z","level":"INFO","message":"Бэкап базы данных создан","backupFile":"C:\\work\\supplement-bot\\backups\\backup-2025-11-12T05-46-51-032Z.db"}
+{"timestamp":"2025-11-12T05:46:51.336Z","level":"INFO","message":"Ежедневные отчеты настроены"}
+{"timestamp":"2025-11-12T05:46:51.338Z","level":"INFO","message":"Еженедельная мотивация настроена"}
+{"timestamp":"2025-11-12T05:47:05.558Z","level":"INFO","message":"Пользователь начал диалог с поддержкой","chatId":725240491,"username":"PrimeKingArs"}

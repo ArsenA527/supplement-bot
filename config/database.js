@@ -152,7 +152,6 @@ db.serialize(() => {
     FOREIGN KEY (chat_id) REFERENCES users (chat_id)
   )`);
 
-  // Добавьте в config/database.js
   db.run(`CREATE TABLE IF NOT EXISTS analytics (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     chat_id INTEGER,
@@ -160,6 +159,26 @@ db.serialize(() => {
     metadata TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS support_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      username TEXT,
+      first_name TEXT,
+      last_name TEXT,
+      message TEXT NOT NULL,
+      message_id INTEGER,
+      status TEXT DEFAULT 'new', -- 'new', 'in_progress', 'answered', 'closed'
+      priority TEXT DEFAULT 'normal', -- 'low', 'normal', 'high', 'urgent'
+      admin_id INTEGER,
+      admin_username TEXT,
+      admin_notes TEXT,
+      response_time INTEGER, -- время ответа в минутах
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      answered_at DATETIME,
+      FOREIGN KEY (user_id) REFERENCES users (chat_id)
+    )`);
 });
 
 
