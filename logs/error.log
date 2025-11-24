@@ -1081,3 +1081,15 @@ Require stack:
 {"timestamp":"2025-11-11T05:59:51.757Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
 2025-11-11 18:18:46 +03:00: Failed to fetch updates. Waiting: 1s request to https://api.telegram.org/bot8470299517:AAGCD-OzkgO-ALq12u04KAoAO82MlJoAVYo/getUpdates?offset=993483117&limit=100&timeout=30 failed, reason: socket hang up
 {"timestamp":"2025-11-12T06:00:00.021Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
+{"timestamp":"2025-11-13T05:59:58.533Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
+2025-11-14 04:10:46 +03:00: Failed to fetch updates. Waiting: 1s 502: Bad Gateway
+2025-11-14 04:10:47 +03:00: Failed to fetch updates. Waiting: 1s 502: Bad Gateway
+2025-11-14 04:10:48 +03:00: Failed to fetch updates. Waiting: 1s 502: Bad Gateway
+2025-11-14 04:10:49 +03:00: Failed to fetch updates. Waiting: 1s 502: Bad Gateway
+2025-11-14 04:10:51 +03:00: Failed to fetch updates. Waiting: 1s 502: Bad Gateway
+{"timestamp":"2025-11-14T05:59:58.543Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
+{"timestamp":"2025-11-15T05:59:56.975Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
+{"timestamp":"2025-11-16T05:59:56.982Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
+{"timestamp":"2025-11-17T05:59:55.393Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
+{"timestamp":"2025-11-17T06:59:56.407Z","level":"ERROR","message":"Ошибка отправки мотивации","chatId":391012615,"error":"403: Forbidden: bot was blocked by the user"}
+2025-11-17 22:38:20 +03:00: Failed to fetch updates. Waiting: 1s request to https://api.telegram.org/bot8470299517:AAGCD-OzkgO-ALq12u04KAoAO82MlJoAVYo/getUpdates?offset=993483200&limit=100&timeout=30 failed, reason: read ECONNRESET
