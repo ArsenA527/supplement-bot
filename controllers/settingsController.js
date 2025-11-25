@@ -109,9 +109,19 @@ class SettingsController {
 
       allRemindersForKeyboard.forEach((reminder, index) => {
         const statusIcon = reminder.is_active ? '🔔' : '🔕';
-        const shortName = reminder.supplement_name.length > 18
-          ? reminder.supplement_name.substring(0, 15) + '...'
-          : reminder.supplement_name;
+
+        let shortName = reminder.supplement_name;
+
+        if (shortName.length > 20) {
+          const firstSpace = shortName.indexOf(' ');
+          if (firstSpace > 0 && firstSpace < 15) {
+            shortName = shortName.substring(0, firstSpace) + '...';
+          } else {
+            shortName = shortName.substring(0, 17) + '...';
+          }
+        }
+
+        shortName = shortName.replace(/\([^)]*$/, '').trim();
 
         keyboard.push([`${statusIcon} ${shortName} (${reminder.time})`]);
       });
@@ -184,43 +194,59 @@ class SettingsController {
 
   findReminderByButtonText(reminders, buttonText) {
     console.log('🔍 Поиск напоминания по кнопке:', buttonText);
+    console.log('🔍 Доступные напоминания:', reminders.map(r => r.supplement_name));
 
     const cleanButtonText = buttonText
-      .replace(/^[🔔🔕]\s*/, '') // Убираем 🔔 или 🔕
-      .replace(/\s*\(\d{2}:\d{2}\)$/, '') // Убираем время в скобках
+      .replace(/^[🔔🔕�]\s*/, '') // Убираем эмодзи статуса (включая �)
+      .replace(/\s*\(\d{1,2}:\d{2}\)$/, '') // Убираем время в скобках
       .replace(/\.{3}$/, '') // Убираем многоточие в конце
+      .replace(/\([^)]*$/, '') // Убираем незакрытые скобки в конце
       .trim();
 
-    console.log('🔍 Очищенный текст кнопки:', cleanButtonText);
 
     const foundReminder = reminders.find(reminder => {
       const reminderName = reminder.supplement_name.trim();
+      const normalizedReminder = this.normalizeName(reminderName);
+      const normalizedButton = this.normalizeName(cleanButtonText);
 
       const matches =
         reminderName === cleanButtonText ||
-        reminderName.includes(cleanButtonText) ||
-        cleanButtonText.includes(reminderName) ||
-        this.normalizeName(reminderName) === this.normalizeName(cleanButtonText);
-
-      if (matches) {
-        console.log('✅ Найдено совпадение:', reminderName);
-      }
+        reminderName.startsWith(cleanButtonText) ||
+        cleanButtonText.startsWith(reminderName) ||
+        normalizedReminder === normalizedButton ||
+        normalizedReminder.startsWith(normalizedButton) ||
+        normalizedButton.startsWith(normalizedReminder) ||
+        this.areNamesSimilar(reminderName, cleanButtonText);
 
       return matches;
     });
 
     if (!foundReminder) {
       console.log('❌ Не найдено совпадений для:', cleanButtonText);
-      console.log('🔍 Доступные варианты:', reminders.map(r => r.supplement_name));
     }
 
     return foundReminder;
   }
 
+  areNamesSimilar(name1, name2) {
+    const norm1 = this.normalizeName(name1);
+    const norm2 = this.normalizeName(name2);
+
+    if (norm1.startsWith(norm2) || norm2.startsWith(norm1)) {
+      return true;
+    }
+
+    const words1 = norm1.split(' ');
+    const words2 = norm2.split(' ');
+
+    return words1[0] === words2[0] && Math.abs(norm1.length - norm2.length) <= 5;
+  }
+
   normalizeName(name) {
     return name
       .toLowerCase()
-      .replace(/[^a-zа-яё0-9]/g, '') // Убираем все не-буквы и не-цифры
+      .replace(/[^a-zа-яё0-9\s]/g, '') // Сохраняем пробелы, убираем остальные спецсимволы
+      .replace(/\s+/g, ' ') // Заменяем множественные пробелы на один
       .trim();
   }
 
