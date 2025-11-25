@@ -72,7 +72,6 @@ class SettingsController {
       const periodLabel = this.getPeriodLabel(period);
       const periodLabelLower = periodLabel.toLowerCase();
 
-
       if (periodReminders.length === 0) {
         await ctx.reply(
           `📭 *У вас нет ${periodLabelLower} напоминаний*\n\n` +
@@ -83,22 +82,38 @@ class SettingsController {
         return;
       }
 
+      const activeReminders = periodReminders.filter(r => r.is_active);
+      const inactiveReminders = periodReminders.filter(r => !r.is_active);
+
       let message = `🌅 *Ваши ${periodLabelLower} напоминания*\n\n`;
 
-      periodReminders.forEach((reminder, index) => {
-        const statusIcon = reminder.is_active ? '🔔' : '🔕';
-        message += `${index + 1}. ${statusIcon} ${reminder.supplement_name}\n`;
-        message += `   ⏰ ${reminder.time} | 📏 ${reminder.dosage}\n\n`;
-      });
+      if (activeReminders.length > 0) {
+        message += `🔔 *Активные:*\n`;
+        activeReminders.forEach((reminder, index) => {
+          message += `${index + 1}. ${reminder.supplement_name}\n`;
+          message += `   ⏰ ${reminder.time} | 📏 ${reminder.dosage}\n\n`;
+        });
+      }
+
+      if (inactiveReminders.length > 0) {
+        message += `🔕 *Отключенные:*\n`;
+        inactiveReminders.forEach((reminder, index) => {
+          const num = activeReminders.length + index + 1;
+          message += `${num}. ${reminder.supplement_name}\n`;
+          message += `   ⏰ ${reminder.time} | 📏 ${reminder.dosage}\n\n`;
+        });
+      }
 
       const keyboard = [];
+      const allRemindersForKeyboard = [...activeReminders, ...inactiveReminders];
 
-      periodReminders.forEach((reminder, index) => {
-        const shortName = reminder.supplement_name.length > 20
-          ? reminder.supplement_name.substring(0, 17) + '...'
+      allRemindersForKeyboard.forEach((reminder, index) => {
+        const statusIcon = reminder.is_active ? '🔔' : '🔕';
+        const shortName = reminder.supplement_name.length > 18
+          ? reminder.supplement_name.substring(0, 15) + '...'
           : reminder.supplement_name;
 
-        keyboard.push([`✏️ ${shortName} (${reminder.time})`]);
+        keyboard.push([`${statusIcon} ${shortName} (${reminder.time})`]);
       });
 
       keyboard.push([`🔄 Изменить все ${periodLabelLower} напоминания`]);
@@ -113,15 +128,11 @@ class SettingsController {
       });
 
       const sessionManager = require('../utils/sessionManager');
-
       sessionManager.set(ctx.chat.id, {
         managingPeriod: period,
-        periodReminders: periodReminders,
+        periodReminders: allRemindersForKeyboard,
         timestamp: Date.now()
       });
-
-      const savedSession = sessionManager.get(ctx.chat.id);
-
     } catch (error) {
       console.error(`❌ Ошибка загрузки ${period} напоминаний:`, error);
       await ctx.reply('❌ Ошибка загрузки напоминаний. Попробуйте позже.');
@@ -173,21 +184,18 @@ class SettingsController {
 
   findReminderByButtonText(reminders, buttonText) {
     console.log('🔍 Поиск напоминания по кнопке:', buttonText);
-    console.log('🔍 Доступные напоминания:', reminders.map(r => r.supplement_name));
 
     const cleanButtonText = buttonText
-      .replace(/^✏️\s*/, '') // Убираем ✏️
+      .replace(/^[🔔🔕]\s*/, '') // Убираем 🔔 или 🔕
       .replace(/\s*\(\d{2}:\d{2}\)$/, '') // Убираем время в скобках
       .replace(/\.{3}$/, '') // Убираем многоточие в конце
       .trim();
 
     console.log('🔍 Очищенный текст кнопки:', cleanButtonText);
 
-    // Ищем напоминание по частичному совпадению
     const foundReminder = reminders.find(reminder => {
       const reminderName = reminder.supplement_name.trim();
 
-      // Проверяем различные варианты совпадения
       const matches =
         reminderName === cleanButtonText ||
         reminderName.includes(cleanButtonText) ||

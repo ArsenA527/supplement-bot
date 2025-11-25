@@ -264,7 +264,7 @@ class ReminderService {
   async getUserReminders(chatId) {
     return new Promise((resolve) => {
       db.all(
-        'SELECT * FROM reminders WHERE chat_id = ? AND is_active = true ORDER BY time',
+        'SELECT * FROM reminders WHERE chat_id = ? ORDER BY time',
         [chatId],
         (err, reminders) => {
           if (err) {
