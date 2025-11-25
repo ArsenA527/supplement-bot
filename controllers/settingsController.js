@@ -72,7 +72,6 @@ class SettingsController {
       const periodLabel = this.getPeriodLabel(period);
       const periodLabelLower = periodLabel.toLowerCase();
 
-
       if (periodReminders.length === 0) {
         await ctx.reply(
           `📭 *У вас нет ${periodLabelLower} напоминаний*\n\n` +
@@ -83,21 +82,48 @@ class SettingsController {
         return;
       }
 
+      const activeReminders = periodReminders.filter(r => r.is_active);
+      const inactiveReminders = periodReminders.filter(r => !r.is_active);
+
       let message = `🌅 *Ваши ${periodLabelLower} напоминания*\n\n`;
 
-      periodReminders.forEach((reminder, index) => {
-        message += `${index + 1}. ${reminder.supplement_name}\n`;
-        message += `   ⏰ ${reminder.time} | 📏 ${reminder.dosage}\n\n`;
-      });
+      if (activeReminders.length > 0) {
+        message += `🔔 *Активные:*\n`;
+        activeReminders.forEach((reminder, index) => {
+          message += `${index + 1}. ${reminder.supplement_name}\n`;
+          message += `   ⏰ ${reminder.time} | 📏 ${reminder.dosage}\n\n`;
+        });
+      }
+
+      if (inactiveReminders.length > 0) {
+        message += `🔕 *Отключенные:*\n`;
+        inactiveReminders.forEach((reminder, index) => {
+          const num = activeReminders.length + index + 1;
+          message += `${num}. ${reminder.supplement_name}\n`;
+          message += `   ⏰ ${reminder.time} | 📏 ${reminder.dosage}\n\n`;
+        });
+      }
 
       const keyboard = [];
+      const allRemindersForKeyboard = [...activeReminders, ...inactiveReminders];
 
-      periodReminders.forEach((reminder, index) => {
-        const shortName = reminder.supplement_name.length > 20
-          ? reminder.supplement_name.substring(0, 17) + '...'
-          : reminder.supplement_name;
+      allRemindersForKeyboard.forEach((reminder, index) => {
+        const statusIcon = reminder.is_active ? '🔔' : '🔕';
 
-        keyboard.push([`✏️ ${shortName} (${reminder.time})`]);
+        let shortName = reminder.supplement_name;
+
+        if (shortName.length > 20) {
+          const firstSpace = shortName.indexOf(' ');
+          if (firstSpace > 0 && firstSpace < 15) {
+            shortName = shortName.substring(0, firstSpace) + '...';
+          } else {
+            shortName = shortName.substring(0, 17) + '...';
+          }
+        }
+
+        shortName = shortName.replace(/\([^)]*$/, '').trim();
+
+        keyboard.push([`${statusIcon} ${shortName} (${reminder.time})`]);
       });
 
       keyboard.push([`🔄 Изменить все ${periodLabelLower} напоминания`]);
@@ -112,15 +138,11 @@ class SettingsController {
       });
 
       const sessionManager = require('../utils/sessionManager');
-
       sessionManager.set(ctx.chat.id, {
         managingPeriod: period,
-        periodReminders: periodReminders,
+        periodReminders: allRemindersForKeyboard,
         timestamp: Date.now()
       });
-
-      const savedSession = sessionManager.get(ctx.chat.id);
-
     } catch (error) {
       console.error(`❌ Ошибка загрузки ${period} напоминаний:`, error);
       await ctx.reply('❌ Ошибка загрузки напоминаний. Попробуйте позже.');
@@ -171,25 +193,61 @@ class SettingsController {
   }
 
   findReminderByButtonText(reminders, buttonText) {
+    console.log('🔍 Поиск напоминания по кнопке:', buttonText);
+    console.log('🔍 Доступные напоминания:', reminders.map(r => r.supplement_name));
 
-    const match = buttonText.match(/✏️ (.+?) \(\d{2}:\d{2}\)/);
-    if (!match) {
-      console.log('❌ Не удалось извлечь название из кнопки');
-      return null;
-    }
+    const cleanButtonText = buttonText
+      .replace(/^[🔔🔕�]\s*/, '') // Убираем эмодзи статуса (включая �)
+      .replace(/\s*\(\d{1,2}:\d{2}\)$/, '') // Убираем время в скобках
+      .replace(/\.{3}$/, '') // Убираем многоточие в конце
+      .replace(/\([^)]*$/, '') // Убираем незакрытые скобки в конце
+      .trim();
 
-    const searchName = match[1].trim();
-    console.log('🔍 Ищем напоминание:', searchName);
 
     const foundReminder = reminders.find(reminder => {
       const reminderName = reminder.supplement_name.trim();
-      return reminderName === searchName ||
-            reminderName.includes(searchName) ||
-            searchName.includes(reminderName);
+      const normalizedReminder = this.normalizeName(reminderName);
+      const normalizedButton = this.normalizeName(cleanButtonText);
+
+      const matches =
+        reminderName === cleanButtonText ||
+        reminderName.startsWith(cleanButtonText) ||
+        cleanButtonText.startsWith(reminderName) ||
+        normalizedReminder === normalizedButton ||
+        normalizedReminder.startsWith(normalizedButton) ||
+        normalizedButton.startsWith(normalizedReminder) ||
+        this.areNamesSimilar(reminderName, cleanButtonText);
+
+      return matches;
     });
 
-    console.log('🔍 Найдено напоминание:', foundReminder);
+    if (!foundReminder) {
+      console.log('❌ Не найдено совпадений для:', cleanButtonText);
+    }
+
     return foundReminder;
+  }
+
+  areNamesSimilar(name1, name2) {
+    const norm1 = this.normalizeName(name1);
+    const norm2 = this.normalizeName(name2);
+
+    if (norm1.startsWith(norm2) || norm2.startsWith(norm1)) {
+      return true;
+    }
+
+    const words1 = norm1.split(' ');
+    const words2 = norm2.split(' ');
+
+    return words1[0] === words2[0] && Math.abs(norm1.length - norm2.length) <= 5;
+  }
+
+  normalizeName(name) {
+    return name
+      .toLowerCase()
+      .replace(/[^a-zа-яё0-9\s]/g, '') // Сохраняем пробелы, убираем остальные спецсимволы
+      .replace(/\s+/g, ' ') // Заменяем множественные пробелы на один
+      .trim();
   }
 
   // 🔄 Обработка массового изменения напоминаний
@@ -216,18 +274,26 @@ class SettingsController {
   async showReminderOptions(ctx, reminder, period) {
     try {
       const periodLabel = this.getPeriodLabel(period).toLowerCase();
+      const statusIcon = reminder.is_active ? '🔔' : '🔕';
+      const statusText = reminder.is_active ? 'Включено' : 'Выключено';
 
       const message = `⚙️ *Настройки напоминания*\n\n` +
         `💊 ${reminder.supplement_name}\n` +
         `📏 ${reminder.dosage}\n` +
-        `⏰ ${reminder.time}\n\n` +
+        `⏰ ${reminder.time}\n` +
+        `${statusIcon} *Статус:* ${statusText}\n\n` +
         `*Выберите действие:*`;
+
+      const toggleButton = reminder.is_active
+        ? '🔕 Выключить напоминание'
+        : '🔔 Включить напоминание';
 
       await ctx.reply(message, {
         parse_mode: 'Markdown',
         reply_markup: {
           keyboard: [
-            ['⏰ Изменить время', '🗑️ Удалить напоминание'],
+            ['⏰ Изменить время', toggleButton],
+            ['🗑️ Удалить напоминание'],
             [`↩️ Назад к ${periodLabel} напоминаниям`]
           ],
           resize_keyboard: true
@@ -249,6 +315,56 @@ class SettingsController {
     } catch (error) {
       console.error('❌ Ошибка показа опций напоминания:', error);
       throw error;
+    }
+  }
+
+  // Обработка переключения статуса напоминания
+  async toggleReminderStatus(ctx) {
+    try {
+      const session = sessionManager.get(ctx.chat.id);
+      if (!session || !session.currentReminder) {
+        await ctx.reply('❌ Сессия устарела. Начните заново.');
+        return;
+      }
+
+      const reminder = session.currentReminder;
+      const newStatus = !reminder.is_active;
+
+      // Обновляем статус в базе данных
+      const db = require('../config/database');
+      await new Promise((resolve, reject) => {
+        db.run(
+          'UPDATE reminders SET is_active = ? WHERE id = ?',
+          [newStatus, reminder.id],
+          function(err) {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+
+      // Обновляем объект напоминания в сессии
+      reminder.is_active = newStatus;
+      session.currentReminder = reminder;
+      sessionManager.set(ctx.chat.id, session);
+
+      const statusText = newStatus ? 'включено' : 'выключено';
+      const statusIcon = newStatus ? '🔔' : '🔕';
+
+      await ctx.reply(
+        `${statusIcon} *Напоминание ${statusText}!*\n\n` +
+        `💊 ${reminder.supplement_name}\n` +
+        `⏰ ${reminder.time}\n\n` +
+        `Вы больше ${newStatus ? 'будете' : 'не будете'} получать уведомления об этом приеме.`,
+        { parse_mode: 'Markdown' }
+      );
+
+      // Показываем обновленное меню
+      await this.showReminderOptions(ctx, reminder, session.managingPeriod);
+
+    } catch (error) {
+      console.error('❌ Ошибка переключения статуса напоминания:', error);
+      await ctx.reply('❌ Не удалось изменить статус напоминания. Попробуйте позже.');
     }
   }
 

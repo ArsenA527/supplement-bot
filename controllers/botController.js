@@ -468,27 +468,28 @@ async function handleTextCommands(ctx) {
 
   const session = sessionManager.get(ctx.chat.id);
 
+  if ((text.startsWith('🔔') || text.startsWith('🔕') || text.includes('�')) && text.includes('(')) {
+    await settingsController.handleEditIndividualReminder(ctx, text);
+    return;
+  }
+
   if (text === '↩️ Назад к настройкам') {
-    console.log('↩️ Принудительный возврат к настройкам');
     sessionManager.delete(ctx.chat.id);
     await settingsController.showReminderSettings(ctx);
     return;
   }
 
   if (text.startsWith('✏️ ') && text.includes('(')) {
-    console.log('✏️ Редактирование напоминания:', text);
     await settingsController.handleEditIndividualReminder(ctx, text);
     return;
   }
 
   if (text.startsWith('🔄 Изменить все ')) {
-    console.log('🔄 Массовое изменение:', text);
     await settingsController.handleEditAllReminders(ctx, text);
     return;
   }
 
   if (text.startsWith('↩️ Назад к ') && text.includes('напоминаниям')) {
-    console.log('↩️ Возврат к напоминаниям периода');
     const periodSession = sessionManager.get(ctx.chat.id);
     if (periodSession && periodSession.managingPeriod) {
       await settingsController.showPeriodReminders(ctx, periodSession.managingPeriod);
@@ -499,10 +500,7 @@ async function handleTextCommands(ctx) {
   }
 
   if (text === '⏰ Изменить время') {
-    console.log('⏰ Изменение времени напоминания');
-
     const timeSession = sessionManager.get(ctx.chat.id);
-    console.log('💾 Сессия при изменении времени:', timeSession);
 
     if (timeSession && timeSession.currentReminder) {
       await settingsController.showTimeSelectionForReminder(
@@ -518,10 +516,7 @@ async function handleTextCommands(ctx) {
   }
 
   if (text === '🗑️ Удалить напоминание') {
-    console.log('🗑️ Удаление напоминания');
-
     const deleteSession = sessionManager.get(ctx.chat.id);
-    console.log('💾 Сессия при удалении:', deleteSession);
 
     if (deleteSession && deleteSession.currentReminder) {
       await settingsController.showDeleteReminderConfirmation(
@@ -537,13 +532,11 @@ async function handleTextCommands(ctx) {
   }
 
   if (text === '✅ Да, удалить напоминание') {
-    console.log('✅ Подтверждение удаления');
     await settingsController.confirmDeleteReminder(ctx);
     return;
   }
 
   if (text === '❌ Нет, оставить напоминание' || text === '❌ Отменить изменение') {
-    console.log('❌ Отмена действия');
     const cancelSession = sessionManager.get(ctx.chat.id);
     if (cancelSession && cancelSession.managingPeriod) {
       await settingsController.showPeriodReminders(ctx, cancelSession.managingPeriod);
@@ -560,14 +553,12 @@ async function handleTextCommands(ctx) {
   if (timeSlots.includes(text)) {
     const timeSession = sessionManager.get(ctx.chat.id);
     if (timeSession && timeSession.changingReminderTime) {
-      console.log('⏰ Сохранение времени:', text);
       await settingsController.saveReminderTime(ctx, text);
       return;
     }
   }
 
   if (session && session.waitingForTimePeriod) {
-    console.log(`⏰ Пользователь выбирает время для ${session.waitingForTimePeriod}: ${text}`);
     await require('./settingsController').processTimeSelection(ctx, text);
     return;
   }
@@ -680,6 +671,12 @@ async function handleTextCommands(ctx) {
 
     case '✏️ Изменить основную цель':
       await settingsController.showEditMainGoal(ctx);
+      break;
+
+    case '🔔 Включить напоминание':
+    case '🔕 Выключить напоминание':
+      console.log('🔔 Переключение статуса напоминания');
+      await settingsController.toggleReminderStatus(ctx);
       break;
 
     case '📝 Добавить дополнительную цель':
