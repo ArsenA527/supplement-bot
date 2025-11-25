@@ -171,25 +171,48 @@ class SettingsController {
   }
 
   findReminderByButtonText(reminders, buttonText) {
+    console.log('🔍 Поиск напоминания по кнопке:', buttonText);
+    console.log('🔍 Доступные напоминания:', reminders.map(r => r.supplement_name));
 
-    const match = buttonText.match(/✏️ (.+?) \(\d{2}:\d{2}\)/);
-    if (!match) {
-      console.log('❌ Не удалось извлечь название из кнопки');
-      return null;
-    }
+    const cleanButtonText = buttonText
+      .replace(/^✏️\s*/, '') // Убираем ✏️
+      .replace(/\s*\(\d{2}:\d{2}\)$/, '') // Убираем время в скобках
+      .replace(/\.{3}$/, '') // Убираем многоточие в конце
+      .trim();
 
-    const searchName = match[1].trim();
-    console.log('🔍 Ищем напоминание:', searchName);
+    console.log('🔍 Очищенный текст кнопки:', cleanButtonText);
 
+    // Ищем напоминание по частичному совпадению
     const foundReminder = reminders.find(reminder => {
       const reminderName = reminder.supplement_name.trim();
-      return reminderName === searchName ||
-            reminderName.includes(searchName) ||
-            searchName.includes(reminderName);
+
+      // Проверяем различные варианты совпадения
+      const matches =
+        reminderName === cleanButtonText ||
+        reminderName.includes(cleanButtonText) ||
+        cleanButtonText.includes(reminderName) ||
+        this.normalizeName(reminderName) === this.normalizeName(cleanButtonText);
+
+      if (matches) {
+        console.log('✅ Найдено совпадение:', reminderName);
+      }
+
+      return matches;
     });
 
-    console.log('🔍 Найдено напоминание:', foundReminder);
+    if (!foundReminder) {
+      console.log('❌ Не найдено совпадений для:', cleanButtonText);
+      console.log('🔍 Доступные варианты:', reminders.map(r => r.supplement_name));
+    }
+
     return foundReminder;
+  }
+
+  normalizeName(name) {
+    return name
+      .toLowerCase()
+      .replace(/[^a-zа-яё0-9]/g, '') // Убираем все не-буквы и не-цифры
+      .trim();
   }
 
   // 🔄 Обработка массового изменения напоминаний
