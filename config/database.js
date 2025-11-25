@@ -63,7 +63,7 @@ db.serialize(() => {
     supplement_name TEXT,
     dosage TEXT,
     time TEXT,
-    days TEXT DEFAULT '1111111', -- 7 digits for each day of week (1=active, 0=inactive)
+    days TEXT DEFAULT '1111111',
     is_active BOOLEAN DEFAULT true,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (chat_id) REFERENCES users (chat_id)

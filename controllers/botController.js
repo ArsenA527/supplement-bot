@@ -682,6 +682,12 @@ async function handleTextCommands(ctx) {
       await settingsController.showEditMainGoal(ctx);
       break;
 
+    case '🔔 Включить напоминание':
+    case '🔕 Выключить напоминание':
+      console.log('🔔 Переключение статуса напоминания');
+      await settingsController.toggleReminderStatus(ctx);
+      break;
+
     case '📝 Добавить дополнительную цель':
       await settingsController.showAddSecondaryGoal(ctx);
       break;

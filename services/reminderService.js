@@ -92,34 +92,40 @@ class ReminderService {
     }
   }
 
-  // Получить напоминания для текущего времени и дня
-  async getDueReminders(currentTime, currentDay) {
-    const normalizedCurrentTime = TimeHelper.normalizeTime(currentTime);
+  async checkAndSendReminders() {
+    try {
+      const now = new Date();
+      const currentTime = now.toTimeString().slice(0, 5);
+      const currentDay = now.getDay();
 
+      const reminders = await this.getDueReminders(currentTime, currentDay);
+
+      for (const reminder of reminders) {
+        if (!reminder.is_active) {
+          console.log(`⏭️ Пропущено отключенное напоминание: ${reminder.supplement_name}`);
+          continue;
+        }
+
+        await this.sendReminder(reminder);
+      }
+    } catch (error) {
+      console.error('❌ Ошибка отправки напоминаний:', error);
+    }
+  }
+
+  async getDueReminders(currentTime, currentDay) {
     return new Promise((resolve) => {
-      const dbDayIndex = currentDay === 0 ? 7 : currentDay;
+      const db = require('../config/database');
+      const dbDayIndex = currentDay === 0 ? 6 : currentDay - 1;
 
       db.all(
-        `SELECT r.*
-         FROM reminders r
-         WHERE r.time = ?
-         AND substr(r.days, ?, 1) = '1'
-         AND r.is_active = true
-         AND NOT EXISTS (
-           SELECT 1 FROM intake_history ih
-           WHERE ih.chat_id = r.chat_id
-           AND ih.supplement_name = r.supplement_name
-           AND DATE(ih.taken_at) = DATE('now')
-           AND ih.status = 'taken'
-         )`,
-        [normalizedCurrentTime, dbDayIndex],
-        (err, reminders) => {
-          if (err) {
-            console.error('❌ Ошибка получения due напоминаний:', err);
-            resolve([]);
-          } else {
-            resolve(reminders || []);
-          }
+        `SELECT * FROM reminders
+        WHERE time = ?
+        AND substr(days, ?, 1) = '1'
+        AND is_active = 1`,
+        [currentTime, dbDayIndex + 1],
+        (err, rows) => {
+          resolve(rows || []);
         }
       );
     });

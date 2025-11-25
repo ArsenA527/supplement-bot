@@ -1093,3 +1093,4 @@ Require stack:
 {"timestamp":"2025-11-17T05:59:55.393Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}
 {"timestamp":"2025-11-17T06:59:56.407Z","level":"ERROR","message":"Ошибка отправки мотивации","chatId":391012615,"error":"403: Forbidden: bot was blocked by the user"}
 2025-11-17 22:38:20 +03:00: Failed to fetch updates. Waiting: 1s request to https://api.telegram.org/bot8470299517:AAGCD-OzkgO-ALq12u04KAoAO82MlJoAVYo/getUpdates?offset=993483200&limit=100&timeout=30 failed, reason: read ECONNRESET
+{"timestamp":"2025-11-25T06:00:00.018Z","level":"ERROR","message":"Ошибка отправки отчета админу","error":"Cannot read properties of undefined (reading 'sendMessage')"}

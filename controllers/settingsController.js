@@ -86,7 +86,8 @@ class SettingsController {
       let message = `🌅 *Ваши ${periodLabelLower} напоминания*\n\n`;
 
       periodReminders.forEach((reminder, index) => {
-        message += `${index + 1}. ${reminder.supplement_name}\n`;
+        const statusIcon = reminder.is_active ? '🔔' : '🔕';
+        message += `${index + 1}. ${statusIcon} ${reminder.supplement_name}\n`;
         message += `   ⏰ ${reminder.time} | 📏 ${reminder.dosage}\n\n`;
       });
 
@@ -239,18 +240,26 @@ class SettingsController {
   async showReminderOptions(ctx, reminder, period) {
     try {
       const periodLabel = this.getPeriodLabel(period).toLowerCase();
+      const statusIcon = reminder.is_active ? '🔔' : '🔕';
+      const statusText = reminder.is_active ? 'Включено' : 'Выключено';
 
       const message = `⚙️ *Настройки напоминания*\n\n` +
         `💊 ${reminder.supplement_name}\n` +
         `📏 ${reminder.dosage}\n` +
-        `⏰ ${reminder.time}\n\n` +
+        `⏰ ${reminder.time}\n` +
+        `${statusIcon} *Статус:* ${statusText}\n\n` +
         `*Выберите действие:*`;
+
+      const toggleButton = reminder.is_active
+        ? '🔕 Выключить напоминание'
+        : '🔔 Включить напоминание';
 
       await ctx.reply(message, {
         parse_mode: 'Markdown',
         reply_markup: {
           keyboard: [
-            ['⏰ Изменить время', '🗑️ Удалить напоминание'],
+            ['⏰ Изменить время', toggleButton],
+            ['🗑️ Удалить напоминание'],
             [`↩️ Назад к ${periodLabel} напоминаниям`]
           ],
           resize_keyboard: true
@@ -272,6 +281,56 @@ class SettingsController {
     } catch (error) {
       console.error('❌ Ошибка показа опций напоминания:', error);
       throw error;
+    }
+  }
+
+  // Обработка переключения статуса напоминания
+  async toggleReminderStatus(ctx) {
+    try {
+      const session = sessionManager.get(ctx.chat.id);
+      if (!session || !session.currentReminder) {
+        await ctx.reply('❌ Сессия устарела. Начните заново.');
+        return;
+      }
+
+      const reminder = session.currentReminder;
+      const newStatus = !reminder.is_active;
+
+      // Обновляем статус в базе данных
+      const db = require('../config/database');
+      await new Promise((resolve, reject) => {
+        db.run(
+          'UPDATE reminders SET is_active = ? WHERE id = ?',
+          [newStatus, reminder.id],
+          function(err) {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+
+      // Обновляем объект напоминания в сессии
+      reminder.is_active = newStatus;
+      session.currentReminder = reminder;
+      sessionManager.set(ctx.chat.id, session);
+
+      const statusText = newStatus ? 'включено' : 'выключено';
+      const statusIcon = newStatus ? '🔔' : '🔕';
+
+      await ctx.reply(
+        `${statusIcon} *Напоминание ${statusText}!*\n\n` +
+        `💊 ${reminder.supplement_name}\n` +
+        `⏰ ${reminder.time}\n\n` +
+        `Вы больше ${newStatus ? 'будете' : 'не будете'} получать уведомления об этом приеме.`,
+        { parse_mode: 'Markdown' }
+      );
+
+      // Показываем обновленное меню
+      await this.showReminderOptions(ctx, reminder, session.managingPeriod);
+
+    } catch (error) {
+      console.error('❌ Ошибка переключения статуса напоминания:', error);
+      await ctx.reply('❌ Не удалось изменить статус напоминания. Попробуйте позже.');
     }
   }
 
