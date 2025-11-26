@@ -3,10 +3,20 @@ const db = require('../config/database');
 class SupportController {
   static async handleSupportCommand(ctx) {
     try {
+      const supportChatId = process.env.SUPPORT_CHAT_ID;
+      if (!supportChatId) {
+        await ctx.reply(
+          '❌ Система поддержки временно недоступна. ' +
+          'Администратору нужно настроить SUPPORT_CHAT_ID.'
+        );
+        return;
+      }
+
       await ctx.reply(
         '💬 *Режим поддержки активирован*\n\n' +
         'Опишите вашу проблему или вопрос. Наша команда ответит в ближайшее время.\n\n' +
-        'Просто напишите ваше сообщение ниже 👇',
+        'Просто напишите ваше сообщение ниже 👇\n\n' +
+        '_Для отмены используйте /cancel_',
         { parse_mode: 'Markdown' }
       );
 
@@ -31,25 +41,21 @@ class SupportController {
 
       console.log('📨 Пересылка сообщения от:', chatId);
 
-      // Форматируем сообщение для админа
-      const adminMessage = `🆘 *НОВОЕ ОБРАЩЕНИЕ В ПОДДЕРЖКУ*\n\n` +
+      const supportChatId = process.env.SUPPORT_CHAT_ID;
+      if (!supportChatId) {
+        throw new Error('SUPPORT_CHAT_ID не установлен');
+      }
+
+      const supportMessage = `🆘 *НОВОЕ ОБРАЩЕНИЕ В ПОДДЕРЖКУ*\n\n` +
         `👤 *Пользователь:* ${user.first_name}${user.last_name ? ' ' + user.last_name : ''}\n` +
         `📱 *Username:* ${user.username ? '@' + user.username : 'не указан'}\n` +
         `🆔 *ID:* ${chatId}\n` +
         `⏰ *Время:* ${new Date().toLocaleString('ru-RU')}\n\n` +
         `💬 *Сообщение:*\n${messageText}`;
 
-      // Отправляем админу
-      const adminChatId = process.env.ADMIN_CHAT_ID;
-      if (!adminChatId) {
-        console.error('❌ ADMIN_CHAT_ID не установлен');
-        await ctx.reply('❌ Система поддержки временно недоступна.');
-        return;
-      }
+      console.log('📤 Отправка сообщения в SUPPORT_CHAT_ID:', supportChatId);
 
-      console.log('📤 Отправка сообщения админу:', adminChatId);
-
-      await ctx.telegram.sendMessage(adminChatId, adminMessage, {
+      await ctx.telegram.sendMessage(supportChatId, supportMessage, {
         parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [[
@@ -65,10 +71,12 @@ class SupportController {
 
       await ctx.reply('✅ Ваше сообщение отправлено в поддержку! Мы ответим в ближайшее время.');
 
+      // Отключаем режим поддержки после отправки
       const sessionManager = require('../utils/sessionManager');
       sessionManager.delete(ctx.chat.id);
 
       console.log('✅ Сообщение успешно переслано в поддержку');
+
     } catch (error) {
       console.error('❌ Ошибка пересылки в поддержку:', error);
       await ctx.reply('❌ Ошибка отправки сообщения. Попробуйте позже.');
@@ -81,16 +89,15 @@ class SupportController {
 
       db.run(
         `INSERT INTO support_requests
-        (user_id, username, first_name, last_name, message, message_id, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          (user_id, username, first_name, last_name, message, message_id)
+          VALUES (?, ?, ?, ?, ?, ?)`,
         [
           ctx.chat.id,
           user.username || null,
           user.first_name || null,
           user.last_name || null,
           messageText,
-          ctx.message.message_id,
-          new Date().toISOString()
+          ctx.message.message_id
         ],
         function(err) {
           if (err) {
@@ -99,6 +106,27 @@ class SupportController {
           } else {
             console.log('✅ Обращение сохранено, ID:', this.lastID);
             resolve(this.lastID);
+          }
+        }
+      );
+    });
+  }
+
+  static async getSupportStats() {
+    return new Promise((resolve) => {
+      db.get(
+        `SELECT
+          COUNT(*) as total_requests,
+          COUNT(CASE WHEN status = 'new' THEN 1 END) as new_requests,
+          COUNT(CASE WHEN status = 'answered' THEN 1 END) as answered_requests
+          FROM support_requests
+          WHERE created_at > datetime('now', '-7 days')`,
+        (err, row) => {
+          if (err) {
+            console.error('❌ Ошибка получения статистики поддержки:', err);
+            resolve({ total_requests: 0, new_requests: 0, answered_requests: 0 });
+          } else {
+            resolve(row || { total_requests: 0, new_requests: 0, answered_requests: 0 });
           }
         }
       );
