@@ -1,123 +1,105 @@
 const db = require('../config/database');
-const logger = require('../utils/logger');
-const NotificationManager = require('../utils/notifications');
 
 class SupportController {
   static async handleSupportCommand(ctx) {
-    await ctx.reply(
-      '💬 Опишите вашу проблему или вопрос — команда поддержки скоро ответит!\n\n' +
-      '✏️ Просто напишите ваше сообщение, и оно будет сразу переправлено нашей команде.'
-    );
+    try {
+      await ctx.reply(
+        '💬 *Режим поддержки активирован*\n\n' +
+        'Опишите вашу проблему или вопрос. Наша команда ответит в ближайшее время.\n\n' +
+        'Просто напишите ваше сообщение ниже 👇',
+        { parse_mode: 'Markdown' }
+      );
 
-    // Используем сессию для отслеживания состояния
-    ctx.session = ctx.session || {};
-    ctx.session.waitingForSupport = true;
-    ctx.session.supportRequestTime = new Date();
+      const sessionManager = require('../utils/sessionManager');
+      sessionManager.set(ctx.chat.id, {
+        waitingForSupport: true,
+        supportRequestTime: new Date()
+      });
 
-    logger.info('Пользователь начал диалог с поддержкой', {
-      chatId: ctx.chat.id,
-      username: ctx.from.username,
-      timestamp: ctx.session.supportRequestTime
-    });
+      console.log('✅ Режим поддержки активирован для:', ctx.chat.id);
+
+    } catch (error) {
+      console.error('❌ Ошибка активации поддержки:', error);
+      await ctx.reply('❌ Ошибка активации поддержки. Попробуйте позже.');
+    }
   }
 
   static async forwardToSupport(ctx, messageText) {
     try {
       const user = ctx.from;
-      const userName = user.username
-        ? `@${user.username}`
-        : `${user.first_name || 'Пользователь'} ${user.last_name || ''}`.trim();
+      const chatId = ctx.chat.id;
 
-      const userId = ctx.chat.id;
-      const messageId = ctx.message.message_id;
+      console.log('📨 Пересылка сообщения от:', chatId);
 
-      const forwardedText = `📩 *Новое сообщение в поддержку*\n\n` +
-        `👤 *Пользователь:* ${userName}\n` +
-        `🆔 *ID:* ${userId}\n` +
-        `📅 *Время:* ${new Date().toLocaleString('ru-RU')}\n\n` +
-        `💬 *Сообщение:*\n${messageText}\n\n` +
-        `_[Ответить](/start)_`;
+      // Форматируем сообщение для админа
+      const adminMessage = `🆘 *НОВОЕ ОБРАЩЕНИЕ В ПОДДЕРЖКУ*\n\n` +
+        `👤 *Пользователь:* ${user.first_name}${user.last_name ? ' ' + user.last_name : ''}\n` +
+        `📱 *Username:* ${user.username ? '@' + user.username : 'не указан'}\n` +
+        `🆔 *ID:* ${chatId}\n` +
+        `⏰ *Время:* ${new Date().toLocaleString('ru-RU')}\n\n` +
+        `💬 *Сообщение:*\n${messageText}`;
 
-      // Отправляем в чат поддержки
-      await ctx.telegram.sendMessage(
-        process.env.SUPPORT_CHAT_ID,
-        forwardedText,
-        {
-          parse_mode: 'Markdown',
-          reply_markup: {
-            inline_keyboard: [[
-              {
-                text: '📝 Ответить пользователю',
-                url: `tg://user?id=${userId}`
-              }
-            ]]
-          }
+      // Отправляем админу
+      const adminChatId = process.env.ADMIN_CHAT_ID;
+      if (!adminChatId) {
+        console.error('❌ ADMIN_CHAT_ID не установлен');
+        await ctx.reply('❌ Система поддержки временно недоступна.');
+        return;
+      }
+
+      console.log('📤 Отправка сообщения админу:', adminChatId);
+
+      await ctx.telegram.sendMessage(adminChatId, adminMessage, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [[
+            {
+              text: '📝 Ответить пользователю',
+              url: `tg://user?id=${chatId}`
+            }
+          ]]
         }
-      );
-
-      // Сохраняем в базу для истории
-      this.saveSupportRequest({
-        user_id: userId,
-        username: userName,
-        message: messageText,
-        message_id: messageId,
-        created_at: new Date()
       });
 
-      await ctx.reply('✅ Ваше сообщение отправлено в поддержку. Мы ответим в ближайшее время!');
+      await this.saveSupportRequest(ctx, messageText);
 
-      // Сбрасываем состояние
-      ctx.session.waitingForSupport = false;
+      await ctx.reply('✅ Ваше сообщение отправлено в поддержку! Мы ответим в ближайшее время.');
 
-      logger.info('Сообщение переслано в поддержку', {
-        chatId: ctx.chat.id,
-        supportChatId: process.env.SUPPORT_CHAT_ID
-      });
+      const sessionManager = require('../utils/sessionManager');
+      sessionManager.delete(ctx.chat.id);
 
+      console.log('✅ Сообщение успешно переслано в поддержку');
     } catch (error) {
-      logger.error('Ошибка пересылки в поддержку', {
-        error: error.message,
-        chatId: ctx.chat.id
-      });
-
-      await ctx.reply('❌ Произошла ошибка при отправке сообщения. Попробуйте еще раз через несколько минут.');
+      console.error('❌ Ошибка пересылки в поддержку:', error);
+      await ctx.reply('❌ Ошибка отправки сообщения. Попробуйте позже.');
     }
   }
 
-  static saveSupportRequest(requestData) {
+  static async saveSupportRequest(ctx, messageText) {
     return new Promise((resolve, reject) => {
+      const user = ctx.from;
+
       db.run(
         `INSERT INTO support_requests
-         (user_id, username, message, message_id, created_at, status)
-         VALUES (?, ?, ?, ?, ?, 'new')`,
+        (user_id, username, first_name, last_name, message, message_id, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
-          requestData.user_id,
-          requestData.username,
-          requestData.message,
-          requestData.message_id,
-          requestData.created_at
+          ctx.chat.id,
+          user.username || null,
+          user.first_name || null,
+          user.last_name || null,
+          messageText,
+          ctx.message.message_id,
+          new Date().toISOString()
         ],
         function(err) {
-          if (err) reject(err);
-          else resolve(this.lastID);
-        }
-      );
-    });
-  }
-
-  static async getSupportStats(ctx) {
-    // Статистика для админа
-    return new Promise((resolve, reject) => {
-      db.all(
-        `SELECT
-          COUNT(*) as total_requests,
-          COUNT(CASE WHEN status = 'new' THEN 1 END) as new_requests,
-          COUNT(CASE WHEN status = 'answered' THEN 1 END) as answered_requests
-         FROM support_requests
-         WHERE created_at > datetime('now', '-7 days')`,
-        (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows[0]);
+          if (err) {
+            console.error('❌ Ошибка сохранения обращения:', err);
+            reject(err);
+          } else {
+            console.log('✅ Обращение сохранено, ID:', this.lastID);
+            resolve(this.lastID);
+          }
         }
       );
     });
