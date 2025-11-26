@@ -336,15 +336,9 @@ bot.command('surveystats', (ctx) => testCommands.surveyAnalytics(ctx));
 bot.command('dailyreport', (ctx) => testCommands.forceDailyReport(ctx));
 
 // ==================== ОБРАБОТКА КНОПОК НАПОМИНАНИЙ ====================
-
-bot.command('support', SupportController.handleSupportCommand);
-// bot.command('support', async (ctx) => {
-//   await ctx.reply(
-//     '💬 Опишите вашу проблему или вопрос — команда поддержки скоро ответит!'
-//   );
-//   ctx.session = ctx.session || {};
-//   ctx.session.waitingForSupport = true;
-// });
+bot.command('support', (ctx) => {
+  SupportController.handleSupportCommand(ctx);
+});
 
 // Обработка кнопки "✅ Принял"
 bot.action(/intake_taken_(\d+)/, async (ctx) => {
@@ -820,13 +814,7 @@ bot.launch().then(() => {
 });
 
 bot.on('message', async (ctx) => {
-  // --- 1. Проверка на активный режим поддержки ---
-  if (ctx.session?.waitingForSupport) {
-    await SupportController.forwardToSupport(ctx, ctx.message.text || '(без текста)');
-    return;
-  }
 
-  // 2. Остальная логика обработки сообщений...
   if (ctx.message && ctx.message.text && ctx.message.text.startsWith('/')) {
     console.log(`❓ Неизвестная команда: ${ctx.message.text}`);
     return ctx.reply(

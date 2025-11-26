@@ -468,6 +468,24 @@ async function handleTextCommands(ctx) {
 
   const session = sessionManager.get(ctx.chat.id);
 
+  if (session && session.waitingForSupport) {
+    console.log('📨 Пересылка сообщения в поддержку:', text);
+    const SupportController = require('./supportController');
+    await SupportController.forwardToSupport(ctx, text);
+    return;
+  }
+
+  if (text === '/cancel' || text === 'Отмена') {
+    const session = sessionManager.get(ctx.chat.id);
+    if (session && session.waitingForSupport) {
+      sessionManager.delete(ctx.chat.id);
+      await ctx.reply('❌ Режим поддержки отменен.');
+      const { showMainMenu } = require('./botController');
+      await showMainMenu(ctx);
+      return;
+    }
+  }
+
   if ((text.startsWith('🔔') || text.startsWith('🔕') || text.includes('�')) && text.includes('(')) {
     await settingsController.handleEditIndividualReminder(ctx, text);
     return;

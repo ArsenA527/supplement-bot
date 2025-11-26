@@ -159,26 +159,38 @@ db.serialize(() => {
     metadata TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
+});
 
-  db.run(`CREATE TABLE IF NOT EXISTS support_requests (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    username TEXT,
-    first_name TEXT,
-    last_name TEXT,
-    message TEXT NOT NULL,
-    message_id INTEGER,
-    status TEXT DEFAULT 'new', -- 'new', 'in_progress', 'answered', 'closed'
-    priority TEXT DEFAULT 'normal', -- 'low', 'normal', 'high', 'urgent'
-    admin_id INTEGER,
-    admin_username TEXT,
-    admin_notes TEXT,
-    response_time INTEGER, -- время ответа в минутах
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    answered_at DATETIME,
-    FOREIGN KEY (user_id) REFERENCES users (chat_id)
-  )`);
+db.serialize(() => {
+  db.run(`DROP TABLE IF EXISTS support_requests`, (err) => {
+    if (err) console.log('ℹ️ Таблица support_requests не существовала');
+
+    db.run(`CREATE TABLE support_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      username TEXT,
+      first_name TEXT,
+      last_name TEXT,
+      message TEXT NOT NULL,
+      message_id INTEGER,
+      status TEXT DEFAULT 'new',
+      priority TEXT DEFAULT 'normal',
+      admin_id INTEGER,
+      admin_username TEXT,
+      admin_notes TEXT,
+      response_time INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      answered_at DATETIME,
+      FOREIGN KEY (user_id) REFERENCES users (chat_id)
+    )`, (err) => {
+      if (err) {
+        console.error('❌ Ошибка создания таблицы support_requests:', err);
+      } else {
+        console.log('✅ Таблица support_requests создана заново');
+      }
+    });
+  });
 });
 
 
