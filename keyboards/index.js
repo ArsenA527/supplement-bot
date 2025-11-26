@@ -9,7 +9,6 @@ function getMainMenuKeyboard(isPremium = false) {
     ['📋 Новый опрос', '💊 Мои рекомендации'],
     ['⏰ Мои напоминания', '📊 Статистика'],
     ['👤 Мой профиль', '⚙️ Настройки'],
-    // ['👤 Мой профиль'],
     ['💎 Premium статус', 'ℹ️ Помощь']
   ];
 
@@ -208,10 +207,10 @@ module.exports = {
   getMainMenuKeyboard,
   getQuestionKeyboard,
   getReminderActionsKeyboard,
-  getReminderSettingsKeyboard,
+  // getReminderSettingsKeyboard,
   getIntakeHistoryKeyboard,
   getSurveyCompletionKeyboard,
-  getSubscriptionKeyboard,
+  // getSubscriptionKeyboard,
   getTimeSettingsKeyboard,
   getSettingsKeyboard,
   generateProgressBar

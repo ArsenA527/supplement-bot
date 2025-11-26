@@ -199,46 +199,6 @@ module.exports = {
     }
   },
 
-  // Принудительная активация Premium
-  forcePremium: async (ctx) => {
-    try {
-      const chatId = ctx.chat.id;
-
-      // Просто устанавливаем подписку без сложных проверок
-      const db = require('../config/database');
-
-      await new Promise((resolve, reject) => {
-        db.run(
-          `INSERT OR REPLACE INTO subscriptions (chat_id, plan, status, end_date)
-          VALUES (?, ?, ?, ?)`,
-          [
-            chatId,
-            'premium',
-            'active',
-            null // Без даты окончания - вечная подписка для теста
-          ],
-          function(err) {
-            if (err) reject(err);
-            else resolve();
-          }
-        );
-      });
-
-      // Проверяем
-      const isActive = await subscriptionService.isSubscriptionActive(chatId);
-
-      ctx.reply(`🎉 Premium принудительно активирован!\n` +
-        `Статус: ${isActive ? '✅ Активен' : '❌ Не активен'}\n\n` +
-        `Проверь командами:\n` +
-        `/debugsub - статус подписки\n` +
-        `/checkmenustatus - меню Premium`);
-
-    } catch (error) {
-      console.error('❌ Ошибка принудительной активации:', error);
-      ctx.reply('❌ Ошибка: ' + error.message);
-    }
-  },
-
   // Активация premium вручную
   activatePremium: async (ctx) => {
     try {
