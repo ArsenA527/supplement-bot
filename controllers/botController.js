@@ -7,7 +7,6 @@ const goalService = require('../services/goalService');
 const settingsController = require('./settingsController');
 const sessionManager = require('../utils/sessionManager');
 
-// Создаем экземпляр для переиспользования
 let reminderControllerInstance = null;
 
 function getReminderController() {
@@ -49,10 +48,8 @@ async function handleStart(ctx) {
     console.error('❌ Ошибка проверки состояния опроса:', error);
   }
 
-
   const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
 
-  let motivationText = '';
   try {
     const reminderService = require('../services/reminderService');
     const service = new reminderService(ctx.telegram);
@@ -239,7 +236,6 @@ async function handleViewRecommendations(ctx) {
   }
 }
 
-// Вспомогательная функция для прогресс-бара
 function generateProgressBar(percentage) {
   const filled = '█'.repeat(Math.round(percentage / 10));
   const empty = '░'.repeat(10 - filled.length);
@@ -296,8 +292,6 @@ function formatKey(key) {
   return keyMap[key] || key;
 }
 
-
-// Меню настроек
 async function showSettingsMenu(ctx) {
   const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
 
@@ -325,7 +319,6 @@ async function showSettingsMenu(ctx) {
     reply_markup: {
       keyboard: [
         ['⏰ Настроить напоминания'],
-        // ['🎯 Мои цели'],
         ['📊 Мои данные'],
         ['🏠 Главное меню']
       ],
@@ -334,7 +327,6 @@ async function showSettingsMenu(ctx) {
   });
 }
 
-// Меню статистики
 async function showStatisticsMenu(ctx) {
   try {
     const chatId = ctx.chat.id;
@@ -342,7 +334,6 @@ async function showStatisticsMenu(ctx) {
 
     await ctx.reply('📊 Формирую ваш персональный отчет...');
 
-    // Получаем все данные
     const reminderService = require('../services/reminderService');
     const service = new reminderService(ctx.telegram);
     const goalService = require('../services/goalService');
@@ -365,7 +356,6 @@ async function showStatisticsMenu(ctx) {
 
     let message = `💪 *ВАШ ПЕРСОНАЛЬНЫЙ ОТЧЕТ*\n\n`;
 
-    // 🎯 Раздел целей
     message += `🎯 *ЦЕЛИ*\n`;
     message += `• Основная: ${goals.mainGoal}\n`;
     if (goals.secondaryGoals && goals.secondaryGoals.length > 0) {
@@ -373,26 +363,21 @@ async function showStatisticsMenu(ctx) {
     }
     message += `\n`;
 
-    // 📊 Раздел статистики
     message += `📊 *СТАТИСТИКА ПРИЕМА*\n`;
 
-    // Недельная статистика
     message += `_За неделю:_\n`;
     message += `• Соблюдение: ${weeklyStats.compliance}% ${generateProgressBar(weeklyStats.compliance)}\n`;
     message += `• Серия дней: ${progress.weekly.streak} ${progress.weekly.streak >= 7 ? '🔥' : ''}\n`;
     message += `• Принято: ${weeklyStats.taken} ✅ | Пропущено: ${weeklyStats.skipped} ⏭️\n\n`;
 
-    // Месячная статистика
     message += `_За месяц:_\n`;
     message += `• Соблюдение: ${monthlyStats.compliance}% ${generateProgressBar(monthlyStats.compliance)}\n`;
     message += `• Всего приемов: ${monthlyStats.total}\n`;
     message += `• Успешных: ${monthlyStats.taken} (${Math.round(monthlyStats.taken/monthlyStats.total*100)}%)\n\n`;
 
-    // 📈 Раздел последних приемов (только если есть история)
     if (weeklyHistory.length > 0) {
       message += `📅 *ПОСЛЕДНИЕ ПРИЕМЫ*\n`;
 
-      // Берем только последние 3 дня для краткости
       const recentDays = {};
       weeklyHistory.slice(0, 10).forEach(item => {
         const date = new Date(item.taken_at).toLocaleDateString('ru-RU');
@@ -413,7 +398,6 @@ async function showStatisticsMenu(ctx) {
       message += `\n`;
     }
 
-    // ⚠️ Раздел анализа проблем
     if (mostSkipped.length > 0) {
       message += `⚠️ *ЧАЩЕ ПРОПУСКАЕТЕ:*\n`;
       mostSkipped.slice(0, 3).forEach((item, index) => {
@@ -422,7 +406,6 @@ async function showStatisticsMenu(ctx) {
       message += `\n`;
     }
 
-    // 💡 Раздел рекомендаций
     message += `💡 *РЕКОМЕНДАЦИИ*\n`;
     if (progress.recommendations && progress.recommendations.length > 0) {
       progress.recommendations.slice(0, 3).forEach((rec, index) => {
@@ -442,7 +425,6 @@ async function showStatisticsMenu(ctx) {
       }
     }
 
-    // 📝 Финальный совет
     message += `\n📝 *СОВЕТ:* Регулярность важнее идеального соблюдения! Главное - не сбиваться с пути.`;
 
     await ctx.reply(message, {
@@ -464,12 +446,9 @@ async function handleTextCommands(ctx) {
   const text = ctx.message.text;
   const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
 
-  console.log(`🎮 Обработка текстовой команды: "${text}"`);
-
   const session = sessionManager.get(ctx.chat.id);
 
   if (session && session.waitingForSupport) {
-    console.log('📨 Пересылка сообщения в поддержку:', text);
     const SupportController = require('./supportController');
     await SupportController.forwardToSupport(ctx, text);
     return;
@@ -602,18 +581,15 @@ async function handleTextCommands(ctx) {
       break;
 
     case '💊 Мои рекомендации':
-      console.log('💊 Показ рекомендаций');
       handlePlan(ctx);
       break;
 
     case '👤 Мой профиль':
-      console.log('👤 Показ профиля');
       await handleProfile(ctx);
       break;
 
     case '💎 Апгрейд до Premium':
       if (!isPremium) {
-        console.log('💳 Информация о подписках');
         await require('./subscriptionController').showSubscriptionPlans(ctx);
       } else {
         await ctx.reply('💎 У вас уже активирована Premium подписка!');
@@ -623,7 +599,6 @@ async function handleTextCommands(ctx) {
 
     case '💎 Premium статус':
       if (isPremium) {
-        console.log('💎 Показ статуса Premium');
         await require('./subscriptionController').checkSubscriptionStatus(ctx);
       } else {
         await ctx.reply('❌ Эта функция доступна только Premium пользователям');
@@ -632,7 +607,6 @@ async function handleTextCommands(ctx) {
       break;
 
     case '💳 Подписка':
-      console.log('💳 Информация о подписках');
       await require('./subscriptionController').showSubscriptionPlans(ctx);
       break;
 
@@ -648,12 +622,10 @@ async function handleTextCommands(ctx) {
 
     case '⏰ Мои напоминания':
       if (isPremium) {
-        console.log('⏰ Показ напоминаний');
         try {
           const reminderController = getReminderController();
           await reminderController.showUserReminders(ctx);
         } catch (error) {
-          console.error('❌ Ошибка показа напоминаний:', error);
           ctx.reply('❌ Ошибка загрузки напоминаний');
         }
       } else {
@@ -664,7 +636,6 @@ async function handleTextCommands(ctx) {
 
     case '📊 Статистика':
       if (isPremium) {
-        console.log('📊 Показ статистики');
         await showStatisticsMenu(ctx);
       } else {
         ctx.reply('❌ Детальная статистика доступна только Premium пользователям. /subscribe');
@@ -673,7 +644,6 @@ async function handleTextCommands(ctx) {
       break;
 
     case '📈 График прогресса':
-      console.log('📈 Показ графика прогресса');
       await settingsController.showProgressChart(ctx);
       break;
 
@@ -693,7 +663,6 @@ async function handleTextCommands(ctx) {
 
     case '🔔 Включить напоминание':
     case '🔕 Выключить напоминание':
-      console.log('🔔 Переключение статуса напоминания');
       await settingsController.toggleReminderStatus(ctx);
       break;
 
@@ -720,27 +689,22 @@ async function handleTextCommands(ctx) {
       break;
 
     case '🌅 Утренние напоминания':
-      console.log('🌅 Показ утренних напоминаний');
       await settingsController.showPeriodReminders(ctx, 'morning');
       break;
 
     case '☀️ Дневные напоминания':
-      console.log('☀️ Показ дневных напоминаний');
       await settingsController.showPeriodReminders(ctx, 'afternoon');
       break;
 
     case '🌙 Вечерние напоминания':
-      console.log('🌙 Показ вечерних напоминаний');
       await settingsController.showPeriodReminders(ctx, 'evening');
       break;
 
     case '📊 Мои данные':
-      console.log('📊 Управление данными');
       await settingsController.showDataManagement(ctx);
       break;
 
     case '↩️ Назад к настройкам':
-      console.log('↩️ Возврат к настройкам');
       await showSettingsMenu(ctx);
       break;
 

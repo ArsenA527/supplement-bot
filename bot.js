@@ -265,7 +265,6 @@ bot.command('fixsubscriptiondate', (ctx) => testCommands.fixSubscriptionDate(ctx
 bot.command('checkpaymentsystem', (ctx) => testCommands.checkPaymentSystem(ctx));
 bot.command('paymentstatus', (ctx) => testCommands.checkTelegramPayments(ctx));
 bot.command('yookassasetup', async (ctx) => await testCommands.yookassaSettings(ctx));
-bot.command('forcepremium', (ctx) => testCommands.forcePremium(ctx));
 bot.command('clearmydata', (ctx) => testCommands.clearMyData(ctx));
 bot.command('checkmenu', (ctx) => testCommands.checkMenuStatus(ctx));
 bot.command('reminderstatus', (ctx) => testCommands.reminderStatus(ctx));

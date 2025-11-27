@@ -5,11 +5,8 @@ const sessionManager = require('../utils/sessionManager');
 const goalService = require('../services/goalService');
 
 class SettingsController {
-
-  // ⏰ Настроить напоминания
   async showReminderSettings(ctx) {
     const settings = await settingsService.getUserSettings(ctx.chat.id);
-
     const message = `⏰ *Настройка времени напоминаний*
 
   Текущие настройки:
@@ -31,7 +28,6 @@ class SettingsController {
     });
   }
 
-  // Функция для группировки времени
   async showTimePeriodSettings(ctx, period) {
     const timeSlots = this.getTimeSlotsByPeriod(period);
     const periodLabel = this.getPeriodLabel(period);
@@ -42,6 +38,7 @@ class SettingsController {
     for (let i = 0; i < timeSlots.length; i += 3) {
       keyboard.push(timeSlots.slice(i, i + 3));
     }
+
     keyboard.push(['↩️ Назад к настройкам', '🏠 Главное меню']);
 
     await ctx.reply(message, {
@@ -56,10 +53,8 @@ class SettingsController {
       waitingForTimePeriod: period,
       timestamp: Date.now()
     });
-
   }
 
-  // 🌅 Показать напоминания по периодам
   async showPeriodReminders(ctx, period) {
     try {
       const chatId = ctx.chat.id;
@@ -109,7 +104,6 @@ class SettingsController {
 
       allRemindersForKeyboard.forEach((reminder, index) => {
         const statusIcon = reminder.is_active ? '🔔' : '🔕';
-
         let shortName = reminder.supplement_name;
 
         if (shortName.length > 20) {
@@ -149,7 +143,6 @@ class SettingsController {
     }
   }
 
-  // 🕒 Фильтрация напоминаний по периоду
   filterRemindersByPeriod(reminders, period) {
     const timeRanges = {
       morning: { start: '06:00', end: '11:00' },
@@ -165,7 +158,6 @@ class SettingsController {
     }).sort((a, b) => a.time.localeCompare(b.time));
   }
 
-  // ✏️ Обработка редактирования отдельного напоминания
   async handleEditIndividualReminder(ctx, text) {
     try {
       const session = sessionManager.get(ctx.chat.id);
@@ -193,8 +185,6 @@ class SettingsController {
   }
 
   findReminderByButtonText(reminders, buttonText) {
-    console.log('🔍 Поиск напоминания по кнопке:', buttonText);
-    console.log('🔍 Доступные напоминания:', reminders.map(r => r.supplement_name));
 
     const cleanButtonText = buttonText
       .replace(/^[🔔🔕�]\s*/, '') // Убираем эмодзи статуса (включая �)
@@ -250,7 +240,6 @@ class SettingsController {
       .trim();
   }
 
-  // 🔄 Обработка массового изменения напоминаний
   async handleEditAllReminders(ctx, text) {
     try {
       const session = sessionManager.get(ctx.chat.id);
@@ -270,7 +259,6 @@ class SettingsController {
     }
   }
 
-  // 📋 Показать опции для конкретного напоминания
   async showReminderOptions(ctx, reminder, period) {
     try {
       const periodLabel = this.getPeriodLabel(period).toLowerCase();
@@ -318,7 +306,6 @@ class SettingsController {
     }
   }
 
-  // Обработка переключения статуса напоминания
   async toggleReminderStatus(ctx) {
     try {
       const session = sessionManager.get(ctx.chat.id);
@@ -330,7 +317,6 @@ class SettingsController {
       const reminder = session.currentReminder;
       const newStatus = !reminder.is_active;
 
-      // Обновляем статус в базе данных
       const db = require('../config/database');
       await new Promise((resolve, reject) => {
         db.run(
@@ -343,7 +329,6 @@ class SettingsController {
         );
       });
 
-      // Обновляем объект напоминания в сессии
       reminder.is_active = newStatus;
       session.currentReminder = reminder;
       sessionManager.set(ctx.chat.id, session);
@@ -359,7 +344,6 @@ class SettingsController {
         { parse_mode: 'Markdown' }
       );
 
-      // Показываем обновленное меню
       await this.showReminderOptions(ctx, reminder, session.managingPeriod);
 
     } catch (error) {
@@ -368,13 +352,11 @@ class SettingsController {
     }
   }
 
-  // 🔢 Извлечение номера напоминания из текста
   extractReminderNumber(text) {
     const match = text.match(/напоминание (\d+)/);
     return match ? parseInt(match[1]) : null;
   }
 
-  // Группировка временных слотов по периодам
   getTimeSlotsByPeriod(period) {
     const slots = {
       morning: ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00'],
@@ -394,7 +376,6 @@ class SettingsController {
     return labels[period] || 'Напоминаний';
   }
 
-  // ⏰ Показать выбор времени для напоминания
   async showTimeSelectionForReminder(ctx, reminder, period) {
     try {
       const timeSlots = this.getTimeSlotsByPeriod(period);
@@ -438,7 +419,6 @@ class SettingsController {
     }
   }
 
-  // 💾 Сохранение нового времени напоминания
   async saveReminderTime(ctx, newTime) {
     try {
       const session = sessionManager.get(ctx.chat.id);
@@ -478,7 +458,6 @@ class SettingsController {
     }
   }
 
-  // 🗑️ Показать подтверждение удаления напоминания
   async showDeleteReminderConfirmation(ctx, reminder, period) {
     try {
       const periodLabel = this.getPeriodLabel(period).toLowerCase();
@@ -520,7 +499,6 @@ class SettingsController {
     }
   }
 
-  // ✅ Подтверждение удаления напоминания
   async confirmDeleteReminder(ctx) {
     try {
       const session = sessionManager.get(ctx.chat.id);
@@ -532,7 +510,6 @@ class SettingsController {
       const reminder = session.currentReminder;
       const period = session.managingPeriod;
 
-      // Удаляем напоминание из БД
       const db = require('../config/database');
       await new Promise((resolve, reject) => {
         db.run(
@@ -563,7 +540,6 @@ class SettingsController {
     }
   }
 
-  // 🔔 Управление уведомлениями
   async showNotificationSettings(ctx) {
     const settings = await settingsService.getUserSettings(ctx.chat.id);
     const status = settings.allow_notifications ? '✅ Включены' : '❌ Выключены';
@@ -585,7 +561,6 @@ class SettingsController {
     });
   }
 
-  // Переключить уведомления
   async toggleNotifications(ctx) {
     try {
       const newStatus = await settingsService.toggleNotifications(ctx.chat.id);
@@ -670,7 +645,6 @@ class SettingsController {
     }
   }
 
-  // 🎯 Получение списка целей из questions.js
   getGoalOptions() {
     try {
       const questions = require('../data/questions');
@@ -703,7 +677,6 @@ class SettingsController {
     }
   }
 
-  // ✏️ Изменить основную цель
   async showEditMainGoal(ctx) {
     const goalOptions = this.getGoalOptions();
 
@@ -742,7 +715,6 @@ class SettingsController {
     });
   }
 
-  // 📝 Добавить дополнительную цель
   async showAddSecondaryGoal(ctx) {
     try {
       const chatId = ctx.chat.id;
@@ -801,7 +773,6 @@ class SettingsController {
     }
   }
 
-  // 🎯 Получение списка дополнительных целей
   getSecondaryGoalOptions() {
     try {
       const questions = require('../data/questions');
@@ -838,7 +809,6 @@ class SettingsController {
     }
   }
 
-  // 🗑️ Удалить цели
   async showDeleteGoalsConfirmation(ctx) {
     const message = `🗑️ *Удаление целей*\n\n` +
       `⚠️ *Внимание!* Это действие:\n` +
@@ -861,7 +831,6 @@ class SettingsController {
     });
   }
 
-  // ✅ Подтверждение удаления целей
   async confirmDeleteGoals(ctx) {
     try {
       const db = require('../config/database');
@@ -890,7 +859,6 @@ class SettingsController {
     }
   }
 
-  // 💾 Сохранение основной цели
   async saveMainGoal(ctx, goalIndex) {
     try {
       const session = sessionManager.get(ctx.chat.id);
@@ -1011,7 +979,6 @@ class SettingsController {
     }
   }
 
-  // 🔧 Создание напоминаний напрямую (без ctx)
   async createRemindersFromRecommendationsDirectly(chatId, recommendations) {
     try {
       const reminderService = require('../services/reminderService');
@@ -1053,7 +1020,6 @@ class SettingsController {
     }
   }
 
-  // ⏰ Умное распределение времени (переносим из reminderController)
   getSmartTimeForSupplement(supplement, settings) {
     const name = supplement.name.toLowerCase();
 
@@ -1068,7 +1034,6 @@ class SettingsController {
     }
   }
 
-  // 💾 Добавление дополнительной цели
   async addSecondaryGoal(ctx, newGoal) {
     try {
       const goals = await goalService.getUserGoals(ctx.chat.id);
@@ -1113,7 +1078,6 @@ class SettingsController {
         { parse_mode: 'Markdown' }
       );
 
-      // Очищаем сессию
       const sessionManager = require('../utils/sessionManager');
       sessionManager.delete(ctx.chat.id);
 
@@ -1128,7 +1092,6 @@ class SettingsController {
     }
   }
 
-  // 📁 Экспорт данных
   async exportUserData(ctx) {
     try {
       await NotificationManager.loading(ctx, 'Подготавливаю ваши данные...');
@@ -1136,7 +1099,6 @@ class SettingsController {
       const userData = await settingsService.exportUserData(ctx.chat.id);
       const jsonData = JSON.stringify(userData, null, 2);
 
-      // Отправляем как файл
       await ctx.replyWithDocument({
         source: Buffer.from(jsonData),
         filename: `supplement_bot_data_${ctx.chat.id}_${new Date().toISOString().split('T')[0]}.json`
@@ -1158,7 +1120,6 @@ class SettingsController {
     }
   }
 
-  // 🗑️ Очистить историю
   async showClearDataConfirmation(ctx) {
     const message = `🗑️ *Очистка данных*\n\n` +
       `⚠️ *Внимание!* Это действие:\n` +
@@ -1182,7 +1143,6 @@ class SettingsController {
     });
   }
 
-  // Подтверждение очистки данных
   async clearUserData(ctx) {
     try {
       await settingsService.clearUserData(ctx.chat.id);
@@ -1203,7 +1163,6 @@ class SettingsController {
     }
   }
 
-  // 🔄 Сброс настроек
   async resetSettings(ctx) {
     try {
       const db = require('../config/database');
@@ -1231,7 +1190,6 @@ class SettingsController {
     }
   }
 
-  // ⏰ Обработка выбора времени
   async handleTimeSetting(ctx, timeType) {
     const timeSlots = settingsService.getAvailableTimeSlots();
 
@@ -1260,7 +1218,6 @@ class SettingsController {
     ctx.session.waitingForTime = timeType;
   }
 
-  // Обработка выбранного времени
   async processTimeSelection(ctx, time) {
 
     const session = sessionManager.get(ctx.chat.id);
@@ -1310,7 +1267,6 @@ class SettingsController {
     return true;
   }
 
-  // Сопоставление периодов с типами времени в БД
   getTimeTypeFromPeriod(period) {
     const mapping = {
       morning: 'morning_time',
@@ -1343,7 +1299,6 @@ class SettingsController {
     await this.showReminderSettings(ctx);
   }
 
-  // Добавляем в SettingsController
   async showTimeChangePreview(ctx, period, newTime) {
     const oldSettings = await settingsService.getUserSettings(ctx.chat.id);
     const timeType = this.getTimeTypeFromPeriod(period);
@@ -1387,7 +1342,6 @@ class SettingsController {
     }
   }
 
-  // Получаем напоминания которые будут затронуты
   async getAffectedReminders(chatId, period, oldTime, newTime) {
     return new Promise((resolve) => {
       const db = require('../config/database');
@@ -1412,7 +1366,6 @@ class SettingsController {
     });
   }
 
-  // Применяем изменения после подтверждения
   async applyTimeChanges(ctx) {
     const pendingChange = ctx.session.pendingTimeChange;
 
