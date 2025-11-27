@@ -281,7 +281,8 @@ class SettingsController {
         parse_mode: 'Markdown',
         reply_markup: {
           keyboard: [
-            ['⏰ Изменить время', toggleButton],
+            ['⏰ Изменить время', '📏 Изменить дозировку'],
+            [toggleButton],
             ['🗑️ Удалить напоминание'],
             [`↩️ Назад к ${periodLabel} напоминаниям`]
           ],
@@ -298,9 +299,6 @@ class SettingsController {
         editingReminder: true,
         timestamp: Date.now()
       });
-
-      console.log('💾 Сессия обновлена с текущим напоминанием:', reminder.supplement_name);
-
     } catch (error) {
       console.error('❌ Ошибка показа опций напоминания:', error);
       throw error;
@@ -1807,6 +1805,132 @@ class SettingsController {
     const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
     const activeDays = days.filter((_, index) => daysPattern[index] === '1');
     return activeDays.join(', ');
+  }
+
+  async showEditDosageForm(ctx) {
+    try {
+      const session = sessionManager.get(ctx.chat.id);
+      if (!session || !session.currentReminder) {
+        await ctx.reply('❌ Сессия устарела. Начните заново.');
+        return;
+      }
+
+      const reminder = session.currentReminder;
+
+      const message = `📏 *Изменение дозировки*\n\n` +
+        `💊 *БАД:* ${reminder.supplement_name}\n` +
+        `⏰ *Время:* ${reminder.time}\n` +
+        `📏 *Текущая дозировка:* ${reminder.dosage}\n\n` +
+        `*Введите новую дозировку:*\n\n` +
+        `Примеры:\n` +
+        `• 5000 МЕ\n` +
+        `• 1000 мг\n` +
+        `• 1 капсула\n` +
+        `• 2 таблетки`;
+
+      const keyboard = [
+        ['1000 мг', '5000 МЕ', '1 капсула'],
+        ['2 капсулы', '1 таблетка', '2 таблетки'],
+        ['↩️ Назад', '❌ Отменить']
+      ];
+
+      await ctx.reply(message, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          keyboard: keyboard,
+          resize_keyboard: true
+        }
+      });
+
+      session.editingDosage = true;
+      sessionManager.set(ctx.chat.id, session);
+
+    } catch (error) {
+      console.error('❌ Ошибка показа формы дозировки:', error);
+      await ctx.reply('❌ Ошибка загрузки формы. Попробуйте позже.');
+    }
+  }
+
+  async handleDosageEdit(ctx, newDosage) {
+    try {
+      const session = sessionManager.get(ctx.chat.id);
+      if (!session || !session.currentReminder) {
+        await ctx.reply('❌ Сессия устарела. Начните заново.');
+        return;
+      }
+
+      if (newDosage === '↩️ Назад') {
+        await this.showReminderOptions(ctx, session.currentReminder, session.managingPeriod);
+        return;
+      }
+
+      if (newDosage === '❌ Отменить') {
+        await this.cancelDosageEdit(ctx);
+        return;
+      }
+
+      const reminder = session.currentReminder;
+      const oldDosage = reminder.dosage;
+
+      if (!newDosage || newDosage.trim().length === 0) {
+        await ctx.reply('❌ Дозировка не может быть пустой. Введите значение:');
+        return;
+      }
+
+      const db = require('../config/database');
+      await new Promise((resolve, reject) => {
+        db.run(
+          'UPDATE reminders SET dosage = ? WHERE id = ?',
+          [newDosage.trim(), reminder.id],
+          function(err) {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+
+      reminder.dosage = newDosage.trim();
+      session.currentReminder = reminder;
+
+      session.editingDosage = false;
+      sessionManager.set(ctx.chat.id, session);
+
+      await ctx.reply(
+          `✅ *Дозировка обновлена!*\n\n` +
+          `💊 ${reminder.supplement_name}\n` +
+          `⏰ ${reminder.time}\n` +
+          `📏 ${oldDosage} → ${newDosage}\n\n` +
+          `Изменения применены к напоминанию.`,
+          { parse_mode: 'Markdown' }
+      );
+
+      await this.showReminderOptions(ctx, reminder, session.managingPeriod);
+    } catch (error) {
+      console.error('❌ Ошибка обновления дозировки:', error);
+      await ctx.reply('❌ Не удалось обновить дозировку. Попробуйте позже.');
+
+      const session = sessionManager.get(ctx.chat.id);
+      if (session) {
+        session.editingDosage = false;
+        sessionManager.set(ctx.chat.id, session);
+      }
+    }
+  }
+
+  async cancelDosageEdit(ctx) {
+    const session = sessionManager.get(ctx.chat.id);
+    if (session) {
+      session.editingDosage = false;
+      sessionManager.set(ctx.chat.id, session);
+    }
+
+    await ctx.reply('❌ Редактирование дозировки отменено.');
+
+    if (session && session.currentReminder) {
+      await this.showReminderOptions(ctx, session.currentReminder, session.managingPeriod);
+    } else {
+      await this.showReminderSettings(ctx);
+    }
   }
 }
 

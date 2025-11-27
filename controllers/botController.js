@@ -570,6 +570,11 @@ async function handleTextCommands(ctx) {
     return;
   }
 
+  if (session && session.editingDosage) {
+    await settingsController.handleDosageEdit(ctx, text);
+    return;
+  }
+
   if (session) {
     if (session.editingMainGoal) {
       await settingsController.saveMainGoal(ctx, text);
@@ -678,6 +683,10 @@ async function handleTextCommands(ctx) {
 
     case '📝 Добавить дополнительную цель':
       await settingsController.showAddSecondaryGoal(ctx);
+      break;
+
+    case '📏 Изменить дозировку':
+      await settingsController.showEditDosageForm(ctx);
       break;
 
     case '🗑️ Удалить цели':
