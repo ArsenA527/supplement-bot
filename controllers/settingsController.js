@@ -21,6 +21,7 @@ class SettingsController {
       reply_markup: {
         keyboard: [
           ['🌅 Утренние напоминания', '☀️ Дневные напоминания', '🌙 Вечерние напоминания'],
+          ['➕ Создать напоминание'],
           ['📊 Мои данные', '🏠 Главное меню'],
         ],
         resize_keyboard: true
@@ -1454,6 +1455,358 @@ class SettingsController {
         getMainMenuKeyboard(true)
       );
     }
+  }
+
+  async showCreateReminderForm(ctx) {
+    try {
+      const message = `➕ *Создание нового напоминания*\n\n` +
+        `Выберите БАД для напоминания:\n\n` +
+        `Или введите название своего БАДа`;
+
+      const popularSupplements = this.getPopularSupplementsList();
+
+      const keyboard = [];
+
+      popularSupplements.forEach(supplement => {
+        keyboard.push([`💊 ${supplement}`]);
+      });
+
+      keyboard.push(['✏️ Ввести свой БАД']);
+      keyboard.push(['↩️ Назад к настройкам']);
+
+      await ctx.reply(message, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          keyboard: keyboard,
+          resize_keyboard: true
+        }
+      });
+
+      const sessionManager = require('../utils/sessionManager');
+      sessionManager.set(ctx.chat.id, {
+        creatingReminder: true,
+        reminderData: {},
+        step: 'select_supplement',
+        timestamp: Date.now()
+      });
+
+    } catch (error) {
+      console.error('❌ Ошибка показа формы создания:', error);
+      await ctx.reply('❌ Ошибка загрузки формы. Попробуйте позже.');
+    }
+  }
+
+  getPopularSupplementsList() {
+    return [
+      'Витамин D3 + K2 (МК-7)',
+      'Омега-3 (EPA/DHA)',
+      'Магний (глицинат/малат)',
+      'Цинк (пиколинат)',
+      'Витамин C',
+      'Комплекс витаминов B',
+      'Железо (бисглицинат)',
+      'Селен',
+      'Пробиотики',
+      'Коллаген'
+    ];
+  }
+
+  async handleCreateReminderStep(ctx, text) {
+    try {
+      const session = sessionManager.get(ctx.chat.id);
+      if (!session || !session.creatingReminder) return;
+
+      const reminderData = session.reminderData || {};
+
+      switch (session.step) {
+        case 'select_supplement':
+          await this.handleSupplementSelection(ctx, text, reminderData);
+          break;
+        case 'enter_dosage':
+          await this.handleDosageInput(ctx, text, reminderData);
+          break;
+        case 'select_time':
+          await this.handleTimeSelection(ctx, text, reminderData);
+          break;
+        case 'select_days':
+          await this.handleDaysSelection(ctx, text, reminderData);
+          break;
+      }
+
+    } catch (error) {
+      console.error('❌ Ошибка обработки шага создания:', error);
+      await ctx.reply('❌ Ошибка обработки. Начните заново.');
+      sessionManager.delete(ctx.chat.id);
+    }
+  }
+
+  async handleSupplementSelection(ctx, text, reminderData) {
+    let supplementName = text;
+
+    if (text.startsWith('💊 ')) {
+      supplementName = text.replace('💊 ', '');
+    }
+
+    if (text === '✏️ Ввести свой БАД') {
+      await ctx.reply('💊 *Введите название вашего БАДа:*', {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          keyboard: [['↩️ Отменить создание']],
+          resize_keyboard: true
+        }
+      });
+
+      const sessionManager = require('../utils/sessionManager');
+      const session = sessionManager.get(ctx.chat.id);
+      session.step = 'enter_custom_supplement';
+      sessionManager.set(ctx.chat.id, session);
+      return;
+    }
+
+    reminderData.supplement_name = supplementName;
+    await this.showDosageSelection(ctx, reminderData);
+  }
+
+  async handleCustomSupplementInput(ctx, text, reminderData) {
+    if (text === '↩️ Отменить создание') {
+      await this.cancelReminderCreation(ctx);
+      return;
+    }
+
+    reminderData.supplement_name = text;
+    await this.showDosageSelection(ctx, reminderData);
+  }
+
+  async showDosageSelection(ctx, reminderData) {
+    const message = `💊 *${reminderData.supplement_name}*\n\n` +
+      `📏 *Введите дозировку:*\n\n` +
+      `Примеры:\n` +
+      `• 5000 МЕ\n` +
+      `• 1000 мг\n` +
+      `• 1 капсула\n` +
+      `• 2 таблетки`;
+
+    const keyboard = [
+      ['1000 мг', '5000 МЕ', '1 капсула'],
+      ['2 капсулы', '1 таблетка', '2 таблетки'],
+      ['↩️ Назад', '❌ Отменить']
+    ];
+
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        keyboard: keyboard,
+        resize_keyboard: true
+      }
+    });
+
+    const sessionManager = require('../utils/sessionManager');
+    const session = sessionManager.get(ctx.chat.id);
+    session.step = 'enter_dosage';
+    session.reminderData = reminderData;
+    sessionManager.set(ctx.chat.id, session);
+  }
+
+  async handleDosageInput(ctx, text, reminderData) {
+    if (text === '↩️ Назад') {
+      await this.showCreateReminderForm(ctx);
+      return;
+    }
+
+    if (text === '❌ Отменить') {
+      await this.cancelReminderCreation(ctx);
+      return;
+    }
+
+    reminderData.dosage = text;
+    await this.showTimeSelection(ctx, reminderData);
+  }
+
+  async showTimeSelection(ctx, reminderData) {
+    const message = `💊 *${reminderData.supplement_name}*\n` +
+      `📏 *${reminderData.dosage}*\n\n` +
+      `⏰ *Выберите время приема:*`;
+
+    const timeSlots = this.getAllTimeSlots();
+    const keyboard = [];
+
+    for (let i = 0; i < timeSlots.length; i += 3) {
+      keyboard.push(timeSlots.slice(i, i + 3));
+    }
+
+    keyboard.push(['↩️ Назад', '❌ Отменить']);
+
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        keyboard: keyboard,
+        resize_keyboard: true
+      }
+    });
+
+    const sessionManager = require('../utils/sessionManager');
+    const session = sessionManager.get(ctx.chat.id);
+    session.step = 'select_time';
+    session.reminderData = reminderData;
+    sessionManager.set(ctx.chat.id, session);
+  }
+
+  getAllTimeSlots() {
+    return [
+      '06:00', '07:00', '08:00', '09:00', '10:00', '11:00',
+      '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
+      '18:00', '19:00', '20:00', '21:00', '22:00'
+    ];
+  }
+
+  async handleTimeSelection(ctx, text, reminderData) {
+    if (text === '↩️ Назад') {
+      await this.showDosageSelection(ctx, reminderData);
+      return;
+    }
+
+    if (text === '❌ Отменить') {
+      await this.cancelReminderCreation(ctx);
+      return;
+    }
+
+    if (!this.isValidTime(text)) {
+      await ctx.reply('❌ Неверный формат времени. Используйте ЧЧ:MM (например, 08:30)');
+      return;
+    }
+
+    reminderData.time = text;
+    await this.showDaysSelection(ctx, reminderData);
+  }
+
+  async showDaysSelection(ctx, reminderData) {
+    const message = `💊 *${reminderData.supplement_name}*\n` +
+      `📏 *${reminderData.dosage}*\n` +
+      `⏰ *${reminderData.time}*\n\n` +
+      `📅 Напоминание будет приходить *каждый день*\n\n` +
+      `Создать напоминание?`;
+
+    const keyboard = [
+      ['✅ Да, создать напоминание'],
+      ['↩️ Назад', '❌ Отменить']
+    ];
+
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        keyboard: keyboard,
+        resize_keyboard: true
+      }
+    });
+
+    const sessionManager = require('../utils/sessionManager');
+    const session = sessionManager.get(ctx.chat.id);
+    session.step = 'select_days';
+    session.reminderData = reminderData;
+    sessionManager.set(ctx.chat.id, session);
+  }
+
+  async handleDaysSelection(ctx, text, reminderData) {
+    if (text === '↩️ Назад') {
+      await this.showTimeSelection(ctx, reminderData);
+      return;
+    }
+
+    if (text === '❌ Отменить') {
+      await this.cancelReminderCreation(ctx);
+      return;
+    }
+
+    let daysPattern = '1111111';
+
+    if (text === '✅ Да, создать напоминание') {
+      reminderData.days = daysPattern;
+      await this.finalizeReminderCreation(ctx, reminderData);
+      return;
+    }
+
+    reminderData.days = daysPattern;
+    await this.showConfirmation(ctx, reminderData);
+  }
+
+  async showConfirmation(ctx, reminderData) {
+    const daysText = this.formatDaysText(reminderData.days);
+
+    const message = `🎯 *Подтвердите создание напоминания:*\n\n` +
+      `💊 *БАД:* ${reminderData.supplement_name}\n` +
+      `📏 *Дозировка:* ${reminderData.dosage}\n` +
+      `⏰ *Время:* ${reminderData.time}\n` +
+      `📅 *Дни:* ${daysText}\n\n` +
+      `Всё верно?`;
+
+    const keyboard = [
+      ['✅ Да, создать напоминание'],
+      ['✏️ Нет, изменить'],
+      ['❌ Отменить создание']
+    ];
+
+    await ctx.reply(message, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        keyboard: keyboard,
+        resize_keyboard: true
+      }
+    });
+
+    const sessionManager = require('../utils/sessionManager');
+    const session = sessionManager.get(ctx.chat.id);
+    session.step = 'confirmation';
+    session.reminderData = reminderData;
+    sessionManager.set(ctx.chat.id, session);
+  }
+
+  async finalizeReminderCreation(ctx, reminderData) {
+    try {
+      const reminderService = require('../services/reminderService');
+      const service = new reminderService();
+
+      await service.createReminder(ctx.chat.id, {
+        supplement_name: reminderData.supplement_name,
+        dosage: reminderData.dosage,
+        time: reminderData.time,
+        days: reminderData.days,
+        is_active: true
+      });
+
+      sessionManager.delete(ctx.chat.id);
+
+      await ctx.reply(
+        `✅ *Напоминание создано!*\n\n` +
+        `💊 ${reminderData.supplement_name}\n` +
+        `📏 ${reminderData.dosage}\n` +
+        `⏰ ${reminderData.time}\n\n` +
+        `📅 *Каждый день*\n\n` +
+        `Вы будете получать уведомления в указанное время.`,
+        { parse_mode: 'Markdown' }
+      );
+
+      await this.showReminderSettings(ctx);
+    } catch (error) {
+      console.error('❌ Ошибка создания напоминания:', error);
+      await ctx.reply('❌ Ошибка создания напоминания. Попробуйте позже.');
+      sessionManager.delete(ctx.chat.id);
+    }
+  }
+  async cancelReminderCreation(ctx) {
+    sessionManager.delete(ctx.chat.id);
+    await ctx.reply('❌ Создание напоминания отменено.');
+    await this.showReminderSettings(ctx);
+  }
+
+  isValidTime(timeString) {
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    return timeRegex.test(timeString);
+  }
+
+  formatDaysText(daysPattern) {
+    const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+    const activeDays = days.filter((_, index) => daysPattern[index] === '1');
+    return activeDays.join(', ');
   }
 }
 
