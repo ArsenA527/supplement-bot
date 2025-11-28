@@ -454,6 +454,16 @@ async function handleTextCommands(ctx) {
     return;
   }
 
+  if (session && session.creatingReminder) {
+    if (session.step === 'enter_custom_supplement') {
+      await settingsController.handleCustomSupplementInput(ctx, text, session.reminderData);
+      return;
+    }
+
+    await settingsController.handleCreateReminderStep(ctx, text);
+    return;
+  }
+
   if (text === '/cancel' || text === 'Отмена') {
     const session = sessionManager.get(ctx.chat.id);
     if (session && session.waitingForSupport) {
@@ -557,6 +567,11 @@ async function handleTextCommands(ctx) {
 
   if (session && session.waitingForTimePeriod) {
     await require('./settingsController').processTimeSelection(ctx, text);
+    return;
+  }
+
+  if (session && session.editingDosage) {
+    await settingsController.handleDosageEdit(ctx, text);
     return;
   }
 
@@ -670,6 +685,10 @@ async function handleTextCommands(ctx) {
       await settingsController.showAddSecondaryGoal(ctx);
       break;
 
+    case '📏 Изменить дозировку':
+      await settingsController.showEditDosageForm(ctx);
+      break;
+
     case '🗑️ Удалить цели':
       await settingsController.showDeleteGoalsConfirmation(ctx);
       break;
@@ -698,6 +717,10 @@ async function handleTextCommands(ctx) {
 
     case '🌙 Вечерние напоминания':
       await settingsController.showPeriodReminders(ctx, 'evening');
+      break;
+
+    case '➕ Создать напоминание':
+      await settingsController.showCreateReminderForm(ctx);
       break;
 
     case '📊 Мои данные':
