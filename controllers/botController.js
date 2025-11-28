@@ -3,7 +3,6 @@ const surveyService = require('../services/surveyService');
 const recommendationService = require('../services/recommendationService');
 const subscriptionService = require('../services/subscriptionService');
 const { ReminderController } = require('./reminderController');
-const goalService = require('../services/goalService');
 const settingsController = require('./settingsController');
 const sessionManager = require('../utils/sessionManager');
 

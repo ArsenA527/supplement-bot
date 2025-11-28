@@ -25,9 +25,6 @@ class SupportController {
         waitingForSupport: true,
         supportRequestTime: new Date()
       });
-
-      console.log('✅ Режим поддержки активирован для:', ctx.chat.id);
-
     } catch (error) {
       console.error('❌ Ошибка активации поддержки:', error);
       await ctx.reply('❌ Ошибка активации поддержки. Попробуйте позже.');
@@ -38,8 +35,6 @@ class SupportController {
     try {
       const user = ctx.from;
       const chatId = ctx.chat.id;
-
-      console.log('📨 Пересылка сообщения от:', chatId);
 
       const supportChatId = process.env.SUPPORT_CHAT_ID;
       if (!supportChatId) {
@@ -52,8 +47,6 @@ class SupportController {
         `🆔 *ID:* ${chatId}\n` +
         `⏰ *Время:* ${new Date().toLocaleString('ru-RU')}\n\n` +
         `💬 *Сообщение:*\n${messageText}`;
-
-      console.log('📤 Отправка сообщения в SUPPORT_CHAT_ID:', supportChatId);
 
       await ctx.telegram.sendMessage(supportChatId, supportMessage, {
         parse_mode: 'Markdown',
@@ -68,15 +61,10 @@ class SupportController {
       });
 
       await this.saveSupportRequest(ctx, messageText);
-
       await ctx.reply('✅ Ваше сообщение отправлено в поддержку! Мы ответим в ближайшее время.');
 
-      // Отключаем режим поддержки после отправки
       const sessionManager = require('../utils/sessionManager');
       sessionManager.delete(ctx.chat.id);
-
-      console.log('✅ Сообщение успешно переслано в поддержку');
-
     } catch (error) {
       console.error('❌ Ошибка пересылки в поддержку:', error);
       await ctx.reply('❌ Ошибка отправки сообщения. Попробуйте позже.');

@@ -18,7 +18,6 @@ class AchievementService {
     const userAchievements = await this.getUserAchievements(chatId);
     const newAchievements = [];
 
-    // Проверяем разные типы достижений
     switch(action) {
       case 'survey_complete':
         if (!userAchievements.includes('first_steps')) {

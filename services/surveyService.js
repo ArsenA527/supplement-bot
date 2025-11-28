@@ -20,9 +20,6 @@ class SurveyService {
     };
 
     await this.saveUserData(chatId, state);
-
-    console.log(`📝 Пользователь ${chatId} начал ${state.surveyType} опрос`);
-
     return this.getCurrentQuestion(chatId);
   }
 
@@ -68,13 +65,11 @@ class SurveyService {
     });
   }
 
-  // Получить тип опроса (free/premium)
   async getSurveyType(chatId) {
     const isPremium = await subscriptionService.isSubscriptionActive(chatId);
     return isPremium ? 'premium' : 'free';
   }
 
-  // Получить текущий вопрос
   async getCurrentQuestion(chatId) {
     const state = await this.getUserState(chatId);
     if (!state) return null;
@@ -86,23 +81,17 @@ class SurveyService {
     const question = userQuestions[state.current];
     const currentAnswers = state.answers[question.key];
 
-
     return question ? {
       ...question,
       index: state.current,
       total: userQuestions.length
     } : null;
-
   }
 
-  // Получить вопросы в зависимости от подписки
   async getQuestionsForUser(chatId) {
     try {
       const isPremium = await subscriptionService.isSubscriptionActive(chatId);
       const selectedQuestions = isPremium ? questions.premium : questions.free;
-
-      console.log(`📋 Загружено ${selectedQuestions.length} вопросов для пользователя ${chatId} (${isPremium ? 'premium' : 'free'})`);
-
       return selectedQuestions;
     } catch (error) {
       console.error('❌ Ошибка определения подписки:', error);
@@ -110,7 +99,6 @@ class SurveyService {
     }
   }
 
-  // Проверить может ли пользователь начать опрос
   async canStartSurvey(chatId) {
     const isPremium = await subscriptionService.isSubscriptionActive(chatId);
     if (isPremium) return true;
@@ -119,7 +107,6 @@ class SurveyService {
     return !hasCompleted;
   }
 
-  // Проверить завершал ли пользователь опрос
   async hasCompletedSurvey(chatId) {
     return new Promise((resolve) => {
       db.get(
@@ -164,7 +151,6 @@ class SurveyService {
     return true;
   }
 
-  // Получить состояние пользователя
   async getUserState(chatId) {
     return new Promise((resolve) => {
       db.get(
@@ -188,7 +174,6 @@ class SurveyService {
     });
   }
 
-  // Сохранить данные пользователя
   async saveUserData(chatId, state) {
     return new Promise((resolve, reject) => {
       db.run(
@@ -214,7 +199,6 @@ class SurveyService {
     });
   }
 
-  // Получить результаты опроса
   async getSurveyResults(chatId) {
     return new Promise((resolve) => {
       db.get(

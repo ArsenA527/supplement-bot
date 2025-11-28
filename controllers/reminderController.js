@@ -7,7 +7,6 @@ class ReminderController {
     this.bot = bot;
   }
 
-  // Инициализация сервиса
   async initialize() {
     try {
       await this.reminderService.initialize();
@@ -17,7 +16,6 @@ class ReminderController {
     }
   }
 
-  // Создать напоминания из рекомендаций
   async createRemindersFromRecommendations(ctx, recommendations) {
     const chatId = ctx.chat.id;
 
@@ -69,7 +67,6 @@ class ReminderController {
       }
 
       return createdCount;
-
     } catch (error) {
       console.error('❌ Ошибка создания напоминаний:', error);
       throw error;
@@ -89,6 +86,7 @@ class ReminderController {
       return settings.morning_time || '08:00';
     }
   }
+
   async clearUserReminders(chatId) {
     return new Promise((resolve) => {
       const db = require('../config/database');
@@ -105,7 +103,6 @@ class ReminderController {
     for (let i = 1; i <= 6; i++) {
       const minutes = (baseMinutes + i * 30) % 60;
       const hours = baseHours + Math.floor((baseMinutes + i * 30) / 60);
-
       const newTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 
       if (!usedTimes.has(newTime)) {
@@ -154,7 +151,6 @@ class ReminderController {
     });
   }
 
-  // Рекомендации по приему с едой
   getFoodRecommendation(supplementName) {
     const foodRules = {
       'Витамин D3': '🍳 С жирной пищей для усвоения',
@@ -211,7 +207,6 @@ class ReminderController {
     });
   }
 
-  // Обработка действий с напоминаниями
   async handleReminderAction(ctx, action, reminderId) {
     try {
       console.log(`🔵 Обработка действия: ${action} для напоминания ${reminderId}`);
@@ -280,7 +275,6 @@ class ReminderController {
     }
   }
 
-  // Вспомогательный метод для получения напоминания
   async getReminderById(reminderId) {
     return new Promise((resolve) => {
       const db = require('../config/database');

@@ -387,7 +387,6 @@ bot.action(/intake_taken_(\d+)/, async (ctx) => {
         }
 
         await NotificationManager.success(ctx, `💊 Прием "${reminder.supplement_name}" записан!`);
-
       } catch (error) {
         console.error('❌ Ошибка записи приема:', error);
         await ctx.answerCbQuery('❌ Ошибка подтверждения');
@@ -406,7 +405,6 @@ bot.action(/intake_skipped_(\d+)/, async (ctx) => {
   try {
     const reminderId = ctx.match[1];
     const action = 'skipped';
-
 
     analyticsService.trackEvent(ctx.chat.id, 'reminder_interaction', {
       action: action,
@@ -438,7 +436,6 @@ bot.action(/intake_skipped_(\d+)/, async (ctx) => {
         }
 
         await NotificationManager.warning(ctx, `💊 Прием "${reminder.supplement_name}" пропущен.`);
-
       } catch (error) {
         console.error('❌ Ошибка записи пропуска:', error);
         await ctx.answerCbQuery('❌ Ошибка обработки пропуска');
@@ -504,7 +501,6 @@ bot.action('test_payment', async (ctx) => {
   try {
     await ctx.answerCbQuery('💳 Тестовый платеж создан!');
 
-    // Имитируем успешный платеж через 2 секунды
     setTimeout(async () => {
       await NotificationManager.success(ctx, '✅ Тестовый платеж успешно обработан!');
       await subscriptionController.handlePaymentConfirmation(ctx);
@@ -824,7 +820,6 @@ bot.on('message', async (ctx) => {
 });
 
 
-// Команда /myid - только для админа
 bot.command('myid', (ctx) => {
   const chatId = ctx.chat.id;
   const adminId = process.env.ADMIN_CHAT_ID;

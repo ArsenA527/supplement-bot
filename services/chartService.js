@@ -1,4 +1,3 @@
-// services/chartService.js
 const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
 const fs = require('fs');
 const path = require('path');
@@ -116,7 +115,6 @@ class ChartService {
     return await this.chartJSNodeCanvas.renderToBuffer(configuration);
   }
 
-  // Вспомогательные методы
   generateDateLabels(days) {
     const labels = [];
     for (let i = days - 1; i >= 0; i--) {
@@ -128,7 +126,6 @@ class ChartService {
   }
 
   calculateDailyCompliance(historyData, days) {
-    // Расчет процента соблюдения по дням
     const dailyStats = this.calculateDailyIntakeStats(historyData, days);
     return dailyStats.taken.map((taken, index) => {
       const total = taken + dailyStats.skipped[index] + dailyStats.missed[index];

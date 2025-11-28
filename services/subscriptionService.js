@@ -1,7 +1,6 @@
 const db = require('../config/database');
 
 class SubscriptionService {
-  // Получить подписку пользователя
   async getUserSubscription(chatId) {
     return new Promise((resolve) => {
       db.get(
@@ -19,7 +18,6 @@ class SubscriptionService {
     });
   }
 
-  // Создать/обновить подписку
   async updateSubscription(chatId, planData) {
     return new Promise((resolve, reject) => {
       db.run(
@@ -44,26 +42,18 @@ class SubscriptionService {
     });
   }
 
-  // Проверить активна ли подписка
   async isSubscriptionActive(chatId) {
     try {
       const subscription = await this.getUserSubscription(chatId);
-      console.log(`🔍 Проверка подписки ${chatId}:`, subscription);
 
       if (!subscription) {
         console.log('❌ Подписка не найдена');
         return false;
       }
 
-      // Проверяем план
       const isPremiumPlan = subscription.plan === 'premium';
-      console.log(`📋 План: ${subscription.plan}, Premium: ${isPremiumPlan}`);
-
-      // Проверяем статус
       const isActiveStatus = subscription.status === 'active';
-      console.log(`📊 Статус: ${subscription.status}, Активен: ${isActiveStatus}`);
 
-      // Проверяем дату окончания - ИСПРАВЛЯЕМ БАГ!
       let isNotExpired = true;
       if (subscription.end_date) {
         const now = new Date();
@@ -73,17 +63,14 @@ class SubscriptionService {
       }
 
       const result = isPremiumPlan && isActiveStatus && isNotExpired;
-      console.log(`🎯 Итог проверки Premium: ${result}`);
 
       return result;
-
     } catch (error) {
       console.error('❌ Ошибка проверки подписки:', error);
       return false;
     }
   }
 
-  // Получить информацию о тарифах
   getSubscriptionPlans() {
     return {
       free: {

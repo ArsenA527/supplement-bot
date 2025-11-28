@@ -31,10 +31,9 @@ const recommendationRules = {
   // ВИТАМИН D - ОСОБЫЙ СЛУЧАЙ (условно-базовый)
   vitamin_d: {
     condition: (answers) => {
-      // Рекомендовать почти всем, кроме тех, кто точно знает свой уровень
       const hasCondition = answers.chronic_conditions &&
         !answers.chronic_conditions.includes('Нет хронических заболеваний');
-      return !hasCondition; // Более безопасный подход
+      return !hasCondition;
     },
     supplements: [
       {

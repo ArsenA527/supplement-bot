@@ -57,12 +57,10 @@ class TelegramPaymentService {
       console.log('💰 Обработка успешного платежа:', successfulPayment);
 
       await this.savePayment(chatId, successfulPayment);
-
       await this.activateSubscription(chatId, 'Premium');
 
       console.log(`✅ Платеж обработан, Premium активирован для ${chatId}`);
       return true;
-
     } catch (error) {
       console.error('❌ Ошибка обработки платежа:', error);
 
@@ -113,8 +111,6 @@ class TelegramPaymentService {
   async activateSubscription(chatId, planName) {
     const endDate = new Date();
     endDate.setMonth(endDate.getMonth() + 1);
-
-    console.log(`🎯 Активация Premium для ${chatId} до ${endDate}`);
 
     await subscriptionService.updateSubscription(chatId, {
       plan: 'premium',

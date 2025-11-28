@@ -24,14 +24,10 @@ class DirectPaymentService {
     if (hasShopId && hasSecretKey) {
       this.shopId = shopId;
       this.secretKey = secretKey;
-
       this.authBasic = Buffer.from(`${shopId}:${secretKey}`).toString('base64');
-
       this.authBearer = secretKey;
-
       this.isRealPayments = true;
 
-      // Тестируем подключение
       this.testConnection();
     } else {
       console.log('🔧 Режим: ТЕСТОВЫЕ ПЛАТЕЖИ');

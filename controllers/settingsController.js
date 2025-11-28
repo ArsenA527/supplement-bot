@@ -178,7 +178,6 @@ class SettingsController {
       const periodLabel = this.getPeriodLabel(period).toLowerCase();
 
       await this.showReminderOptions(ctx, reminder, period);
-
     } catch (error) {
       console.error('❌ Ошибка редактирования напоминания:', error);
       await ctx.reply('❌ Ошибка загрузки настроек напоминания.');
@@ -253,7 +252,6 @@ class SettingsController {
       const periodLabel = this.getPeriodLabel(period).toLowerCase();
 
       await this.showTimePeriodSettings(ctx, period);
-
     } catch (error) {
       console.error('❌ Ошибка массового изменения:', error);
       await ctx.reply('❌ Ошибка загрузки настроек.');
@@ -344,7 +342,6 @@ class SettingsController {
       );
 
       await this.showReminderOptions(ctx, reminder, session.managingPeriod);
-
     } catch (error) {
       console.error('❌ Ошибка переключения статуса напоминания:', error);
       await ctx.reply('❌ Не удалось изменить статус напоминания. Попробуйте позже.');
@@ -409,9 +406,6 @@ class SettingsController {
         currentReminder: reminder,
         timestamp: Date.now()
       });
-
-      console.log('💾 Сессия обновлена для изменения времени');
-
     } catch (error) {
       console.error('❌ Ошибка показа выбора времени:', error);
       throw error;
@@ -450,7 +444,6 @@ class SettingsController {
 
       sessionManager.delete(ctx.chat.id);
       await this.showPeriodReminders(ctx, session.managingPeriod);
-
     } catch (error) {
       console.error('❌ Ошибка обновления времени:', error);
       await ctx.reply('❌ Не удалось обновить время. Попробуйте позже.');
@@ -489,9 +482,6 @@ class SettingsController {
         currentReminder: reminder,
         timestamp: Date.now()
       });
-
-      console.log('💾 Сессия обновлена для удаления напоминания');
-
     } catch (error) {
       console.error('❌ Ошибка показа подтверждения удаления:', error);
       throw error;
@@ -532,7 +522,6 @@ class SettingsController {
 
       sessionManager.delete(ctx.chat.id);
       await this.showPeriodReminders(ctx, period);
-
     } catch (error) {
       console.error('❌ Ошибка удаления напоминания:', error);
       await ctx.reply('❌ Не удалось удалить напоминание. Попробуйте позже.');
@@ -570,7 +559,6 @@ class SettingsController {
       );
 
       await this.showNotificationSettings(ctx);
-
     } catch (error) {
       console.error('❌ Ошибка переключения уведомлений:', error);
       await NotificationManager.error(ctx,
@@ -634,7 +622,6 @@ class SettingsController {
           resize_keyboard: true
         }
       });
-
     } catch (error) {
       console.error('❌ Ошибка загрузки целей:', error);
       await ctx.reply(
@@ -765,7 +752,6 @@ class SettingsController {
         availableGoals: availableGoals,
         timestamp: Date.now()
       });
-
     } catch (error) {
       console.error('❌ Ошибка показа добавления цели:', error);
       await ctx.reply('❌ Ошибка загрузки целей. Попробуйте позже.');
@@ -848,7 +834,6 @@ class SettingsController {
       );
 
       await this.showGoalsManagement(ctx);
-
     } catch (error) {
       console.error('❌ Ошибка удаления целей:', error);
       await ctx.reply(
@@ -906,7 +891,6 @@ class SettingsController {
       sessionManager.delete(chatId);
 
       await this.showGoalsManagement(ctx);
-
     } catch (error) {
       console.error('❌ Ошибка сохранения цели:', error);
       await ctx.reply(
@@ -971,7 +955,6 @@ class SettingsController {
 
       console.log(`✅ Рекомендации успешно обновлены для пользователя ${chatId}`);
       return true;
-
     } catch (error) {
       console.error('❌ Ошибка обновления рекомендаций:', error);
       throw error;
@@ -1004,7 +987,6 @@ class SettingsController {
             days: '1111111'
           });
           createdCount++;
-
         } catch (error) {
           console.error('❌ Ошибка создания напоминания:', error);
         }
@@ -1012,7 +994,6 @@ class SettingsController {
 
       console.log(`✅ Создано ${createdCount} напоминаний для пользователя ${chatId}`);
       return createdCount;
-
     } catch (error) {
       console.error('❌ Ошибка создания напоминаний:', error);
       return 0;
@@ -1081,7 +1062,6 @@ class SettingsController {
       sessionManager.delete(ctx.chat.id);
 
       await this.showGoalsManagement(ctx);
-
     } catch (error) {
       console.error('❌ Ошибка добавления цели:', error);
       await ctx.reply(
@@ -1110,7 +1090,6 @@ class SettingsController {
           `*Дата экспорта:* ${new Date().toLocaleDateString('ru-RU')}`,
         parse_mode: 'Markdown'
       });
-
     } catch (error) {
       console.error('❌ Ошибка экспорта данных:', error);
       await NotificationManager.error(ctx,
@@ -1153,7 +1132,6 @@ class SettingsController {
 
       const { showMainMenu } = require('./botController');
       await showMainMenu(ctx);
-
     } catch (error) {
       console.error('❌ Ошибка очистки данных:', error);
       await NotificationManager.error(ctx,
@@ -1180,7 +1158,6 @@ class SettingsController {
       );
 
       await this.showNotificationSettings(ctx);
-
     } catch (error) {
       console.error('❌ Ошибка сброса настроек:', error);
       await NotificationManager.error(ctx,
@@ -1251,7 +1228,6 @@ class SettingsController {
 
       await ctx.reply(message);
       await this.showReminderSettings(ctx);
-
     } catch (error) {
       await ctx.reply(`❌ ${error.message}\n\nПожалуйста, выберите время из предложенных вариантов.`);
       await this.showTimePeriodSettings(ctx, period);
@@ -1398,7 +1374,6 @@ class SettingsController {
 
       await ctx.reply(message);
       await this.showReminderSettings(ctx);
-
     } catch (error) {
       await ctx.reply(`❌ Ошибка применения изменений: ${error.message}`);
     }
@@ -1445,7 +1420,6 @@ class SettingsController {
         `📊 *За неделю:* ${weeklyStats.compliance}% соблюдения`;
 
       await ctx.reply(statsMessage, { parse_mode: 'Markdown' });
-
     } catch (error) {
       console.error('❌ Ошибка генерации графиков:', error);
       await ctx.reply(
@@ -1487,7 +1461,6 @@ class SettingsController {
         step: 'select_supplement',
         timestamp: Date.now()
       });
-
     } catch (error) {
       console.error('❌ Ошибка показа формы создания:', error);
       await ctx.reply('❌ Ошибка загрузки формы. Попробуйте позже.');
@@ -1530,7 +1503,6 @@ class SettingsController {
           await this.handleDaysSelection(ctx, text, reminderData);
           break;
       }
-
     } catch (error) {
       console.error('❌ Ошибка обработки шага создания:', error);
       await ctx.reply('❌ Ошибка обработки. Начните заново.');
@@ -1844,7 +1816,6 @@ class SettingsController {
 
       session.editingDosage = true;
       sessionManager.set(ctx.chat.id, session);
-
     } catch (error) {
       console.error('❌ Ошибка показа формы дозировки:', error);
       await ctx.reply('❌ Ошибка загрузки формы. Попробуйте позже.');

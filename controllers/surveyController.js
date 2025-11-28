@@ -1,14 +1,10 @@
 const surveyService = require('../services/surveyService');
 const recommendationService = require('../services/recommendationService');
-const progressService = require('../services/progressService');
-const goalService = require('../services/goalService');
 const { getQuestionKeyboard, getMainMenuKeyboard, getSurveyCompletionKeyboard } = require('../keyboards');
 const NotificationManager = require('../utils/notifications');
-const subscriptionService = require('../services/subscriptionService');
 
 const lastSurveyMessages = new Map();
 
-// Начать опрос
 async function handleStartSurvey(ctx) {
   const chatId = ctx.chat.id;
   const userData = {

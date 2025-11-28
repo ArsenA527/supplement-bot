@@ -3,7 +3,6 @@ const TimeHelper = require('../utils/timeHelper');
 
 class ReminderService {
   constructor(bot) {
-    // Защита от множественной инициализации
     if (global.reminderServiceInstance) {
       return global.reminderServiceInstance;
     }
@@ -14,9 +13,7 @@ class ReminderService {
     this.lastCheckTime = null;
     this.isInitialized = false;
 
-    // Сохраняем экземпляр глобально
     global.reminderServiceInstance = this;
-
   }
 
   // Инициализация сервиса
@@ -387,7 +384,6 @@ class ReminderService {
 
     this.isInitialized = false;
 
-    // Очищаем глобальный экземпляр
     if (global.reminderServiceInstance === this) {
       global.reminderServiceInstance = null;
     }
@@ -414,7 +410,6 @@ class ReminderService {
     return optimizedSchedule;
   }
 
-  // Умный подбор времени based на типе добавки
   findBestTime(supplement, usedTimes, availableSlots) {
     const name = supplement.name.toLowerCase();
 

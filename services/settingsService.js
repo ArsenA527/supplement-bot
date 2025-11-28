@@ -5,8 +5,6 @@ const analyticsService = require('./analyticsService');
 const TimeHelper = require('../utils/timeHelper');
 
 class SettingsService {
-
-  // Получить настройки пользователя
   async getUserSettings(chatId) {
     return new Promise((resolve) => {
       db.get(
@@ -34,7 +32,6 @@ class SettingsService {
     });
   }
 
-  // Создать настройки по умолчанию
   async createDefaultSettings(chatId) {
     const defaultSettings = {
       chat_id: chatId,
@@ -72,7 +69,6 @@ class SettingsService {
     });
   }
 
-  // Обновить настройки уведомлений
   async updateNotificationSettings(chatId, updates) {
     const oldSettings = await this.getUserSettings(chatId);
 
@@ -140,7 +136,6 @@ class SettingsService {
     });
   }
 
-  // Синхронизация напоминаний с новым временем
   async syncRemindersWithNewTime(chatId, updates, oldSettings) {
     try {
       const reminderService = require('./reminderService');
@@ -173,7 +168,6 @@ class SettingsService {
     }
   }
 
-  // Обновляем напоминания для конкретного периода
   async updateRemindersForPeriod(chatId, period, oldTime, newTime) {
     return new Promise((resolve) => {
       const db = require('../config/database');
@@ -210,7 +204,6 @@ class SettingsService {
     });
   }
 
-  // Выносим трекинг в отдельную функцию
   async trackSettingsChanges(chatId, updates, oldSettings) {
     try {
       if (typeof analyticsService.trackSettingsUsage === 'function') {
@@ -241,7 +234,6 @@ class SettingsService {
     return newStatus;
   }
 
-  // Валидация времени
   validateTime(timeString) {
     if (!TimeHelper.isValidTime(timeString)) {
       throw new Error('Неверный формат времени. Используйте HH:MM (например, 08:30)');
@@ -249,7 +241,6 @@ class SettingsService {
     return true;
   }
 
-  // Получить доступные временные слоты
   getAvailableTimeSlots() {
     return [
       '06:00', '07:00', '08:00', '09:00', '10:00',
@@ -259,7 +250,6 @@ class SettingsService {
     ];
   }
 
-  // Очистить данные пользователя
   async clearUserData(chatId) {
     return new Promise((resolve, reject) => {
       db.serialize(() => {
@@ -283,7 +273,6 @@ class SettingsService {
     });
   }
 
-  // Экспорт данных пользователя
   async exportUserData(chatId) {
     const userData = {};
 

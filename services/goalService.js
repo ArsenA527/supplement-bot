@@ -2,7 +2,6 @@ const db = require('../config/database');
 const logger = require('../utils/logger');
 
 class GoalService {
-  // 📅 Инициализация целей пользователя
   async initializeUserGoals(chatId, surveyAnswers) {
     const goals = this.extractGoalsFromSurvey(surveyAnswers);
 
@@ -25,10 +24,8 @@ class GoalService {
     });
   }
 
-  // 🎯 Извлечение целей из опросника
   extractGoalsFromSurvey(answers) {
     const mainGoal = answers.goal || 'Общее оздоровление';
-
     const secondaryGoals = [];
 
     if (answers.energy && answers.energy.includes('усталость')) {
@@ -53,7 +50,6 @@ class GoalService {
     return { mainGoal, secondaryGoals };
   }
 
-  // 📊 Получение целей пользователя
   async getUserGoals(chatId) {
     return new Promise((resolve) => {
       db.get(
@@ -80,7 +76,6 @@ class GoalService {
     });
   }
 
-  // 🎯 Создание целей на основе опроса
   async createGoalsFromSurvey(chatId) {
     const surveyService = require('./surveyService');
     const answers = await surveyService.getSurveyResults(chatId);
@@ -92,7 +87,6 @@ class GoalService {
     return this.extractGoalsFromSurvey(answers);
   }
 
-  // 🎯 Цели по умолчанию
   createDefaultGoals() {
     return {
       mainGoal: 'Общее оздоровление',
@@ -100,7 +94,6 @@ class GoalService {
     };
   }
 
-  // 📈 Прогресс по целям
   async getGoalProgress(chatId, days = 30) {
     const reminderService = require('./reminderService');
     const service = new reminderService();
@@ -118,7 +111,6 @@ class GoalService {
     };
   }
 
-  // 🔥 Текущая серия (streak)
   async getCurrentStreak(chatId) {
     return new Promise((resolve) => {
       db.get(
