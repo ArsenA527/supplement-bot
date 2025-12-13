@@ -28,7 +28,6 @@ class BackupService {
 
       fs.copyFileSync(dbPath, backupFile);
 
-      // Очистка старых бэкапов (оставляем последние 10)
       this.cleanupOldBackups();
       logger.info('Бэкап базы данных создан', { backupFile });
 
@@ -46,10 +45,8 @@ class BackupService {
           path: path.join(this.backupDir, f),
           time: fs.statSync(path.join(this.backupDir, f)).mtime.getTime()
         }))
-        .sort((a, b) => b.time - a.time); // Новые сначала
+        .sort((a, b) => b.time - a.time);
 
-
-      // Удаляем все кроме последних 10
       if (files.length > 10) {
         files.slice(10).forEach(file => {
           fs.unlinkSync(file.path);

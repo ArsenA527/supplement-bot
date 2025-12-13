@@ -1,7 +1,6 @@
 const db = require('../config/database');
 
 class ProgressService {
-  // Получить прогресс опроса
   async getSurveyProgress(chatId) {
     return new Promise((resolve) => {
       db.get('SELECT state FROM users WHERE chat_id = ?', [chatId], (err, row) => {
@@ -28,7 +27,6 @@ class ProgressService {
     });
   }
 
-  // Отправить уведомление о прогрессе
   async sendProgressUpdate(ctx, message, progress) {
     const progressBar = this.generateProgressBar(progress.current, progress.total);
     const fullMessage = `${progressBar}\n\n${message}`;

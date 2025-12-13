@@ -21,6 +21,7 @@ db.serialize(() => {
     last_name TEXT,
     state TEXT,
     answers TEXT,
+    survey_message_id INTEGER,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
@@ -62,7 +63,7 @@ db.serialize(() => {
     supplement_name TEXT,
     dosage TEXT,
     time TEXT,
-    days TEXT DEFAULT '1111111', -- 7 digits for each day of week (1=active, 0=inactive)
+    days TEXT DEFAULT '1111111',
     is_active BOOLEAN DEFAULT true,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (chat_id) REFERENCES users (chat_id)
@@ -79,7 +80,9 @@ db.serialize(() => {
     FOREIGN KEY (chat_id) REFERENCES users (chat_id)
   )`);
 
-  // Таблица настроек уведомлений
+  console.log('✅ Таблица истории приема создана/проверена');
+
+  // Таблица notification_settings с updated_at
   db.run(`CREATE TABLE IF NOT EXISTS notification_settings (
     chat_id INTEGER PRIMARY KEY,
     morning_time TEXT DEFAULT '08:00',
@@ -88,22 +91,17 @@ db.serialize(() => {
     allow_notifications BOOLEAN DEFAULT true,
     timezone TEXT DEFAULT 'Europe/Moscow',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (chat_id) REFERENCES users (chat_id)
-  )`);
+  )`, (err) => {
+    if (err) {
+      console.error('❌ Ошибка создания таблицы notification_settings:', err);
+    } else {
+      console.log('✅ Таблица notification_settings создана/проверена');
+    }
+  });
 
   console.log('✅ Таблицы напоминаний созданы');
-
-  db.run(`CREATE TABLE IF NOT EXISTS intake_history (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    chat_id INTEGER,
-    supplement_name TEXT,
-    dosage TEXT,
-    taken_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    status TEXT DEFAULT 'taken',
-    FOREIGN KEY (chat_id) REFERENCES users (chat_id)
-  )`);
-
-  console.log('✅ Таблица истории приема создана/проверена');
 
   db.run(`DROP TABLE IF EXISTS payments`, (err) => {
     if (err) console.log('ℹ️ Таблица payments не существует');
@@ -117,6 +115,8 @@ db.serialize(() => {
       status TEXT,
       yookassa_id TEXT,
       plan TEXT,
+      provider_payload TEXT,
+      telegram_payment_charge_id TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (chat_id) REFERENCES users (chat_id)
     )`, (err) => {
@@ -129,7 +129,70 @@ db.serialize(() => {
   });
 
   console.log('✅ Таблица платежей создана');
+
+  // Таблица целей пользователя
+  db.run(`CREATE TABLE IF NOT EXISTS user_goals (
+    chat_id INTEGER PRIMARY KEY,
+    main_goal TEXT DEFAULT 'Общее оздоровление',
+    secondary_goals TEXT DEFAULT '[]',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (chat_id) REFERENCES users (chat_id)
+  )`);
+
+  console.log('✅ Таблица целей создана/проверена');
+
+  // Таблица достижений
+  db.run(`CREATE TABLE IF NOT EXISTS achievements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chat_id INTEGER,
+    achievement_id TEXT,
+    awarded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(chat_id, achievement_id),
+    FOREIGN KEY (chat_id) REFERENCES users (chat_id)
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS analytics (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chat_id INTEGER,
+    event_name TEXT,
+    metadata TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
 });
+
+db.serialize(() => {
+  db.run(`DROP TABLE IF EXISTS support_requests`, (err) => {
+    if (err) console.log('ℹ️ Таблица support_requests не существовала');
+
+    db.run(`CREATE TABLE support_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      username TEXT,
+      first_name TEXT,
+      last_name TEXT,
+      message TEXT NOT NULL,
+      message_id INTEGER,
+      status TEXT DEFAULT 'new',
+      priority TEXT DEFAULT 'normal',
+      admin_id INTEGER,
+      admin_username TEXT,
+      admin_notes TEXT,
+      response_time INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      answered_at DATETIME,
+      FOREIGN KEY (user_id) REFERENCES users (chat_id)
+    )`, (err) => {
+      if (err) {
+        console.error('❌ Ошибка создания таблицы support_requests:', err);
+      } else {
+        console.log('✅ Таблица support_requests создана заново');
+      }
+    });
+  });
+});
+
 
 // Graceful shutdown
 process.on('SIGINT', () => {

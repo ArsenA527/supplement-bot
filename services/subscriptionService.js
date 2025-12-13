@@ -1,7 +1,6 @@
 const db = require('../config/database');
 
 class SubscriptionService {
-  // Получить подписку пользователя
   async getUserSubscription(chatId) {
     return new Promise((resolve) => {
       db.get(
@@ -19,7 +18,6 @@ class SubscriptionService {
     });
   }
 
-  // Создать/обновить подписку
   async updateSubscription(chatId, planData) {
     return new Promise((resolve, reject) => {
       db.run(
@@ -44,35 +42,49 @@ class SubscriptionService {
     });
   }
 
-  // Проверить активна ли подписка
   async isSubscriptionActive(chatId) {
-    const subscription = await this.getUserSubscription(chatId);
+    try {
+      const subscription = await this.getUserSubscription(chatId);
 
-    if (subscription.plan === 'free') return false;
-    if (subscription.status !== 'active') return false;
+      if (!subscription) {
+        console.log('❌ Подписка не найдена');
+        return false;
+      }
 
-    // Проверяем дату окончания
-    if (subscription.end_date) {
-      const endDate = new Date(subscription.end_date);
-      return endDate > new Date();
+      const isPremiumPlan = subscription.plan === 'premium';
+      const isActiveStatus = subscription.status === 'active';
+
+      let isNotExpired = true;
+      if (subscription.end_date) {
+        const now = new Date();
+        const endDate = new Date(subscription.end_date);
+
+        isNotExpired = endDate > now;
+      }
+
+      const result = isPremiumPlan && isActiveStatus && isNotExpired;
+
+      return result;
+    } catch (error) {
+      console.error('❌ Ошибка проверки подписки:', error);
+      return false;
     }
-
-    return true;
   }
 
-  // Получить информацию о тарифах
   getSubscriptionPlans() {
     return {
       free: {
+        name: 'Free',
         price: 0,
         features: [
-          'Базовый опрос (8 вопросов)',
-          'Общие рекомендации',
-          'Одноразовое прохождение'
+          'Базовый опрос (9 вопросов)',
+          'Общие рекомендации по БАДам',
+          'Однократное прохождение'
         ]
       },
       premium: {
-        price: 499,
+        name: 'Premium',
+        price: 490,
         period: 'month',
         features: [
           'Расширенный опрос (17+ вопросов)',

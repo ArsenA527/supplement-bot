@@ -1,5 +1,5 @@
 const ReminderService = require('../services/reminderService');
-const { getMainMenuKeyboard } = require('../keyboards'); // Исправляем импорт
+const { getMainMenuKeyboard } = require('../keyboards');
 
 class ReminderController {
   constructor(bot) {
@@ -7,7 +7,6 @@ class ReminderController {
     this.bot = bot;
   }
 
-  // Инициализация сервиса
   async initialize() {
     try {
       await this.reminderService.initialize();
@@ -17,37 +16,24 @@ class ReminderController {
     }
   }
 
-  // Создать напоминания из рекомендаций
   async createRemindersFromRecommendations(ctx, recommendations) {
     const chatId = ctx.chat.id;
 
     try {
-      // Сначала удаляем старые напоминания
       await this.clearUserReminders(chatId);
 
-      // Умное распределение времени
-      const timeSlots = {
-        'утром': '08:00', 'утро': '08:00',
-        'днем': '13:00', 'дневное': '13:00',
-        'вечером': '20:00', 'вечер': '20:00',
-        'перед сном': '22:00', 'сон': '22:00',
-        'с едой': '12:00', 'еда': '12:00',
-        'после еды': '13:00'
-      };
+      const settingsService = require('../services/settingsService');
+      const settings = await settingsService.getUserSettings(chatId);
 
       let createdCount = 0;
-      const usedTimes = new Set();
 
       for (const supplement of recommendations) {
-        const timeKey = supplement.time.toLowerCase();
-        let time = timeSlots[timeKey] || '10:00';
-
-        // Если время уже занято, находим свободное
-        if (usedTimes.has(time)) {
-          time = this.findAvailableTime(usedTimes, time);
+        let time;
+        if (supplement.period && settings[`${supplement.period}_time`]) {
+          time = settings[`${supplement.period}_time`];
+        } else {
+          time = this.getSmartTimeForSupplement(supplement, settings);
         }
-
-        usedTimes.add(time);
 
         try {
           await this.reminderService.createReminder(chatId, {
@@ -63,13 +49,16 @@ class ReminderController {
         }
       }
 
-      // Отправляем расписание пользователю
       if (createdCount > 0) {
-        const sortedTimes = Array.from(usedTimes).sort();
-        let scheduleMessage = `📅 *Ваше расписание:*\n`;
+        let scheduleMessage = `📅 *Ваше расписание:*\n\n`;
 
-        sortedTimes.forEach(t => {
-          scheduleMessage += `⏰ ${t}\n`;
+        recommendations.forEach(supp => {
+          const foodInfo = this.getFoodRecommendation(supp.name);
+          scheduleMessage += `⏰ ${supp.time} - ${supp.name}\n`;
+          if (foodInfo) {
+            scheduleMessage += `   ${foodInfo}\n`;
+          }
+          scheduleMessage += `\n`;
         });
 
         ctx.reply(`✅ Создано ${createdCount} напоминаний!\n\n${scheduleMessage}\nВы будете получать уведомления в указанное время.`,
@@ -78,14 +67,26 @@ class ReminderController {
       }
 
       return createdCount;
-
     } catch (error) {
       console.error('❌ Ошибка создания напоминаний:', error);
       throw error;
     }
   }
 
-  // Очистить напоминания пользователя
+  getSmartTimeForSupplement(supplement, settings) {
+    const name = supplement.name.toLowerCase();
+
+    if (name.includes('тирозин') || name.includes('родиола')) {
+      return settings.morning_time || '08:00';
+    } else if (name.includes('магний') || name.includes('ашваганда')) {
+      return settings.evening_time || '20:00';
+    } else if (name.includes('омега') || name.includes('цинк')) {
+      return settings.afternoon_time || '13:00';
+    } else {
+      return settings.morning_time || '08:00';
+    }
+  }
+
   async clearUserReminders(chatId) {
     return new Promise((resolve) => {
       const db = require('../config/database');
@@ -96,15 +97,12 @@ class ReminderController {
     });
   }
 
-  // Вспомогательный метод для поиска свободного времени
   findAvailableTime(usedTimes, baseTime) {
     const [baseHours, baseMinutes] = baseTime.split(':').map(Number);
 
-    // Пробуем сдвинуть на 30 минут
     for (let i = 1; i <= 6; i++) {
       const minutes = (baseMinutes + i * 30) % 60;
       const hours = baseHours + Math.floor((baseMinutes + i * 30) / 60);
-
       const newTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 
       if (!usedTimes.has(newTime)) {
@@ -112,54 +110,67 @@ class ReminderController {
       }
     }
 
-    // Если все занято, возвращаем исходное
     return baseTime;
   }
 
-  // Показать настройки напоминаний
-  async showReminderSettings(ctx) {
-    // Временно используем простую клавиатуру вместо getReminderSettingsKeyboard
-    const message = `⚙️ *Настройки напоминаний*\n\n` +
-      `Здесь вы можете настроить время напоминаний о приеме добавок.\n\n` +
-      `По умолчанию:\n` +
-      `• Утро: 08:00\n` +
-      `• День: 13:00\n` +
-      `• Вечер: 20:00\n\n` +
-      `Используйте команды для настройки:`;
-
-    // Используем главное меню вместо специализированной клавиатуры
-    ctx.reply(message, {
-      parse_mode: 'Markdown',
-      ...getMainMenuKeyboard() // Используем существующую клавиатуру
-    });
-  }
-
-  // Показать напоминания пользователя
   async showUserReminders(ctx) {
     const chatId = ctx.chat.id;
     const reminders = await this.reminderService.getUserReminders(chatId);
 
+    const subscriptionService = require('../services/subscriptionService');
+    const isPremium = await subscriptionService.isSubscriptionActive(chatId);
+
     if (reminders.length === 0) {
       ctx.reply('📋 У вас нет активных напоминаний.\n\nНастройте напоминания после прохождения опроса.',
-        getMainMenuKeyboard()
+        getMainMenuKeyboard(isPremium)
       );
       return;
     }
 
     let message = '📋 *Ваши напоминания:*\n\n';
+
     reminders.forEach(reminder => {
-      message += `⏰ ${reminder.time} - ${reminder.supplement_name} (${reminder.dosage})\n`;
+      const foodInfo = this.getFoodRecommendation(reminder.supplement_name);
+      message += `⏰ ${reminder.time} - ${reminder.supplement_name}\n`;
+      message += `   📏 ${reminder.dosage}\n`;
+
+      if (foodInfo) {
+        message += `   ${foodInfo}\n`;
+      }
+
+      message += `\n`;
     });
 
-    message += `\nВсего: ${reminders.length} напоминаний`;
+    message += `Всего: ${reminders.length} напоминаний\n\n` +
+`⚙️ Чтобы *изменить или удалить напоминания*, перейдите в:\n` +
+`*Настройки → Настроить напоминания*`;
 
     ctx.reply(message, {
       parse_mode: 'Markdown',
-      ...getMainMenuKeyboard()
+      ...getMainMenuKeyboard(isPremium)
     });
   }
 
-  // Показать историю приема
+  getFoodRecommendation(supplementName) {
+    const foodRules = {
+      'Витамин D3': '🍳 С жирной пищей для усвоения',
+      'Омега-3': '🍽️ Обязательно с едой',
+      'L-Тирозин': '⏰ Натощак за 30 мин до еды',
+      'Цинк': '🍛 С едой чтобы избежать тошноту',
+      'Родиола розовая': '☕ За 20-30 минут до завтрака',
+      'Магний': '🌙 На пустой желудок перед сном',
+      'Ашваганда': '💊 Можно с едой или без'
+    };
+
+    for (const [key, recommendation] of Object.entries(foodRules)) {
+      if (supplementName.includes(key)) {
+        return recommendation;
+      }
+    }
+
+    return null;
+  }
+
   async showIntakeHistory(ctx, days = 7) {
     const chatId = ctx.chat.id;
     const history = await this.reminderService.getIntakeHistory(chatId, days);
@@ -196,12 +207,12 @@ class ReminderController {
     });
   }
 
-  // Обработка действий с напоминаниями - УПРОЩЕННАЯ ВЕРСИЯ
   async handleReminderAction(ctx, action, reminderId) {
     try {
+      console.log(`🔵 Обработка действия: ${action} для напоминания ${reminderId}`);
+
       const db = require('../config/database');
 
-      // Получаем напоминание
       db.get('SELECT * FROM reminders WHERE id = ?', [reminderId], async (err, reminder) => {
         if (err || !reminder) {
           ctx.answerCbQuery('❌ Напоминание не найдено');
@@ -231,7 +242,6 @@ class ReminderController {
 
           case 'later':
             message = '⏰ Напомню через 1 минуту';
-            // Напомнить через 1 минуту (для теста)
             setTimeout(() => {
               ctx.reply(`⏰ Напоминание: ${reminder.supplement_name} (${reminder.dosage})`,
                 {
@@ -252,7 +262,6 @@ class ReminderController {
 
         ctx.answerCbQuery(message);
 
-        // Пытаемся удалить сообщение
         try {
           await ctx.deleteMessage();
         } catch (error) {
@@ -266,7 +275,6 @@ class ReminderController {
     }
   }
 
-  // Вспомогательный метод для получения напоминания
   async getReminderById(reminderId) {
     return new Promise((resolve) => {
       const db = require('../config/database');

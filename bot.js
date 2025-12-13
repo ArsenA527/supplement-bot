@@ -18,13 +18,12 @@ console.log('   BOT_TOKEN length:', process.env.BOT_TOKEN ? process.env.BOT_TOKE
 
 if (!process.env.BOT_TOKEN) {
   console.log('⚠️ BOT_TOKEN не найден, пробуем .env');
-  require('dotenv').config(); // Загружаем обычный .env
+  require('dotenv').config();
 
   if (!process.env.BOT_TOKEN) {
     console.error('❌ CRITICAL: BOT_TOKEN не найден ни в одном .env файле!');
     console.log('📁 Проверьте файлы в директории:', __dirname);
 
-    // Покажем какие файлы есть
     const fs = require('fs');
     const files = fs.readdirSync(__dirname);
     console.log('📋 Файлы в директории:', files.filter(f => f.includes('.env')));
@@ -48,34 +47,136 @@ const Telegraf = require('telegraf');
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const db = require('./config/database');
 
-// Импорты контроллеров
+global.botInstance = bot;
+global.reminderBot = bot;
+
+// ==================== ИМПОРТЫ КОНТРОЛЛЕРОВ И СЕРВИСОВ ====================
 const botController = require('./controllers/botController');
 const surveyController = require('./controllers/surveyController');
 const subscriptionController = require('./controllers/subscriptionController');
 const { ReminderController } = require('./controllers/reminderController');
+const settingsController = require('./controllers/settingsController');
 const testCommands = require('./commands/testCommands');
+const analyticsService = require('./services/analyticsService');
 
 // Middleware
-const { injectSubscriptionData } = require('./middlewares/subscriptionMiddleware');
 const { getMainMenuKeyboard } = require('./keyboards');
-
-// Утилиты
 const NotificationManager = require('./utils/notifications');
 
-// Инициализация напоминаний
-const reminderController = new ReminderController(bot);
-reminderController.initialize().then(() => {
-  console.log('✅ Сервис напоминаний инициализирован');
-});
-
+// Сервисы
+const subscriptionService = require('./services/subscriptionService');
 const ReminderService = require('./services/reminderService');
-const reminderService = new ReminderService(bot); // Явно создаем экземпляр
+const SupportController = require('./controllers/supportController');
+
+// Инициализация напоминаний
+const reminderService = new ReminderService(bot);
+
+// Инициализация напоминаний с защитой от дублирования
+let reminderInitialized = false;
+
+function initializeReminders() {
+  if (reminderInitialized) {
+    console.log('⚠️ Напоминания уже инициализированы, пропускаем...');
+    return;
+  }
+
+  reminderService.initialize().then(() => {
+    console.log('✅ Сервис напоминаний инициализирован');
+    reminderInitialized = true;
+  }).catch(error => {
+    console.error('❌ Ошибка инициализации напоминаний:', error);
+  });
+}
+
+initializeReminders();
+
 // ==================== MIDDLEWARE ====================
 
-// Инъекция данных подписки
-bot.use(injectSubscriptionData);
+// Простая система сессий в памяти
+const sessions = new Map();
+const processedMessages = new Set();
+const originalEmit = bot.emit;
 
-// Логирование всех сообщений
+bot.emit = function (event, ctx, next) {
+  if (event === 'text') {
+    const messageId = `${ctx.chat.id}_${ctx.message.message_id}`;
+
+    if (processedMessages.has(messageId)) {
+      console.log('⚠️ Пропускаем дубликат:', ctx.message.text?.substring(0, 30));
+      return;
+    }
+
+    processedMessages.add(messageId);
+    setTimeout(() => processedMessages.delete(messageId), 3000);
+  }
+
+  return originalEmit.call(this, event, ctx, next);
+};
+
+bot.use(async (ctx, next) => {
+  const chatId = ctx.chat?.id;
+  const username = ctx.from?.username || 'unknown';
+  const text = ctx.message?.text || ctx.callbackQuery?.data || 'no text';
+
+  // 1. Логирование
+  console.log(`📨 [${username}:${chatId}] ${text}`);
+
+  // 2. Система сессий
+  if (chatId) {
+    if (!sessions.has(chatId)) {
+      sessions.set(chatId, {
+        created: Date.now(),
+        lastActivity: Date.now()
+      });
+    }
+    ctx.session = sessions.get(chatId);
+    ctx.session.lastActivity = Date.now();
+  }
+
+  // 3. Инъекция данных подписки
+  try {
+    ctx.state.subscription = await subscriptionService.getUserSubscription(chatId);
+  } catch (error) {
+    console.error('❌ Ошибка инъекции данных подписки:', error);
+    ctx.state.subscription = { plan: 'free', status: 'active' };
+  }
+
+  await next();
+
+  // 4. Базовая валидация
+  if (ctx.message && ctx.message.text && ctx.message.text.length > 4000) {
+    console.log('⚠️ Слишком длинное сообщение от', chatId);
+    await NotificationManager.warning(ctx, 'Сообщение слишком длинное. Максимум 4000 символов.');
+    return;
+  }
+
+  // 5. Обновление активности пользователя в БД
+  if (chatId && ctx.message) {
+    setTimeout(() => {
+      analyticsService.trackEvent(chatId, 'user_activity', {
+        type: ctx.message.text ? 'text_message' : 'other'
+      });
+    }, 100);
+  }
+});
+
+// Очистка старых сессий каждые 24 часа
+setInterval(() => {
+  const now = Date.now();
+  let clearedCount = 0;
+
+  for (const [chatId, session] of sessions.entries()) {
+    if (session.lastActivity && now - session.lastActivity > 24 * 60 * 60 * 1000) {
+      sessions.delete(chatId);
+      clearedCount++;
+    }
+  }
+
+  if (clearedCount > 0) {
+    console.log(`🧹 Очищено ${clearedCount} старых сессий`);
+  }
+}, 60 * 60 * 1000);
+
 bot.use(async (ctx, next) => {
   const chatId = ctx.chat?.id;
   const username = ctx.from?.username || 'unknown';
@@ -88,6 +189,11 @@ bot.use(async (ctx, next) => {
 // ==================== ОСНОВНЫЕ КОМАНДЫ ====================
 
 bot.start(async (ctx) => {
+  await analyticsService.trackEvent(ctx.chat.id, 'bot_start', {
+    username: ctx.from.username,
+    first_name: ctx.from.first_name
+  });
+
   await NotificationManager.welcome(ctx, ctx.from.first_name);
   botController.handleStart(ctx);
 });
@@ -98,6 +204,7 @@ bot.help((ctx) => {
 });
 
 bot.command('survey', (ctx) => {
+  analyticsService.trackEvent(ctx.chat.id, 'survey_start');
   NotificationManager.loading(ctx, 'Загружаем опрос...');
   setTimeout(() => {
     surveyController.handleStartSurvey(ctx);
@@ -154,19 +261,12 @@ bot.command('checkhistory', (ctx) => testCommands.checkHistory(ctx));
 bot.command('reminderstats', (ctx) => testCommands.reminderStats(ctx));
 bot.command('debugsub', (ctx) => testCommands.debugSubscription(ctx));
 bot.command('activatepremium', (ctx) => testCommands.activatePremium(ctx));
+bot.command('fixsubscriptiondate', (ctx) => testCommands.fixSubscriptionDate(ctx));
+bot.command('checkpaymentsystem', (ctx) => testCommands.checkPaymentSystem(ctx));
+bot.command('paymentstatus', (ctx) => testCommands.checkTelegramPayments(ctx));
+bot.command('yookassasetup', async (ctx) => await testCommands.yookassaSettings(ctx));
 bot.command('clearmydata', (ctx) => testCommands.clearMyData(ctx));
-bot.command('testquestions', (ctx) => testCommands.testQuestions(ctx));
-bot.command('testbuttons', (ctx) => testCommands.testButtons(ctx));
-bot.command('testremindersnow', (ctx) => testCommands.testRemindersNow(ctx));
-bot.command('createremindersfromplan', (ctx) => testCommands.createRemindersFromPlan(ctx));
-
-bot.command('createtestreminder', (ctx) => {
-  const time = ctx.message.text.split(' ')[1]; // /createtestreminder 14:30
-  testCommands.createTestReminder(ctx, time);
-});
-
-bot.command('forcereminders', (ctx) => testCommands.forceSendReminders(ctx));
-bot.command('cleartestreminders', (ctx) => testCommands.clearTestReminders(ctx));
+bot.command('checkmenu', (ctx) => testCommands.checkMenuStatus(ctx));
 bot.command('reminderstatus', (ctx) => testCommands.reminderStatus(ctx));
 
 // Команды истории и статистики
@@ -229,13 +329,27 @@ bot.command('mystats', async (ctx) => {
 bot.command('backupstatus', (ctx) => testCommands.backupStatus(ctx));
 bot.command('backupnow', (ctx) => testCommands.createBackupNow(ctx));
 
+// Команды аналитики (только для админа)
+bot.command('analytics', (ctx) => testCommands.analyticsDashboard(ctx));
+bot.command('surveystats', (ctx) => testCommands.surveyAnalytics(ctx));
+bot.command('dailyreport', (ctx) => testCommands.forceDailyReport(ctx));
+
 // ==================== ОБРАБОТКА КНОПОК НАПОМИНАНИЙ ====================
+bot.command('support', (ctx) => {
+  SupportController.handleSupportCommand(ctx);
+});
 
 // Обработка кнопки "✅ Принял"
 bot.action(/intake_taken_(\d+)/, async (ctx) => {
   console.log('🔵 Обработка кнопки Принял для reminder:', ctx.match[1]);
   try {
     const reminderId = ctx.match[1];
+    const action = 'taken';
+
+    analyticsService.trackEvent(ctx.chat.id, 'reminder_interaction', {
+      action: action,
+      reminder_id: ctx.match[2]
+    });
 
     db.get('SELECT * FROM reminders WHERE id = ?', [reminderId], async (err, reminder) => {
       if (err) {
@@ -265,7 +379,6 @@ bot.action(/intake_taken_(\d+)/, async (ctx) => {
         console.log('✅ Прием записан в историю');
         await ctx.answerCbQuery('✅ Прием подтвержден!');
 
-        // Удаляем сообщение с кнопками
         try {
           await ctx.deleteMessage();
           console.log('🗑️ Сообщение удалено');
@@ -273,9 +386,7 @@ bot.action(/intake_taken_(\d+)/, async (ctx) => {
           console.log('⚠️ Не удалось удалить сообщение:', deleteError.message);
         }
 
-        // Отправляем подтверждение
         await NotificationManager.success(ctx, `💊 Прием "${reminder.supplement_name}" записан!`);
-
       } catch (error) {
         console.error('❌ Ошибка записи приема:', error);
         await ctx.answerCbQuery('❌ Ошибка подтверждения');
@@ -293,6 +404,12 @@ bot.action(/intake_skipped_(\d+)/, async (ctx) => {
   console.log('🔵 Обработка кнопки Пропустить для reminder:', ctx.match[1]);
   try {
     const reminderId = ctx.match[1];
+    const action = 'skipped';
+
+    analyticsService.trackEvent(ctx.chat.id, 'reminder_interaction', {
+      action: action,
+      reminder_id: ctx.match[2]
+    });
 
     db.get('SELECT * FROM reminders WHERE id = ?', [reminderId], async (err, reminder) => {
       if (err || !reminder) {
@@ -319,7 +436,6 @@ bot.action(/intake_skipped_(\d+)/, async (ctx) => {
         }
 
         await NotificationManager.warning(ctx, `💊 Прием "${reminder.supplement_name}" пропущен.`);
-
       } catch (error) {
         console.error('❌ Ошибка записи пропуска:', error);
         await ctx.answerCbQuery('❌ Ошибка обработки пропуска');
@@ -367,7 +483,7 @@ bot.action(/intake_later_(\d+)/, async (ctx) => {
         } catch (error) {
           console.error('❌ Ошибка повторного напоминания:', error);
         }
-      }, 600000); // 10 минут
+      }, 600000);
 
       await NotificationManager.info(ctx, `⏰ Напомню о приеме "${reminder.supplement_name}" через 10 минут.`);
     });
@@ -385,7 +501,6 @@ bot.action('test_payment', async (ctx) => {
   try {
     await ctx.answerCbQuery('💳 Тестовый платеж создан!');
 
-    // Имитируем успешный платеж через 2 секунды
     setTimeout(async () => {
       await NotificationManager.success(ctx, '✅ Тестовый платеж успешно обработан!');
       await subscriptionController.handlePaymentConfirmation(ctx);
@@ -397,7 +512,7 @@ bot.action('test_payment', async (ctx) => {
   }
 });
 
-// Обработка "Я оплатил(а)"
+// Обработка "✅ Я оплатил(а)"
 bot.action('payment_confirmed', async (ctx) => {
   try {
     await subscriptionController.handlePaymentConfirmation(ctx);
@@ -408,6 +523,11 @@ bot.action('payment_confirmed', async (ctx) => {
   }
 });
 
+// Обработка callback от платежей
+bot.action(/payment_(confirm|check|status)_(.+)/, async (ctx) => {
+  await subscriptionController.handlePaymentCallback(ctx);
+});
+
 // ==================== ДРУГИЕ ОБРАБОТЧИКИ ACTION ====================
 
 bot.action(/history_(\d+)/, (ctx) => {
@@ -416,14 +536,17 @@ bot.action(/history_(\d+)/, (ctx) => {
   ctx.answerCbQuery();
 });
 
-bot.action('subscription_info', (ctx) => {
-  subscriptionController.showSubscriptionPlans(ctx);
-  ctx.answerCbQuery();
+bot.action('subscription_info', async (ctx) => {
+  const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
+  await subscriptionController.showSubscriptionPlans(ctx);
+  await ctx.answerCbQuery();
 });
 
-bot.action('main_menu', (ctx) => {
-  botController.showMainMenu(ctx);
-  ctx.answerCbQuery();
+bot.action('main_menu', async (ctx) => {
+  const isPremium = await subscriptionService.isSubscriptionActive(ctx.chat.id);
+  const { showMainMenu } = require('./controllers/botController');
+  await showMainMenu(ctx);
+  await ctx.answerCbQuery();
 });
 
 bot.action('restart_survey', (ctx) => {
@@ -460,13 +583,18 @@ bot.on('text', async (ctx) => {
 
     console.log(`📨 Текст получен: "${text}" от ${chatId}`);
 
-    // Команды главного меню
     const menuCommands = [
       '📋 Пройти опрос', '📋 Новый опрос', '💊 Мои рекомендации',
       '👤 Мой профиль', '💎 Апгрейд до Premium', '💎 Получить Premium',
       '⏰ Мои напоминания', '📊 Статистика', 'ℹ️ Помощь', '⚙️ Настройки',
       '⏰ Утреннее время', '🌅 Дневное время', '🌙 Вечернее время',
-      '🔔 Вкл/Выкл уведомления', '📋 Мои напоминания', '🏠 Главное меню'
+      '🔔 Вкл/Выкл уведомления', '📋 Мои напоминания', '🏠 Главное меню',
+      '⏰ Настроить напоминания', '🔔 Управление уведомлениями',
+      '📊 Мои данные', '🗑️ Очистить историю',
+      '🌅 Утреннее время', '☀️ Дневное время', '🌙 Вечернее время',
+      '✅ Включить уведомления', '❌ Выключить уведомления',
+      '📁 Экспорт данных', '🔄 Сбросить настройки',
+      '✅ Да, очистить все данные', '❌ Нет, отменить', '↩️ Назад к настройкам'
     ];
 
     if (menuCommands.includes(text)) {
@@ -475,7 +603,6 @@ bot.on('text', async (ctx) => {
       return;
     }
 
-    // Проверяем, находится ли пользователь в опросе
     const surveyService = require('./services/surveyService');
     const question = await surveyService.getCurrentQuestion(chatId);
 
@@ -495,11 +622,10 @@ bot.on('text', async (ctx) => {
 
 // ==================== ЗАПУСК И ОБРАБОТКА ОШИБОК ====================
 
-bot.on('callback_query', (ctx) => {
+bot.on('callback_query', async (ctx) => {
   const callbackData = ctx.callbackQuery.data;
   console.log('📨 Callback received:', callbackData);
 
-  // Если callback еще не обработан специфическими обработчиками
   if (!callbackData.startsWith('intake_') &&
       !callbackData.startsWith('history_') &&
       !callbackData.startsWith('admin_') &&
@@ -510,9 +636,69 @@ bot.on('callback_query', (ctx) => {
       callbackData !== 'payment_confirmed' &&
       callbackData !== 'test_payment' &&
       callbackData !== 'cancel_survey') {
-
-    // Передаем в обработчик опросов
     require('./controllers/surveyController').handleButtonAnswer(ctx);
+  }
+});
+
+// Обработка PreCheckoutQuery (подтверждение платежа)
+bot.on('pre_checkout_query', async (ctx) => {
+  console.log('🔵 PRE_CHECKOUT_QUERY:', {
+    id: ctx.preCheckoutQuery.id,
+    from: ctx.preCheckoutQuery.from.id,
+    currency: ctx.preCheckoutQuery.currency,
+    amount: ctx.preCheckoutQuery.total_amount,
+    payload: ctx.preCheckoutQuery.invoice_payload
+  });
+
+  try {
+    await ctx.answerPreCheckoutQuery(true);
+    console.log('✅ PreCheckoutQuery подтвержден');
+  } catch (error) {
+    console.error('❌ Ошибка подтверждения PreCheckoutQuery:', error);
+    await ctx.answerPreCheckoutQuery(false, "Ошибка обработки платежа");
+  }
+});
+
+// Обработка успешного платежа
+bot.on('successful_payment', async (ctx) => {
+  try {
+    console.log('💰 SUCCESSFUL_PAYMENT:', {
+    charge_id: ctx.message.successful_payment.provider_payment_charge_id,
+    amount: ctx.message.successful_payment.total_amount,
+    currency: ctx.message.successful_payment.currency,
+    payload: ctx.message.successful_payment.invoice_payload
+  });
+
+    const paymentService = require('./services/telegramPaymentService');
+    await paymentService.processSuccessfulPayment(
+      ctx.message.successful_payment,
+      ctx.chat.id
+    );
+
+    // Отправляем подтверждение пользователю
+    await ctx.reply(
+      `🎉 *Оплата прошла успешно!*\n\n` +
+      `💎 *Premium подписка активирована на 30 дней!*\n\n` +
+      `Теперь вам доступны:\n` +
+      `• 📋 Расширенный опрос (17+ вопросов)\n` +
+      `• 💊 Персональные дозировки\n` +
+      `• ⏰ Умные напоминания\n` +
+      `• 🔄 Неограниченные опросы\n\n` +
+      `*ID транзакции:* ${ctx.message.successful_payment.provider_payment_charge_id}\n` +
+      `*Сумма:* ${ctx.message.successful_payment.total_amount / 100} RUB\n\n` +
+      `Используйте /survey для нового расширенного опроса!`,
+      { parse_mode: 'Markdown' }
+    );
+
+    console.log(`✅ Платеж обработан для пользователя ${ctx.chat.id}`);
+
+  } catch (error) {
+    console.error('❌ Ошибка обработки успешного платежа:', error);
+    await ctx.reply(
+      '❌ Произошла ошибка при активации подписки. ' +
+      'Пожалуйста, обратитесь в поддержку и сообщите ID транзакции: ' +
+      ctx.message.successful_payment.provider_payment_charge_id
+    );
   }
 });
 
@@ -533,25 +719,107 @@ bot.catch((err, ctx) => {
   );
 });
 
+// 🕐 АВТОМАТИЧЕСКИЕ ЕЖЕДНЕВНЫЕ ОТЧЕТЫ
+function setupDailyReports() {
+  // Отчет каждый день в 09:00
+  const now = new Date();
+  const targetTime = new Date();
+  targetTime.setHours(9, 0, 0, 0);
+
+  if (now > targetTime) {
+    targetTime.setDate(targetTime.getDate() + 1);
+  }
+
+  const timeUntilReport = targetTime - now;
+
+  setTimeout(() => {
+    analyticsService.generateDailyReport();
+    setInterval(() => analyticsService.generateDailyReport(), 24 * 60 * 60 * 1000);
+  }, timeUntilReport);
+
+  logger.info('Ежедневные отчеты настроены');
+}
+
+function setupWeeklyMotivation() {
+  const motivationService = require('./services/motivationService');
+
+  // Каждый понедельник в 10:00
+  const now = new Date();
+  const nextMonday = new Date();
+  nextMonday.setDate(now.getDate() + ((1 + 7 - now.getDay()) % 7));
+  nextMonday.setHours(10, 0, 0, 0);
+
+  if (now > nextMonday) {
+    nextMonday.setDate(nextMonday.getDate() + 7);
+  }
+
+  const timeUntilMotivation = nextMonday - now;
+
+  setTimeout(() => {
+    sendMotivationToActiveUsers();
+
+    setInterval(sendMotivationToActiveUsers, 7 * 24 * 60 * 60 * 1000);
+  }, timeUntilMotivation);
+
+  logger.info('Еженедельная мотивация настроена');
+}
+
+async function sendMotivationToActiveUsers() {
+  const db = require('./config/database');
+  const motivationService = require('./services/motivationService');
+
+  db.all(
+    `SELECT DISTINCT chat_id FROM analytics
+     WHERE created_at > datetime('now', '-30 days')`,
+    async (err, rows) => {
+      if (err) {
+        logger.error('Ошибка получения активных пользователей', { error: err.message });
+        return;
+      }
+
+      for (const row of rows) {
+        try {
+          const fakeCtx = {
+            chat: { id: row.chat_id },
+            reply: (message, options) => {
+              return global.botInstance.telegram.sendMessage(row.chat_id, message, options);
+            }
+          };
+
+          await motivationService.sendWeeklyMotivation(fakeCtx);
+          await new Promise(resolve => setTimeout(resolve, 100));
+        } catch (error) {
+          logger.error('Ошибка отправки мотивации пользователю', {
+            chatId: row.chat_id,
+            error: error.message
+          });
+        }
+      }
+    }
+  );
+}
+
 // Запуск бота
 bot.launch().then(() => {
   console.log('🤖 Бот запущен');
+  setupDailyReports();
+  setupWeeklyMotivation();
 }).catch(err => {
   console.error('❌ Ошибка запуска бота:', err);
 });
 
-// Добавляем обработку неизвестных команд
-bot.on('message', (ctx) => {
+bot.on('message', async (ctx) => {
+
   if (ctx.message && ctx.message.text && ctx.message.text.startsWith('/')) {
     console.log(`❓ Неизвестная команда: ${ctx.message.text}`);
-    ctx.reply(
-      '❓ Неизвестная команда. Используйте /help для списка команд.',
+    return ctx.reply(
+      '❓ Неизвестная команда. Используйте /help для списка доступных команд.',
       getMainMenuKeyboard()
     );
   }
 });
 
-// Команда /myid - только для админа
+
 bot.command('myid', (ctx) => {
   const chatId = ctx.chat.id;
   const adminId = process.env.ADMIN_CHAT_ID;
@@ -576,6 +844,15 @@ process.on('uncaughtException', (error) => {
 // Graceful shutdown
 process.once('SIGINT', async () => {
   console.log('🔄 Получен SIGINT, останавливаем бота...');
+
+  // Останавливаем сервис напоминаний
+  if (reminderService && reminderService.stop) {
+    reminderService.stop();
+  }
+
+  // Очищаем глобальные переменные
+  global.sentReminders = {};
+
   try {
     await bot.stop();
     console.log('✅ Бот корректно остановлен');
@@ -595,6 +872,13 @@ process.once('SIGINT', async () => {
 
 process.once('SIGTERM', async () => {
   console.log('🔄 Получен SIGTERM, останавливаем бота...');
+
+  if (reminderService && reminderService.stop) {
+    reminderService.stop();
+  }
+
+  global.sentReminders = {};
+
   try {
     await bot.stop();
     console.log('✅ Бот корректно остановлен');

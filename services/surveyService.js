@@ -20,20 +20,56 @@ class SurveyService {
     };
 
     await this.saveUserData(chatId, state);
-
-    // Логируем начало опроса
-    console.log(`📝 Пользователь ${chatId} начал ${state.surveyType} опрос`);
-
     return this.getCurrentQuestion(chatId);
   }
 
-  // Получить тип опроса (free/premium)
+  async saveSurveyMessageId(chatId, messageId) {
+    return new Promise((resolve, reject) => {
+      const db = require('../config/database');
+      db.run(
+        `UPDATE users SET survey_message_id = ? WHERE chat_id = ?`,
+        [messageId, chatId],
+        function(err) {
+          if (err) reject(err);
+          else resolve(this.changes);
+        }
+      );
+    });
+  }
+
+  async getSurveyMessageId(chatId) {
+    return new Promise((resolve) => {
+      const db = require('../config/database');
+      db.get(
+        `SELECT survey_message_id FROM users WHERE chat_id = ?`,
+        [chatId],
+        (err, row) => {
+          if (err || !row) resolve(null);
+          else resolve(row.survey_message_id);
+        }
+      );
+    });
+  }
+
+  async clearSurveyMessageId(chatId) {
+    return new Promise((resolve) => {
+      const db = require('../config/database');
+      db.run(
+        `UPDATE users SET survey_message_id = NULL WHERE chat_id = ?`,
+        [chatId],
+        (err) => {
+          if (err) console.error('Ошибка очистки survey_message_id:', err);
+          resolve();
+        }
+      );
+    });
+  }
+
   async getSurveyType(chatId) {
     const isPremium = await subscriptionService.isSubscriptionActive(chatId);
     return isPremium ? 'premium' : 'free';
   }
 
-  // Получить текущий вопрос
   async getCurrentQuestion(chatId) {
     const state = await this.getUserState(chatId);
     if (!state) return null;
@@ -43,6 +79,8 @@ class SurveyService {
     if (state.current >= userQuestions.length) return null;
 
     const question = userQuestions[state.current];
+    const currentAnswers = state.answers[question.key];
+
     return question ? {
       ...question,
       index: state.current,
@@ -50,14 +88,10 @@ class SurveyService {
     } : null;
   }
 
-  // Получить вопросы в зависимости от подписки
   async getQuestionsForUser(chatId) {
     try {
       const isPremium = await subscriptionService.isSubscriptionActive(chatId);
       const selectedQuestions = isPremium ? questions.premium : questions.free;
-
-      console.log(`📋 Загружено ${selectedQuestions.length} вопросов для пользователя ${chatId} (${isPremium ? 'premium' : 'free'})`);
-
       return selectedQuestions;
     } catch (error) {
       console.error('❌ Ошибка определения подписки:', error);
@@ -65,17 +99,14 @@ class SurveyService {
     }
   }
 
-  // Проверить может ли пользователь начать опрос
   async canStartSurvey(chatId) {
     const isPremium = await subscriptionService.isSubscriptionActive(chatId);
-    if (isPremium) return true; // Премиум без ограничений
+    if (isPremium) return true;
 
-    // Для free проверяем, не проходили ли уже опрос
     const hasCompleted = await this.hasCompletedSurvey(chatId);
     return !hasCompleted;
   }
 
-  // Проверить завершал ли пользователь опрос
   async hasCompletedSurvey(chatId) {
     return new Promise((resolve) => {
       db.get(
@@ -100,32 +131,26 @@ class SurveyService {
 
     if (!question) throw new Error('Вопрос не найден');
 
-    // Валидация числовых полей
-    if (['age', 'height', 'weight', 'region'].includes(question.key)) {
-      if (question.key === 'region') {
-        // Для региона просто сохраняем текст
-        state.answers[question.key] = answer;
-      } else {
-        // Для числовых полей проверяем валидность
-        const numValue = parseInt(answer);
-        if (isNaN(numValue) || numValue <= 0) {
-          throw new Error('Пожалуйста, введите корректное положительное число');
+    if (question.isMultiple) {
+      state.answers[question.key] = state.answers[question.key] || [];
+
+      if (answerData.action === 'add') {
+        if (!state.answers[question.key].includes(answer)) {
+          state.answers[question.key].push(answer);
         }
-        state.answers[question.key] = numValue;
+      } else if (answerData.action === 'continue') {
+        state.current++;
       }
+
     } else {
       state.answers[question.key] = answer;
     }
 
     state.current++;
     await this.saveUserData(chatId, state);
-
-    console.log(`💾 Ответ сохранен: ${question.key} = ${answer} (вопрос ${state.current}/${userQuestions.length})`);
-
     return true;
   }
 
-  // Получить состояние пользователя
   async getUserState(chatId) {
     return new Promise((resolve) => {
       db.get(
@@ -149,7 +174,6 @@ class SurveyService {
     });
   }
 
-  // Сохранить данные пользователя
   async saveUserData(chatId, state) {
     return new Promise((resolve, reject) => {
       db.run(
@@ -175,7 +199,6 @@ class SurveyService {
     });
   }
 
-  // Получить результаты опроса
   async getSurveyResults(chatId) {
     return new Promise((resolve) => {
       db.get(
@@ -200,8 +223,9 @@ class SurveyService {
   // Завершить опрос
   async completeSurvey(chatId) {
     return new Promise((resolve, reject) => {
+      const db = require('../config/database');
       db.run(
-        `UPDATE users SET state = NULL, updated_at = CURRENT_TIMESTAMP WHERE chat_id = ?`,
+        `UPDATE users SET state = NULL, survey_message_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE chat_id = ?`,
         [chatId],
         (err) => {
           if (err) {

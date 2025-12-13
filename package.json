@@ -13,13 +13,15 @@
     "logs": "pm2 logs supplement-bot",
     "monit": "pm2 monit",
     "backup": "node scripts/backup.js",
-    "deploy": "scripts/deploy-production.sh"
+    "deploy": "scripts/deploy-production.bat"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@a2seven/yoo-checkout": "^1.1.4",
+    "axios": "^1.12.2",
+    "chart.js": "^4.5.0",
+    "chartjs-node-canvas": "^5.0.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "node-cron": "^4.2.1",
